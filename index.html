@@ -246,12 +246,13 @@ body.admin-mode .nav-tab.lock-tab { display: flex !important; }
 #trx-list-section { display: block; }
 #trx-detail-section { display: none; }
 body.trx-detail-mode #trx-list-section { display: none; }
-body.trx-detail-mode #trx-detail-section { display: block; }
+
 
 /* Tombol back di transaksi */
 .btn-back { display:none; }
 body.trx-detail-mode .btn-back { display:inline-flex; }
 body.trx-detail-mode .btn-match-new { display:none; }
+body.trx-detail-mode #trx-detail-section { display: block; }
 </style>
 <style>
 #section-freq-wrap > div:first-child { display: none; } /* Sembunyikan card frequent */
@@ -1326,9 +1327,6 @@ function renderScorer(id,data){
 }
 
 function goPage(id){
-  if(id==='transaksi'){
-    document.body.classList.remove('trx-detail-mode');
-  }
   if(id==='transaksi'){
     document.body.classList.remove('trx-detail-mode');
     setTimeout(renderMatchList,50);
