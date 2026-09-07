@@ -450,22 +450,23 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div><div class="pg-title">Transaksi match</div><div class="pg-sub">Input dan kelola match aktif</div></div>
     <button class="btn btn-prim" onclick="openModal('m-match-baru')"><i class="ti ti-plus"></i> Match baru</button>
   </div>
-  <div class="card">
+  <div id="match-switcher" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+  <div class="card" id="match-card">
     <div class="mhd">
       <div>
-        <div style="font-size:14px;font-weight:600">6 September 2026 — Internal SMS</div>
-        <div style="font-size:11px;color:var(--mu);margin-top:2px">Futsal Menteng · Lapangan Kecil · HTM Rp 95.000 · GK Rp 35.000</div>
+        <div style="font-size:14px;font-weight:600" id="mhd-title">6 September 2026 — Internal SMS</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:2px" id="mhd-sub">Futsal Menteng · Lapangan Kecil · HTM Rp 95.000 · GK Rp 35.000</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <span class="b b-gn" style="font-size:12px;padding:5px 10px"><span class="sd sdg"></span>Match aktif</span>
-        <button class="btn btn-dng" onclick="openModal('m-tutup-match')"><i class="ti ti-lock"></i> Tutup match</button>
+        <span class="b b-gn" style="font-size:12px;padding:5px 10px" id="mhd-status"><span class="sd sdg"></span>Match aktif</span>
+        <button class="btn btn-dng" id="mhd-tutup-btn" onclick="openModal('m-tutup-match')"><i class="ti ti-lock"></i> Tutup match</button>
       </div>
     </div>
     <div class="mb-wrap">
-      <div class="mb-cell"><div class="mb-lbl">Sales pasti (Lunas)</div><div class="mb-val" style="color:var(--nv)">Rp 1.530.000</div></div>
-      <div class="mb-cell"><div class="mb-lbl">Sales estimasi (Sementara)</div><div class="mb-val" style="color:var(--am)">Rp 95.000</div></div>
-      <div class="mb-cell"><div class="mb-lbl">Total cost (rencana)</div><div class="mb-val" style="color:var(--rd)">Rp 1.614.000</div></div>
-      <div class="mb-cell profit"><div class="mb-lbl" style="color:var(--gn)">Margin proyeksi</div><div class="mb-val" style="color:var(--gn)">+Rp 11.000</div></div>
+      <div class="mb-cell"><div class="mb-lbl">Sales pasti (Lunas)</div><div class="mb-val" id="mb-pasti" style="color:var(--nv)">Rp 1.530.000</div></div>
+      <div class="mb-cell"><div class="mb-lbl">Sales estimasi (Sementara)</div><div class="mb-val" id="mb-sementara" style="color:var(--am)">Rp 95.000</div></div>
+      <div class="mb-cell"><div class="mb-lbl">Total cost (rencana)</div><div class="mb-val" id="mb-cost" style="color:var(--rd)">Rp 1.614.000</div></div>
+      <div class="mb-cell profit"><div class="mb-lbl" id="mb-margin-lbl" style="color:var(--gn)">Margin proyeksi</div><div class="mb-val" id="mb-margin" style="color:var(--gn)">+Rp 11.000</div></div>
     </div>
 
     <div class="trx-wrap" style="border-radius:0;border:none;border-top:1px solid var(--bd)">
@@ -481,7 +482,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <!-- SLOT PLAYER — Tim di kanan Status, SHTM flag di sebelah nama -->
         <div id="trx-slot" class="trx-p active">
           <div class="sec-lbl">
-            Slot player — 6 / 28 terisi
+            <span id="slot-count-lbl">Slot player — 6 / 28 terisi</span>
             <button class="btn btn-sm" onclick="openModal('m-tambah-player')"><i class="ti ti-user-plus"></i> Tambah player</button>
             <button class="btn btn-sm" style="background:var(--gn2);color:var(--gn);border-color:#86EFAC;margin-left:auto" onclick="openModal('m-broadcast')">
               <i class="ti ti-broadcast"></i> Generate broadcast
@@ -503,11 +504,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <th style="width:120px">Jersey</th>
                 <th style="width:48px">Ukuran</th>
                 <th style="width:82px">Status</th>
-                <th style="width:82px" id="th-formasi" style="display:none">Formasi</th>
+                <th style="width:82px" id="th-formasi">Formasi</th>
                 <th style="width:60px">Aksi</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="slot-tbody">
               <!-- FIELD PLAYER -->
               <tr>
                 <td style="color:var(--hi)">GK</td>
@@ -527,14 +528,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 </td>
                 <td><span class="b b-gy">M</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
-                <td class="td-formasi" style="display:none">
-                  <select class="formasi-sel" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
+                <td class="td-formasi">
+                  <span class="formasi-dash" style="color:var(--mu)">—</span>
+                  <select class="formasi-sel" style="display:none;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
                     <option>GK</option><option>CB</option><option>RB</option><option>LB</option>
                     <option>DMF</option><option>AMF</option><option>LMF</option><option>RMF</option>
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr style="background:#FFF5F5">
                 <td style="color:var(--hi)">1</td>
@@ -554,14 +556,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 </td>
                 <td><span class="b b-gy">M</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
-                <td class="td-formasi" style="display:none">
-                  <select class="formasi-sel" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
+                <td class="td-formasi">
+                  <span class="formasi-dash" style="color:var(--mu)">—</span>
+                  <select class="formasi-sel" style="display:none;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
                     <option>GK</option><option>CB</option><option>RB</option><option>LB</option>
                     <option>DMF</option><option>AMF</option><option>LMF</option><option>RMF</option>
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
                 <td style="color:var(--hi)">2</td>
@@ -581,14 +584,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 </td>
                 <td><span class="b b-gy">L</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
-                <td class="td-formasi" style="display:none">
-                  <select class="formasi-sel" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
+                <td class="td-formasi">
+                  <span class="formasi-dash" style="color:var(--mu)">—</span>
+                  <select class="formasi-sel" style="display:none;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
                     <option>GK</option><option>CB</option><option>RB</option><option>LB</option>
                     <option>DMF</option><option>AMF</option><option>LMF</option><option>RMF</option>
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
                 <td style="color:var(--hi)">3</td>
@@ -608,14 +612,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 </td>
                 <td><span class="b b-gy">XL</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
-                <td class="td-formasi" style="display:none">
-                  <select class="formasi-sel" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
+                <td class="td-formasi">
+                  <span class="formasi-dash" style="color:var(--mu)">—</span>
+                  <select class="formasi-sel" style="display:none;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
                     <option>GK</option><option>CB</option><option>RB</option><option>LB</option>
                     <option>DMF</option><option>AMF</option><option>LMF</option><option>RMF</option>
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr class="sem">
                 <td style="color:var(--hi)">4</td>
@@ -635,14 +640,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 </td>
                 <td><span class="b b-gy">L</span></td>
                 <td><span class="b b-am"><span class="sd sda"></span>Sementara</span></td>
-                <td class="td-formasi" style="display:none">
-                  <select class="formasi-sel" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
+                <td class="td-formasi">
+                  <span class="formasi-dash" style="color:var(--mu)">—</span>
+                  <select class="formasi-sel" style="display:none;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
                     <option>GK</option><option>CB</option><option>RB</option><option>LB</option>
                     <option>DMF</option><option>AMF</option><option>LMF</option><option>RMF</option>
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
             </tbody>
           </table>
@@ -653,13 +659,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
           <div class="sec-lbl">Biaya match <button class="btn btn-sm" onclick="openModal('m-tambah-biaya')"><i class="ti ti-plus"></i> Tambah item biaya</button></div>
           <table class="stbl">
             <thead><tr><th>Item</th><th>Tipe</th><th>Rencana (Rp)</th><th>Realisasi (Rp)</th><th>Malik 60%</th><th>Filan 40%</th><th>Aksi</th></tr></thead>
-            <tbody>
-              <tr><td style="font-weight:500">Sewa lapangan</td><td><span class="b b-gy">Ops</span></td><td>1.300.000</td><td>1.300.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Wasit</td><td><span class="b b-gy">Ops</span></td><td>200.000</td><td>200.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Air + laundry</td><td><span class="b b-gy">Ops</span></td><td>85.000</td><td>85.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Gimmick voucher</td><td><span class="b b-gy">Ops</span></td><td>29.000</td><td>29.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+            <tbody id="biaya-tbody">
+              <tr><td style="font-weight:500">Sewa lapangan</td><td><span class="b b-gy">Ops</span></td><td>1.300.000</td><td>1.300.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Wasit</td><td><span class="b b-gy">Ops</span></td><td>200.000</td><td>200.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Air + laundry</td><td><span class="b b-gy">Ops</span></td><td>85.000</td><td>85.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Gimmick voucher</td><td><span class="b b-gy">Ops</span></td><td>29.000</td><td>29.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
             </tbody>
-            <tfoot><tr><td colspan="2">Total operasional</td><td>Rp 1.614.000</td><td style="color:var(--rd)">Rp 1.614.000</td><td colspan="3"></td></tr></tfoot>
+            <tfoot><tr><td colspan="2">Total operasional</td><td id="biaya-total-rencana">Rp 1.614.000</td><td id="biaya-total-realisasi" style="color:var(--rd)">Rp 1.614.000</td><td colspan="3"></td></tr></tfoot>
           </table>
         </div>
 
@@ -667,17 +673,19 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div id="trx-deposit" class="trx-p">
           <div class="sec-lbl">Deposit player <button class="btn btn-sm" onclick="openModal('m-tambah-deposit')"><i class="ti ti-plus"></i> Tambah deposit</button></div>
           <div style="padding:14px 16px">
+            <div id="dep-saldo-list">
             <div class="dep-row">
               <div style="font-weight:500;min-width:100px">Wayan</div>
               <div style="font-size:14px;font-weight:700;color:var(--am);min-width:90px">Rp 70.000</div>
               <div style="flex:1;font-size:11px;color:var(--mu)">Saldo aktif · dapat dipakai di match ini</div>
-              <div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div>
+              <div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div>
+            </div>
             </div>
             <div style="border-top:1px solid var(--bd);margin-top:14px;padding-top:14px">
               <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Log transaksi deposit</div>
               <table class="tbl">
                 <thead><tr><th>Tgl</th><th>Player</th><th>Jenis</th><th>Masuk (Rp)</th><th>Dipakai (Rp)</th><th>Saldo setelah</th><th>Match</th></tr></thead>
-                <tbody>
+                <tbody id="dep-log-tbody">
                   <tr><td>Berbagai</td><td class="pri">Wayan</td><td><span class="b b-am">Cancel→Deposit</span></td><td style="color:var(--gn)">+70.000</td><td>—</td><td style="color:var(--am);font-weight:500">70.000</td><td>Berbagai</td></tr>
                   <tr><td>15/08</td><td class="pri">Lana</td><td><span class="b b-am">Cancel→Deposit</span></td><td style="color:var(--gn)">+70.000</td><td style="color:var(--rd)">-70.000</td><td style="color:var(--mu)">0</td><td>15 Agust</td></tr>
                 </tbody>
@@ -813,49 +821,49 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
           <td>1</td><td class="pri">Jayadi</td>
           <td>6 Sept 2026</td><td style="color:var(--hi)">—</td>
           <td><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
           <td>2</td><td class="pri">Ricky</td>
           <td>28 Sept 2025</td><td style="color:var(--hi)">—</td>
           <td><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
           <td>3</td><td class="pri">Adam Nh</td>
           <td>3 Nov 2025</td><td style="color:var(--hi)">—</td>
           <td><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
           <td>4</td><td class="pri">Wage</td>
           <td>21 Des 2025</td><td style="color:var(--hi)">—</td>
           <td><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
           <td>5</td><td class="pri">Rizal Angga</td>
           <td>17 Mei 2026</td><td style="color:var(--hi)">—</td>
           <td><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr>
           <td>6</td><td class="pri">Chessa</td>
           <td>14 Sept 2025</td><td>28 Sept 2025</td>
           <td><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td>
         </tr>
         <tr>
           <td>7</td><td class="pri">Didik</td>
           <td>12 Juli 2026</td><td>26 Juli 2026</td>
           <td><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td>
         </tr>
         <tr>
           <td>8</td><td class="pri">Fauzan</td>
           <td>26 Des 2025</td><td>11 Jan 2026</td>
           <td><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button></div></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td>
         </tr>
       </tbody>
     </table>
@@ -886,9 +894,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <table class="tbl">
       <thead><tr><th>No</th><th>Nama</th><th>Alias</th><th>Kategori</th><th>Hadir</th><th>Last match</th><th>Deposit</th><th>SHTM</th><th>Aksi</th></tr></thead>
       <tbody>
-        <tr><td>1</td><td class="pri">Malik</td><td>—</td><td><span class="b b-gy">SMS</span></td><td>40×</td><td>6 Sept</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button></div></td></tr>
-        <tr style="background:#FFF5F5"><td>4</td><td class="pri">Ricky</td><td>—</td><td><span class="b b-gy">Umum</span></td><td>6×</td><td>6 Sept</td><td>—</td><td><span class="b b-sh">Belum dipakai</span></td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button></div></td></tr>
-        <tr style="background:var(--am2)"><td>5</td><td class="pri">Wayan</td><td>—</td><td><span class="b b-gy">Umum</span></td><td>8×</td><td>6 Sept</td><td style="color:var(--am);font-weight:500">Rp 70.000</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button></div></td></tr>
+        <tr><td>1</td><td class="pri">Malik</td><td>—</td><td><span class="b b-gy">SMS</span></td><td>40×</td><td>6 Sept</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td></tr>
+        <tr style="background:#FFF5F5"><td>4</td><td class="pri">Ricky</td><td>—</td><td><span class="b b-gy">Umum</span></td><td>6×</td><td>6 Sept</td><td>—</td><td><span class="b b-sh">Belum dipakai</span></td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td></tr>
+        <tr style="background:var(--am2)"><td>5</td><td class="pri">Wayan</td><td>—</td><td><span class="b b-gy">Umum</span></td><td>8×</td><td>6 Sept</td><td style="color:var(--am);font-weight:500">Rp 70.000</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -943,30 +951,30 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div class="modal-hd"><div class="modal-title"><i class="ti ti-calendar-plus" style="color:var(--ac)"></i> Buat match baru</div><button class="ib" onclick="closeModal('m-match-baru')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
       <div class="g2f">
-        <div class="fg"><div class="fl">Tanggal match</div><input type="date" value="2026-09-20"></div>
+        <div class="fg"><div class="fl">Tanggal match</div><input type="date" id="nm-tanggal" value="2026-09-20"></div>
         <div class="fg"><div class="fl">Jenis game</div>
-          <select onchange="setGameMode(this.value==='Football (11 vs 11)'?'football':'mini')">
+          <select id="nm-jenis">
             <option>Minisoccer (7 vs 7)</option>
             <option>Football (11 vs 11)</option>
           </select>
         </div>
-        <div class="fg" style="grid-column:span 2"><div class="fl">Venue (nama lapangan)</div><input type="text" placeholder="Contoh: Futsal Menteng, Blok M Square Lt.3"></div>
-        <div class="fg"><div class="fl">Tipe lapangan</div><select><option>Kecil</option><option>Besar</option></select></div>
+        <div class="fg" style="grid-column:span 2"><div class="fl">Venue (nama lapangan)</div><input type="text" id="nm-venue" placeholder="Contoh: Futsal Menteng, Blok M Square Lt.3"></div>
+        <div class="fg"><div class="fl">Tipe lapangan</div><select id="nm-tipe-lap"><option>Kecil</option><option>Besar</option></select></div>
         <div class="fg"><div class="fl">Tipe event</div>
           <!-- Internal = SMS atau BIG, Join Game, Sparing Eksternal -->
-          <select>
+          <select id="nm-tipe-event">
             <option>Internal</option>
             <option>Join Game</option>
             <option>Sparing Eksternal</option>
           </select>
         </div>
-        <div class="fg"><div class="fl">HTM Player (Rp)</div><input type="number" value="95000"></div>
-        <div class="fg"><div class="fl">HTM GK (Rp)</div><input type="number" value="35000"></div>
-        <div class="fg"><div class="fl">Kuota Kiper (GK)</div><input type="number" value="4" min="1" placeholder="mis. 4"></div>
-        <div class="fg"><div class="fl">Kuota Field (Player)</div><input type="number" value="24" min="1" placeholder="mis. 24"></div>
+        <div class="fg"><div class="fl">HTM Player (Rp)</div><input type="number" id="nm-htm-player" value="95000"></div>
+        <div class="fg"><div class="fl">HTM GK (Rp)</div><input type="number" id="nm-htm-gk" value="35000"></div>
+        <div class="fg"><div class="fl">Kuota Kiper (GK)</div><input type="number" id="nm-kuota-gk" value="4" min="1" placeholder="mis. 4"></div>
+        <div class="fg"><div class="fl">Kuota Field (Player)</div><input type="number" id="nm-kuota-field" value="24" min="1" placeholder="mis. 24"></div>
       </div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-match-baru')">Batal</button><button class="btn btn-prim"><i class="ti ti-check"></i> Buat match</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-match-baru')">Batal</button><button class="btn btn-prim" onclick="submitMatchBaru()"><i class="ti ti-check"></i> Buat match</button></div>
   </div>
 </div>
 
@@ -983,7 +991,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       </div>
       <div class="info info-gn"><i class="ti ti-file-text"></i> PDF laporan otomatis digenerate setelah match ditutup.</div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng" onclick="submitTutupMatch()"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
   </div>
 </div>
 
@@ -991,21 +999,21 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <div class="modal">
     <div class="modal-hd"><div class="modal-title"><i class="ti ti-user-plus" style="color:var(--ac)"></i> Tambah player / walk-in</div><button class="ib" onclick="closeModal('m-tambah-player')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
-      <div class="fg"><div class="fl">Cari nama player (autocomplete dari DB)</div><input type="text" placeholder="Ketik nama..."></div>
+      <div class="fg"><div class="fl">Cari nama player (autocomplete dari DB)</div><input type="text" id="tp-nama" placeholder="Ketik nama..."></div>
       <div class="g2f">
-        <div class="fg"><div class="fl">HTM (Rp)</div><input type="number" value="95000"></div>
-        <div class="fg"><div class="fl">Label harga</div><select><option>Normal</option><option>SHTM (50rb)</option><option>Promo</option><option>Free</option><option>Sponsor</option></select></div>
-        <div class="fg"><div class="fl">Posisi</div><select><option>Field</option><option>GK</option></select></div>
-        <div class="fg"><div class="fl">Jersey warna</div><select><option>Merah SMS</option><option>Kuning SMS</option><option>Biru SMS</option><option>Hijau SMS</option><option>Pribadi</option></select></div>
-        <div class="fg"><div class="fl">Ukuran jersey</div><select><option>M</option><option>L</option><option>XL</option><option>2XL</option></select></div>
-        <div class="fg"><div class="fl">Status</div><select><option>Sementara</option><option>Lunas</option><option>Walk-in</option></select></div>
-        <div class="fg"><div class="fl">Metode bayar</div><select><option value="">— (belum/sementara)</option><option>BCA</option><option>BSI</option><option>Mandiri</option><option>BRI</option><option>BNI</option><option>Cash</option><option>Deposit</option></select></div>
-        <div class="fg"><div class="fl">Jumlah bayar (Rp)</div><input type="number" placeholder="0"></div>
+        <div class="fg"><div class="fl">HTM (Rp)</div><input type="number" id="tp-htm" value="95000"></div>
+        <div class="fg"><div class="fl">Label harga</div><select id="tp-label"><option>Normal</option><option>SHTM</option><option>Promo</option><option>Free</option><option>Sponsor</option></select></div>
+        <div class="fg"><div class="fl">Posisi</div><select id="tp-posisi"><option>Field</option><option>GK</option></select></div>
+        <div class="fg"><div class="fl">Jersey warna</div><select id="tp-jersey"><option value="">— pilih</option><option>Merah</option><option>Kuning</option><option>Biru</option><option>Hijau</option></select></div>
+        <div class="fg"><div class="fl">Ukuran jersey</div><select id="tp-ukuran"><option>M</option><option>L</option><option>XL</option><option>2XL</option></select></div>
+        <div class="fg"><div class="fl">Status</div><select id="tp-status"><option>Sementara</option><option>Lunas</option><option>Walk-in</option></select></div>
+        <div class="fg"><div class="fl">Metode bayar</div><select id="tp-metode"><option value="">— (belum/sementara)</option><option>BCA</option><option>BSI</option><option>Mandiri</option><option>BRI</option><option>BNI</option><option>Cash</option><option>Deposit</option></select></div>
+        <div class="fg"><div class="fl">Jumlah bayar (Rp)</div><input type="number" id="tp-jumlah" placeholder="0"></div>
       </div>
       <!-- Tim tidak ada di form — diisi di tabel slot setelah player masuk -->
       <div class="info info-ac"><i class="ti ti-info-circle"></i> Tim diisi langsung di tabel slot setelah player ditambahkan. Jika player punya deposit aktif, akan otomatis tercantum.</div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-player')">Batal</button><button class="btn btn-prim"><i class="ti ti-check"></i> Tambah player</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-player')">Batal</button><button class="btn btn-prim" onclick="submitTambahPlayer()"><i class="ti ti-check"></i> Tambah player</button></div>
   </div>
 </div>
 
@@ -1013,16 +1021,16 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <div class="modal">
     <div class="modal-hd"><div class="modal-title"><i class="ti ti-receipt" style="color:var(--ac)"></i> Tambah item biaya</div><button class="ib" onclick="closeModal('m-tambah-biaya')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
-      <div class="fg"><div class="fl">Nama item</div><input type="text" placeholder="Sewa lapangan, wasit, laundry..."></div>
+      <div class="fg"><div class="fl">Nama item</div><input type="text" id="tb-item" placeholder="Sewa lapangan, wasit, laundry..."></div>
       <div class="g2f">
-        <div class="fg"><div class="fl">Kategori</div><select><option>Lapangan</option><option>Wasit</option><option>Air</option><option>Laundry</option><option>Gimmick</option><option>Konsumsi</option><option>Inventaris</option><option>Lainnya</option></select></div>
+        <div class="fg"><div class="fl">Kategori</div><select id="tb-kategori"><option>Lapangan</option><option>Wasit</option><option>Air</option><option>Laundry</option><option>Gimmick</option><option>Konsumsi</option><option>Inventaris</option><option>Lainnya</option></select></div>
         <div class="fg"><div class="fl">Tipe pembebanan</div>
           <select id="sel-tipe" onchange="document.getElementById('inv-opts').style.display=this.value==='Inventaris'?'block':'none'">
             <option>Operasional</option><option>Inventaris</option>
           </select>
         </div>
-        <div class="fg"><div class="fl">Rencana (Rp)</div><input type="number" placeholder="0"></div>
-        <div class="fg"><div class="fl">Realisasi (Rp)</div><input type="number" placeholder="0"></div>
+        <div class="fg"><div class="fl">Rencana (Rp)</div><input type="number" id="tb-rencana" placeholder="0"></div>
+        <div class="fg"><div class="fl">Realisasi (Rp)</div><input type="number" id="tb-realisasi" placeholder="0"></div>
       </div>
       <div id="inv-opts" style="display:none">
         <div class="info info-pu" style="margin-bottom:10px"><i class="ti ti-info-circle"></i> Inventaris langsung potong kumulatif Malik 60% dan Filan 40%, tidak masuk margin match.</div>
@@ -1032,7 +1040,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         </div>
       </div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-biaya')">Batal</button><button class="btn btn-prim"><i class="ti ti-check"></i> Simpan</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-biaya')">Batal</button><button class="btn btn-prim" onclick="submitTambahBiaya()"><i class="ti ti-check"></i> Simpan</button></div>
   </div>
 </div>
 
@@ -1041,14 +1049,14 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div class="modal-hd"><div class="modal-title"><i class="ti ti-wallet" style="color:var(--am)"></i> Tambah deposit player</div><button class="ib" onclick="closeModal('m-tambah-deposit')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
       <div class="g2f">
-        <div class="fg"><div class="fl">Player</div><input type="text" placeholder="Cari nama player..."></div>
-        <div class="fg"><div class="fl">Jumlah (Rp)</div><input type="number" placeholder="mis. 95000"></div>
-        <div class="fg"><div class="fl">Sumber</div><select><option>Cancel → Deposit</option><option>Kelebihan bayar</option><option>Sponsor credit</option></select></div>
-        <div class="fg"><div class="fl">Keterangan</div><input type="text" placeholder="opsional"></div>
+        <div class="fg"><div class="fl">Player</div><input type="text" id="td-player" placeholder="Cari nama player..."></div>
+        <div class="fg"><div class="fl">Jumlah (Rp)</div><input type="number" id="td-jumlah" placeholder="mis. 95000"></div>
+        <div class="fg"><div class="fl">Sumber</div><select id="td-sumber"><option>Cancel → Deposit</option><option>Kelebihan bayar</option><option>Sponsor credit</option></select></div>
+        <div class="fg"><div class="fl">Keterangan</div><input type="text" id="td-ket" placeholder="opsional"></div>
       </div>
       <div class="info info-am"><i class="ti ti-info-circle"></i> Saldo berkurang otomatis saat player memilih metode "Deposit" di tab Slot Player.</div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-deposit')">Batal</button><button class="btn btn-prim"><i class="ti ti-check"></i> Simpan</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-deposit')">Batal</button><button class="btn btn-prim" onclick="submitTambahDeposit()"><i class="ti ti-check"></i> Simpan</button></div>
   </div>
 </div>
 
@@ -1057,13 +1065,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div class="modal-hd"><div class="modal-title"><i class="ti ti-ball-football" style="color:var(--gn)"></i> Tambah gol</div><button class="ib" onclick="closeModal('m-tambah-gol')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
       <div class="fg"><div class="fl">Pencetak gol (player match ini)</div>
-        <select><option value="">Pilih player...</option><option>Malik (GK · Tim 1)</option><option>Ricky (Field · Tim 1)</option><option>Wayan (Field · Tim 1)</option><option>Jayadi (Field · Tim 1)</option><option>Heru (Field · Tim 2)</option></select>
+        <select id="tg-player"><option value="">Pilih player...</option></select>
       </div>
-      <div class="fg"><div class="fl">Jumlah gol di match ini</div><input type="number" min="1" value="1"></div>
-      <div class="fg"><div class="fl">Keterangan (opsional)</div><input type="text" placeholder="mis. gol di babak kedua"></div>
+      <div class="fg"><div class="fl">Jumlah gol di match ini</div><input type="number" id="tg-jumlah" min="1" value="1"></div>
+      <div class="fg"><div class="fl">Keterangan (opsional)</div><input type="text" id="tg-ket" placeholder="mis. gol di babak kedua"></div>
       <div class="info info-gn"><i class="ti ti-chart-bar"></i> Gol direkap ke top skor all time setelah match ditutup.</div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-gol')">Batal</button><button class="btn btn-prim"><i class="ti ti-check"></i> Simpan gol</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-gol')">Batal</button><button class="btn btn-prim" onclick="submitTambahGol()"><i class="ti ti-check"></i> Simpan gol</button></div>
   </div>
 </div>
 
@@ -1075,20 +1083,20 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="g2f">
         <div class="fg">
           <div class="fl">Warna jersey</div>
-          <input type="text" placeholder="Merah / Kuning / Biru / Hijau / dll" list="warna-list">
+          <input type="text" id="ts-warna" placeholder="Merah / Kuning / Biru / Hijau / dll" list="warna-list">
           <datalist id="warna-list">
             <option>Merah</option><option>Kuning</option><option>Biru</option><option>Hijau</option>
             <option>Putih</option><option>Hitam</option><option>Oranye</option><option>Abu-abu</option>
           </datalist>
         </div>
-        <div class="fg"><div class="fl">Tipe jersey</div><select><option>Field</option><option>GK</option></select></div>
-        <div class="fg"><div class="fl">Ukuran</div><select><option>M</option><option>L</option><option>XL</option><option>2XL</option><option>3XL</option><option>S</option></select></div>
-        <div class="fg"><div class="fl">Jumlah unit (ditambahkan)</div><input type="number" min="1" value="1" placeholder="Berapa unit baru?"></div>
-        <div class="fg" style="grid-column:span 2"><div class="fl">Keterangan (opsional)</div><input type="text" placeholder="mis. beli 2 jersey Merah XL baru, atau ganti warna Ungu L"></div>
+        <div class="fg"><div class="fl">Tipe jersey</div><select id="ts-tipe"><option>Field</option><option>GK</option></select></div>
+        <div class="fg"><div class="fl">Ukuran</div><select id="ts-ukuran"><option>M</option><option>L</option><option>XL</option><option>2XL</option><option>3XL</option><option>S</option></select></div>
+        <div class="fg"><div class="fl">Jumlah unit (ditambahkan)</div><input type="number" id="ts-jumlah" min="1" value="1" placeholder="Berapa unit baru?"></div>
+        <div class="fg" style="grid-column:span 2"><div class="fl">Keterangan (opsional)</div><input type="text" id="ts-ket" placeholder="mis. beli 2 jersey Merah XL baru, atau ganti warna Ungu L"></div>
       </div>
       <div class="info info-ac"><i class="ti ti-info-circle"></i> Jika warna belum ada → jersey baru didaftarkan ke sistem. Jika sudah ada → stok bertambah. Perubahan langsung tercermin di notifikasi ketersediaan saat input player.</div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-stok')">Batal</button><button class="btn btn-prim"><i class="ti ti-check"></i> Simpan stok</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-stok')">Batal</button><button class="btn btn-prim" onclick="submitTambahStok()"><i class="ti ti-check"></i> Simpan stok</button></div>
   </div>
 </div>
 
@@ -1174,6 +1182,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <div style="background:var(--nv);color:#fff;border-radius:10px;padding:12px 16px;font-size:12px;max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.25)">
     <div style="font-weight:600;margin-bottom:3px"><i class="ti ti-ticket"></i> SHTM dicatat!</div>
     <div id="toast-msg" style="opacity:.85">Jayadi mendapat SHTM pada 6 Sept 2026. Tercatat di Admin → Daftar SHTM.</div>
+  </div>
+</div>
+<div id="ms-toast" style="position:fixed;bottom:24px;right:24px;z-index:999;display:none">
+  <div style="background:#111827;color:#fff;border-radius:10px;padding:11px 15px;font-size:12px;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.25)">
+    <div id="ms-toast-msg" style="font-weight:500"></div>
   </div>
 </div>
 
@@ -1518,16 +1531,18 @@ function updateGkOptions(gkSel) {
   }
 }
 
-// ── FORMASI: tampil/sembunyikan kolom formasi berdasarkan Jenis Game ──
-// Di mockup ini kita track dengan variable global
+// ── FORMASI: kolom Formasi selalu tampil. Untuk Football tampil dropdown posisi,
+// untuk Minisoccer tampil "—" statis (tidak ada konsep formasi di minisoccer). ──
 let isFootball = false;
 
 function setGameMode(mode) {
   isFootball = (mode === 'football');
-  const th = document.getElementById('th-formasi');
-  const tds = document.querySelectorAll('.td-formasi');
-  if(th) th.style.display = isFootball ? '' : 'none';
-  tds.forEach(td => td.style.display = isFootball ? '' : 'none');
+  document.querySelectorAll('.td-formasi').forEach(td => {
+    const dash = td.querySelector('.formasi-dash');
+    const sel = td.querySelector('.formasi-sel');
+    if(dash) dash.style.display = isFootball ? 'none' : '';
+    if(sel) sel.style.display = isFootball ? '' : 'none';
+  });
 }
 
 // ── LINE UP VIEW ──
@@ -1609,9 +1624,16 @@ function renderLineupView() {
 // Intercept openModal untuk lineup view
 const _origOpenModal = openModal;
 openModal = function(id) {
+  // Match yang sudah ditutup: kunci semua modal input (kecuali sekedar lihat lineup/broadcast/db player)
+  const lockedIds = ['m-tambah-player','m-tambah-biaya','m-tambah-deposit','m-tambah-gol'];
+  if(lockedIds.includes(id) && msIsActiveLocked()){
+    showToast('Match ini sudah ditutup dan dikunci — tidak bisa diubah lagi.');
+    return;
+  }
   _origOpenModal(id);
   if(id === 'm-broadcast') setTimeout(genBroadcast, 80);
   if(id === 'm-lineup-view') setTimeout(renderLineupView, 60);
+  if(id === 'm-tambah-gol') setTimeout(populateGolPlayerSelect, 30);
 };
 
 // Init GK dropdowns saat halaman load
@@ -1621,6 +1643,561 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   PATCH — dikerjakan berdasarkan diagnosis:
+   1) Modal invisible — sudah diverifikasi normal di build ini (lihat catatan chat)
+   2) Tombol edit & hapus — sekarang fungsional (generic inline edit + confirm delete)
+   3) Formasi — bug duplicate style attribute diperbaiki, default "—" utk Minisoccer,
+      dropdown hanya utk Football, dan otomatis ikut jenis game match aktif
+   4) Multi-match — bisa buka & pindah antar beberapa match aktif sekaligus
+   Catatan: semua di bawah ini masih 100% di sisi client (belum sambung Google Sheets —
+   itu langkah berikutnya). Data hilang kalau halaman di-refresh.
+   ══════════════════════════════════════════════════════════════ */
+
+function escAttr(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+function parseRupiah(s){
+  if(s==null) return 0;
+  const n = parseInt(String(s).replace(/[^\d-]/g,''),10);
+  return isNaN(n) ? 0 : n;
+}
+function fmtRupiah(n){
+  return Math.round(n).toLocaleString('id-ID');
+}
+function showToast(msg){
+  const el = document.getElementById('ms-toast-msg');
+  const box = document.getElementById('ms-toast');
+  if(!el||!box) return;
+  el.textContent = msg;
+  box.style.display = 'block';
+  clearTimeout(window._msToastTimer);
+  window._msToastTimer = setTimeout(()=>{ box.style.display='none'; }, 3200);
+}
+
+/* ── GENERIC ROW EDIT ──
+   Aturan (murni struktural, tidak perlu markup tambahan per tabel):
+   - <td>/<div> yang punya <select> di dalamnya -> dilewati (sudah py sendiri, mis. dropdown jersey/formasi)
+   - <td>/<div> ".acts" -> dilewati (kolom aksi)
+   - teks polos di depan (sebelum badge/tombol) -> jadi input, sisanya (badge/tombol) tetap
+   - <td> berisi satu <span class="b ..."> (badge) saja -> isi badge jadi input
+   - <td> kosong dari elemen (teks polos) -> seluruh isi jadi input
+*/
+function rowCells(row){
+  return [...row.children].filter(el=>{
+    if(el.classList && el.classList.contains('acts')) return false;
+    if(el.querySelector && el.querySelector('select')) return false;
+    return true;
+  });
+}
+const NUMERIC_RE = /^-?[\d.]+$/;
+const RP_RE = /^Rp\s*-?[\d.]+$/i;
+function numAttrs(val){
+  if(RP_RE.test(val)) return ' data-numeric="1" data-rp="1"';
+  if(NUMERIC_RE.test(val)) return ' data-numeric="1"';
+  return '';
+}
+function enterEditCell(el){
+  if(el.children.length===0){
+    const val = el.textContent.trim();
+    el.innerHTML = `<input class="ms-ed-input" value="${escAttr(val)}"${numAttrs(val)}>`;
+    return;
+  }
+  const first = el.childNodes[0];
+  if(first && first.nodeType===3 && first.textContent.trim().length>0){
+    const val = first.textContent.trim();
+    const inp = document.createElement('input');
+    inp.className='ms-ed-input';
+    inp.value=val;
+    inp.style.width = Math.max(46,val.length*7)+'px';
+    el.replaceChild(inp, first);
+    el.insertBefore(document.createTextNode(' '), inp.nextSibling);
+    return;
+  }
+  if(el.children.length===1 && el.children[0].tagName==='SPAN' && el.children[0].classList.contains('b') && el.children[0].children.length===0){
+    const span = el.children[0];
+    const val = span.textContent.trim();
+    span.innerHTML = `<input class="ms-ed-input" value="${escAttr(val)}">`;
+    return;
+  }
+}
+function commitInput(input){
+  let val = input.value.trim();
+  if(input.dataset.numeric){
+    const n = parseRupiah(val);
+    val = (input.dataset.rp ? 'Rp ' : '') + fmtRupiah(n);
+  }
+  const parent = input.parentNode;
+  if(!parent) return;
+  if(parent.tagName==='SPAN' && parent.classList.contains('b')){
+    parent.textContent = val;
+    return;
+  }
+  if(parent.children.length===1){
+    parent.textContent = val;
+    return;
+  }
+  const txt = document.createTextNode(val+' ');
+  parent.replaceChild(txt, input);
+}
+function msIsActiveLocked(){
+  const m = msMatches[msActiveId];
+  return m && m.status === 'tutup';
+}
+function doStartEdit(btn){
+  if(msIsActiveLocked() && btn.closest('#trx-slot,#trx-biaya,#trx-deposit')){
+    showToast('Match ini sudah ditutup — data tidak bisa diedit lagi.');
+    return;
+  }
+  const row = btn.closest('tr') || btn.closest('.dep-row');
+  if(!row || row.classList.contains('ms-editing')) return;
+  row.classList.add('ms-editing');
+  rowCells(row).forEach(enterEditCell);
+  btn.dataset.origHtml = btn.innerHTML;
+  btn.innerHTML = '<i class="ti ti-check" style="color:var(--gn)"></i>';
+  btn.classList.add('ms-saving');
+  const inp = row.querySelector('input.ms-ed-input');
+  if(inp){ inp.focus(); inp.select(); }
+}
+function doSaveEdit(btn){
+  const row = btn.closest('tr') || btn.closest('.dep-row');
+  if(!row) return;
+  row.querySelectorAll('input.ms-ed-input').forEach(commitInput);
+  row.classList.remove('ms-editing');
+  btn.innerHTML = btn.dataset.origHtml || '<i class="ti ti-edit"></i>';
+  btn.classList.remove('ms-saving');
+  afterRowChange(row);
+}
+function afterRowChange(row){
+  if(row.closest && row.closest('#adm-shtm')){
+    const tds = row.querySelectorAll(':scope > td');
+    const dipakaiTd = tds[3];
+    const statusTd = tds[4];
+    const dipakai = dipakaiTd ? dipakaiTd.textContent.trim() : '';
+    const used = dipakai && dipakai !== '—' && dipakai !== '-';
+    if(statusTd){
+      statusTd.innerHTML = used ? '<span class="b b-gn">Sudah dipakai</span>' : '<span class="b b-sh">Belum dipakai</span>';
+    }
+    row.style.background = used ? '' : '#FFF5F5';
+    const actsDiv = row.querySelector('.acts');
+    if(actsDiv){
+      const editBtn = actsDiv.querySelector('.ib-edit');
+      const editHtml = editBtn ? editBtn.outerHTML : '<button class="ib ib-edit"><i class="ti ti-edit"></i></button>';
+      actsDiv.innerHTML = used ? editHtml : editHtml + '<button class="ib del"><i class="ti ti-trash"></i></button>';
+    }
+  }
+  recalcAll();
+}
+function onDeleteBtnClick(btn){
+  if(msIsActiveLocked() && btn.closest('#trx-slot,#trx-biaya,#trx-deposit')){
+    showToast('Match ini sudah ditutup — data tidak bisa dihapus.');
+    return;
+  }
+  const actsDiv = btn.closest('.acts');
+  if(!actsDiv || actsDiv.dataset.confirming) return;
+  actsDiv.dataset.confirming = '1';
+  actsDiv.dataset.orig = actsDiv.innerHTML;
+  actsDiv.innerHTML = '<span style="font-size:10px;color:var(--rd);white-space:nowrap">Hapus? '
+    + '<a href="#" class="ms-del-yes" style="color:var(--rd);font-weight:700;text-decoration:underline;margin:0 4px">Ya</a>'
+    + '<a href="#" class="ms-del-no" style="color:var(--mu);text-decoration:underline">Batal</a></span>';
+}
+document.addEventListener('click', function(e){
+  const editBtn = e.target.closest('.ib-edit');
+  const delBtn = e.target.closest('.ib.del');
+  const yesBtn = e.target.closest('.ms-del-yes');
+  const noBtn = e.target.closest('.ms-del-no');
+  if(editBtn){
+    e.preventDefault();
+    if(editBtn.classList.contains('ms-saving')) doSaveEdit(editBtn);
+    else doStartEdit(editBtn);
+    return;
+  }
+  if(delBtn){ e.preventDefault(); onDeleteBtnClick(delBtn); return; }
+  if(yesBtn){
+    e.preventDefault();
+    const actsDiv = yesBtn.closest('.acts');
+    const row = actsDiv ? (actsDiv.closest('tr') || actsDiv.closest('.dep-row')) : null;
+    if(row) row.remove();
+    recalcAll();
+    return;
+  }
+  if(noBtn){
+    e.preventDefault();
+    const actsDiv = noBtn.closest('.acts');
+    if(actsDiv && actsDiv.dataset.orig){
+      actsDiv.innerHTML = actsDiv.dataset.orig;
+      delete actsDiv.dataset.confirming;
+      delete actsDiv.dataset.orig;
+    }
+    return;
+  }
+});
+
+/* ── RECALC ringkasan match aktif dari isi tabel ── */
+function recalcSlot(){
+  const tbody = document.getElementById('slot-tbody');
+  if(!tbody) return;
+  const rows = [...tbody.querySelectorAll('tr')];
+  let pasti=0, sementara=0;
+  rows.forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    const htm = parseRupiah(tds[2] ? tds[2].textContent : '');
+    const statusTxt = tds[9] ? tds[9].textContent : '';
+    if(/Lunas/i.test(statusTxt)) pasti += htm;
+    else if(/Sementara/i.test(statusTxt)) sementara += htm;
+  });
+  const pastiEl = document.getElementById('mb-pasti');
+  const sementaraEl = document.getElementById('mb-sementara');
+  if(pastiEl) pastiEl.textContent = 'Rp ' + fmtRupiah(pasti);
+  if(sementaraEl) sementaraEl.textContent = 'Rp ' + fmtRupiah(sementara);
+  const kuota = (msMatches[msActiveId] && msMatches[msActiveId].kuota) || 28;
+  const lblEl = document.getElementById('slot-count-lbl');
+  if(lblEl) lblEl.textContent = 'Slot player — ' + rows.length + ' / ' + kuota + ' terisi';
+  recalcMargin();
+}
+function recalcBiaya(){
+  const tbody = document.getElementById('biaya-tbody');
+  if(!tbody) return;
+  const rows = [...tbody.querySelectorAll('tr')];
+  let rencana=0, realisasi=0;
+  rows.forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    rencana += parseRupiah(tds[2] ? tds[2].textContent : '');
+    realisasi += parseRupiah(tds[3] ? tds[3].textContent : '');
+  });
+  const rEl = document.getElementById('biaya-total-rencana');
+  const aEl = document.getElementById('biaya-total-realisasi');
+  if(rEl) rEl.textContent = 'Rp ' + fmtRupiah(rencana);
+  if(aEl) aEl.textContent = 'Rp ' + fmtRupiah(realisasi);
+  const costEl = document.getElementById('mb-cost');
+  if(costEl) costEl.textContent = 'Rp ' + fmtRupiah(realisasi);
+  recalcMargin();
+}
+function recalcMargin(){
+  const pasti = parseRupiah(document.getElementById('mb-pasti') && document.getElementById('mb-pasti').textContent);
+  const sementara = parseRupiah(document.getElementById('mb-sementara') && document.getElementById('mb-sementara').textContent);
+  const cost = parseRupiah(document.getElementById('mb-cost') && document.getElementById('mb-cost').textContent);
+  const margin = pasti + sementara - cost;
+  const mEl = document.getElementById('mb-margin');
+  const lblEl = document.getElementById('mb-margin-lbl');
+  if(mEl){
+    mEl.textContent = (margin>=0?'+':'-') + 'Rp ' + fmtRupiah(Math.abs(margin));
+    mEl.style.color = margin>=0 ? 'var(--gn)' : 'var(--rd)';
+    const cell = mEl.closest('.mb-cell');
+    if(cell) cell.style.cssText = margin>=0 ? '' : 'background:var(--rd2);border-left:3px solid var(--rd)';
+  }
+  if(lblEl) lblEl.style.color = margin>=0 ? 'var(--gn)' : 'var(--rd)';
+}
+function recalcAll(){ recalcSlot(); recalcBiaya(); }
+
+/* ══════════════════════════════════════════════════════════════
+   MULTI-MATCH — bisa buka & pindah antar beberapa match "aktif" sekaligus.
+   Pendekatan: setiap match menyimpan snapshot HTML tabel-nya sendiri.
+   Cuma satu match yang live di DOM pada satu waktu (supaya semua fungsi
+   lama — jersey, formasi, SHTM, broadcast, dll — tetap jalan apa adanya),
+   saat pindah match, snapshot match yang lama disimpan, lalu snapshot
+   match tujuan ditulis balik ke DOM yang sama.
+   ══════════════════════════════════════════════════════════════ */
+const msMatches = {};
+let msOrder = [];
+let msActiveId = null;
+let msSeq = 1;
+
+function msSeedFromDom(){
+  const id = 'M1';
+  msMatches[id] = {
+    id,
+    titleLine: document.getElementById('mhd-title').textContent,
+    subLine: document.getElementById('mhd-sub').textContent,
+    jenisGame: 'mini',
+    status: 'aktif',
+    kuota: 28,
+    slotHtml: document.getElementById('slot-tbody').innerHTML,
+    biayaHtml: document.getElementById('biaya-tbody').innerHTML,
+    depSaldoHtml: document.getElementById('dep-saldo-list').innerHTML,
+    depLogHtml: document.getElementById('dep-log-tbody').innerHTML,
+    matchScorers: MATCH_SCORERS.map(s=>({name:s.name,gol:s.gol})),
+    activeTab: 'slot'
+  };
+  msOrder = [id];
+  msActiveId = id;
+}
+
+function msCaptureCurrent(){
+  if(!msActiveId || !msMatches[msActiveId]) return;
+  const m = msMatches[msActiveId];
+  m.slotHtml = document.getElementById('slot-tbody').innerHTML;
+  m.biayaHtml = document.getElementById('biaya-tbody').innerHTML;
+  m.depSaldoHtml = document.getElementById('dep-saldo-list').innerHTML;
+  m.depLogHtml = document.getElementById('dep-log-tbody').innerHTML;
+  m.jenisGame = isFootball ? 'football' : 'mini';
+  const activeTabEl = document.querySelector('.trx-st.active');
+  if(activeTabEl){
+    const onclickAttr = activeTabEl.getAttribute('onclick') || '';
+    const mm = onclickAttr.match(/trxTab\('([a-z]+)'/);
+    if(mm) m.activeTab = mm[1];
+  }
+}
+
+function msRenderSwitcher(){
+  const box = document.getElementById('match-switcher');
+  if(!box) return;
+  box.innerHTML = msOrder.map(id=>{
+    const m = msMatches[id];
+    const active = id===msActiveId;
+    const locked = m.status==='tutup';
+    return `<div onclick="msSwitchTo('${id}')" style="cursor:pointer;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:500;border:1px solid ${active?'var(--ac)':'var(--bd)'};background:${active?'var(--ac2)':'var(--su)'};color:${active?'var(--ac)':'var(--tx)'};display:flex;align-items:center;gap:6px;white-space:nowrap">`
+      + (locked?'<i class="ti ti-lock" style="font-size:11px"></i>':'<span class="sd sdg"></span>')
+      + m.titleLine + '</div>';
+  }).join('');
+}
+
+function msRestore(id){
+  const m = msMatches[id];
+  if(!m) return;
+  document.getElementById('mhd-title').textContent = m.titleLine;
+  document.getElementById('mhd-sub').textContent = m.subLine;
+  document.getElementById('slot-tbody').innerHTML = m.slotHtml;
+  document.getElementById('biaya-tbody').innerHTML = m.biayaHtml;
+  document.getElementById('dep-saldo-list').innerHTML = m.depSaldoHtml;
+  document.getElementById('dep-log-tbody').innerHTML = m.depLogHtml;
+  const statusBadge = document.getElementById('mhd-status');
+  const tutupBtn = document.getElementById('mhd-tutup-btn');
+  if(m.status==='tutup'){
+    statusBadge.className='b b-gy';
+    statusBadge.innerHTML = '<i class="ti ti-lock" style="font-size:11px"></i> Match ditutup';
+    tutupBtn.style.display='none';
+  } else {
+    statusBadge.className='b b-gn';
+    statusBadge.innerHTML = '<span class="sd sdg"></span>Match aktif';
+    tutupBtn.style.display='';
+  }
+  setGameMode(m.jenisGame==='football' ? 'football' : 'mini');
+  document.querySelectorAll('.jersey-sel[data-posisi="field"]').forEach(sel=>onJerseyChange(sel));
+  document.querySelectorAll('.jersey-sel[data-posisi="gk"]').forEach(sel=>updateGkOptions(sel));
+  renderScorer('t-match-scorer', m.matchScorers.map((s,i)=>({rank:i+1,name:s.name,gol:s.gol,pct:m.matchScorers[0]?Math.round(s.gol/m.matchScorers[0].gol*100):0,cat:''})));
+  msActiveId = id;
+  recalcAll();
+  const tabBtn = document.querySelector(`.trx-st[onclick*="trxTab('${m.activeTab||'slot'}'"]`);
+  trxTab(m.activeTab||'slot', tabBtn);
+  msRenderSwitcher();
+}
+
+function msSwitchTo(id){
+  if(id===msActiveId) return;
+  msCaptureCurrent();
+  msRestore(id);
+}
+
+function msCreateMatch(meta){
+  msCaptureCurrent();
+  const id = 'M' + (++msSeq);
+  msMatches[id] = {
+    id,
+    titleLine: meta.titleLine,
+    subLine: meta.subLine,
+    jenisGame: meta.jenisGame,
+    status: 'aktif',
+    kuota: meta.kuota,
+    slotHtml: '',
+    biayaHtml: '',
+    depSaldoHtml: '',
+    depLogHtml: '',
+    matchScorers: [],
+    activeTab: 'slot'
+  };
+  msOrder.push(id);
+  msRestore(id);
+  return id;
+}
+
+/* ── Submit handler tiap modal "Tambah ..." ── */
+function nextSlotNo(){
+  const rows = document.querySelectorAll('#slot-tbody tr');
+  return rows.length; // No GK tidak dihitung nomor urut; field mulai dari jumlah baris field yg ada
+}
+
+function submitMatchBaru(){
+  const tglRaw = document.getElementById('nm-tanggal').value;
+  const jenisSel = document.getElementById('nm-jenis').value;
+  const venue = document.getElementById('nm-venue').value.trim() || 'Venue belum diisi';
+  const tipeLap = document.getElementById('nm-tipe-lap').value;
+  const tipeEvent = document.getElementById('nm-tipe-event').value;
+  const htmP = parseRupiah(document.getElementById('nm-htm-player').value);
+  const htmG = parseRupiah(document.getElementById('nm-htm-gk').value);
+  const kuotaGk = parseInt(document.getElementById('nm-kuota-gk').value,10)||0;
+  const kuotaField = parseInt(document.getElementById('nm-kuota-field').value,10)||0;
+  let tglLabel = tglRaw;
+  if(tglRaw){
+    const d = new Date(tglRaw+'T00:00:00');
+    if(!isNaN(d)) tglLabel = d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  }
+  const jenisGame = jenisSel.indexOf('Football')===0 ? 'football' : 'mini';
+  const eventLabel = tipeEvent==='Internal' ? 'Internal SMS' : tipeEvent;
+  const id = msCreateMatch({
+    titleLine: tglLabel + ' — ' + eventLabel,
+    subLine: venue + ' · ' + tipeLap + ' · HTM Rp ' + fmtRupiah(htmP) + ' · GK Rp ' + fmtRupiah(htmG),
+    jenisGame,
+    kuota: kuotaGk + kuotaField
+  });
+  closeModal('m-match-baru');
+  showToast('Match baru dibuat: ' + tglLabel + '. Sekarang ada ' + msOrder.length + ' match aktif — pindah lewat tab di atas.');
+}
+
+function submitTambahPlayer(){
+  if(msIsActiveLocked()){ showToast('Match sudah ditutup.'); closeModal('m-tambah-player'); return; }
+  const nama = document.getElementById('tp-nama').value.trim();
+  if(!nama){ showToast('Nama player belum diisi.'); return; }
+  const htm = parseRupiah(document.getElementById('tp-htm').value);
+  const label = document.getElementById('tp-label').value;
+  const posisi = document.getElementById('tp-posisi').value;
+  const jerseyWarna = document.getElementById('tp-jersey').value;
+  const ukuran = document.getElementById('tp-ukuran').value;
+  const status = document.getElementById('tp-status').value;
+  const metode = document.getElementById('tp-metode').value;
+  const isGk = posisi==='GK';
+  const tbody = document.getElementById('slot-tbody');
+  const no = isGk ? 'GK' : ([...tbody.querySelectorAll('tr')].filter(r=>r.children[0].textContent!=='GK').length+1);
+  const labelBadgeClass = label==='SHTM' ? 'b-sh' : 'b-gy';
+  const statusBadgeClass = status==='Lunas' ? 'b-gn' : (status==='Sementara' ? 'b-am' : 'b-gy');
+  const statusDot = status==='Lunas' ? '<span class="sd sdg"></span>' : (status==='Sementara' ? '<span class="sd sda"></span>' : '');
+  const bankHtml = metode ? `<span class="b b-ac">${metode}</span>` : '<span style="color:var(--mu)">—</span>';
+  const titleLine = document.getElementById('mhd-title').textContent;
+  const tglLabel = titleLine.split('—')[0].trim();
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="color:var(--hi)">${no}</td>
+    <td style="font-weight:500">${nama} <button class="sf sf-off" onclick="toggleSf(this,'${nama.replace(/'/g,"\\'")}','${tglLabel}')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
+    <td>${fmtRupiah(htm)}</td><td><span class="b ${labelBadgeClass}">${label}</span></td>
+    <td style="color:var(--mu)">—</td><td>${bankHtml}</td>
+    <td><span class="b b-gy">${isGk?'GK':'Field'}</span></td>
+    <td>
+      <select class="jersey-sel" data-posisi="${isGk?'gk':'field'}" onchange="onJerseyChange(this)">
+        <option value="">— pilih</option>
+        <option value="Merah"${jerseyWarna==='Merah'?' selected':''}>Merah</option>
+        <option value="Kuning"${jerseyWarna==='Kuning'?' selected':''}>Kuning</option>
+        <option value="Biru"${jerseyWarna==='Biru'?' selected':''}>Biru</option>
+        <option value="Hijau"${jerseyWarna==='Hijau'?' selected':''}>Hijau</option>
+      </select>
+      <div class="jersey-notif" style="font-size:10px;margin-top:3px"></div>
+    </td>
+    <td><span class="b b-gy">${ukuran}</span></td>
+    <td><span class="b ${statusBadgeClass}">${statusDot}${status}</span></td>
+    <td class="td-formasi">
+      <span class="formasi-dash" style="color:var(--mu)">—</span>
+      <select class="formasi-sel" style="display:none;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
+        <option>GK</option><option>CB</option><option>RB</option><option>LB</option>
+        <option>DMF</option><option>AMF</option><option>LMF</option><option>RMF</option>
+        <option>CMF</option><option>CF</option><option>SS</option>
+      </select>
+    </td>
+    <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
+  tbody.appendChild(tr);
+  setGameMode(isFootball ? 'football' : 'mini');
+  if(isGk) updateGkOptions(tr.querySelector('.jersey-sel'));
+  else onJerseyChange(tr.querySelector('.jersey-sel'));
+  closeModal('m-tambah-player');
+  recalcAll();
+  showToast(nama + ' ditambahkan ke slot player.');
+}
+
+function submitTambahBiaya(){
+  if(msIsActiveLocked()){ showToast('Match sudah ditutup.'); closeModal('m-tambah-biaya'); return; }
+  const item = document.getElementById('tb-item').value.trim();
+  if(!item){ showToast('Nama item belum diisi.'); return; }
+  const kategori = document.getElementById('tb-kategori').value;
+  const tipe = document.getElementById('sel-tipe').value;
+  const rencana = parseRupiah(document.getElementById('tb-rencana').value);
+  const realisasi = parseRupiah(document.getElementById('tb-realisasi').value);
+  const tbody = document.getElementById('biaya-tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="font-weight:500">${item}</td><td><span class="b b-gy">${tipe==='Inventaris'?'Inv':'Ops'}</span></td><td>${fmtRupiah(rencana)}</td><td>${fmtRupiah(realisasi)}</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
+  tbody.appendChild(tr);
+  closeModal('m-tambah-biaya');
+  recalcAll();
+  showToast('Item biaya "' + item + '" ditambahkan.');
+}
+
+function submitTambahDeposit(){
+  const player = document.getElementById('td-player').value.trim();
+  if(!player){ showToast('Nama player belum diisi.'); return; }
+  const jumlah = parseRupiah(document.getElementById('td-jumlah').value);
+  const sumber = document.getElementById('td-sumber').value;
+  const list = document.getElementById('dep-saldo-list');
+  const row = document.createElement('div');
+  row.className='dep-row';
+  row.innerHTML = `<div style="font-weight:500;min-width:100px">${player}</div><div style="font-size:14px;font-weight:700;color:var(--am);min-width:90px">Rp ${fmtRupiah(jumlah)}</div><div style="flex:1;font-size:11px;color:var(--mu)">Saldo aktif · dapat dipakai di match ini</div><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div>`;
+  list.appendChild(row);
+  const logTbody = document.getElementById('dep-log-tbody');
+  const logTr = document.createElement('tr');
+  logTr.innerHTML = `<td>Baru</td><td class="pri">${player}</td><td><span class="b b-am">${sumber}</span></td><td style="color:var(--gn)">+${fmtRupiah(jumlah)}</td><td>—</td><td style="color:var(--am);font-weight:500">${fmtRupiah(jumlah)}</td><td>—</td>`;
+  logTbody.prepend(logTr);
+  closeModal('m-tambah-deposit');
+  showToast('Deposit ' + player + ' Rp ' + fmtRupiah(jumlah) + ' tersimpan.');
+}
+
+function populateGolPlayerSelect(){
+  const sel = document.getElementById('tg-player');
+  if(!sel) return;
+  const rows = [...document.querySelectorAll('#slot-tbody tr')];
+  let html = '<option value="">Pilih player...</option>';
+  rows.forEach(tr=>{
+    const nameCell = tr.children[1];
+    const posisi = tr.children[0].textContent.trim()==='GK' ? 'GK' : 'Field';
+    const nama = nameCell ? nameCell.childNodes[0].textContent.trim() : '';
+    if(nama) html += `<option>${nama} (${posisi})</option>`;
+  });
+  sel.innerHTML = html;
+}
+
+function submitTambahGol(){
+  if(msIsActiveLocked()){ showToast('Match sudah ditutup.'); closeModal('m-tambah-gol'); return; }
+  const playerRaw = document.getElementById('tg-player').value;
+  if(!playerRaw){ showToast('Pilih pencetak gol dulu.'); return; }
+  const nama = playerRaw.split(' (')[0];
+  const jumlah = parseInt(document.getElementById('tg-jumlah').value,10) || 1;
+  const m = msMatches[msActiveId];
+  const existing = m.matchScorers.find(s=>s.name===nama);
+  if(existing) existing.gol += jumlah;
+  else m.matchScorers.push({name:nama, gol:jumlah});
+  m.matchScorers.sort((a,b)=>b.gol-a.gol);
+  const max = m.matchScorers[0].gol;
+  renderScorer('t-match-scorer', m.matchScorers.map((s,i)=>({rank:i+1,name:s.name,gol:s.gol,pct:Math.round(s.gol/max*100),cat:''})));
+  closeModal('m-tambah-gol');
+  showToast('Gol ' + nama + ' (+' + jumlah + ') dicatat untuk match ini.');
+}
+
+function submitTambahStok(){
+  const warna = document.getElementById('ts-warna').value.trim();
+  if(!warna){ showToast('Warna jersey belum diisi.'); return; }
+  const ukuran = document.getElementById('ts-ukuran').value;
+  const jumlah = parseInt(document.getElementById('ts-jumlah').value,10) || 0;
+  if(!JERSEY_STOK[warna]) JERSEY_STOK[warna] = {M:0,L:0,XL:0,'2XL':0};
+  JERSEY_STOK[warna][ukuran] = (JERSEY_STOK[warna][ukuran]||0) + jumlah;
+  closeModal('m-tambah-stok');
+  showToast('Stok jersey ' + warna + ' (' + ukuran + ') +' + jumlah + ' unit. Refresh tab Admin utk lihat kartu terbaru.');
+}
+
+function submitTutupMatch(){
+  const m = msMatches[msActiveId];
+  if(!m) return;
+  m.status = 'tutup';
+  closeModal('m-tutup-match');
+  msRestore(msActiveId);
+  showToast('Match "' + m.titleLine + '" ditutup dan dikunci.');
+}
+
+/* ── INIT multi-match ──
+   Catatan: recalcAll() SENGAJA tidak dipanggil di sini supaya angka contoh di
+   kartu ringkasan (Sales pasti dll) tetap seperti tampilan awal mockup selama
+   belum ada perubahan data. Begitu ada tambah/edit/hapus player atau biaya,
+   angka otomatis dihitung ulang dari isi tabel yang sebenarnya. */
+document.addEventListener('DOMContentLoaded', function(){
+  msSeedFromDom();
+  msRenderSwitcher();
+});
 </script>
 <script>
 const SMS_PW='sms2024';
