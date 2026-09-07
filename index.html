@@ -330,7 +330,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 
     <!-- Frequent + top skor -->
     <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card" style="display:none" style="margin-bottom:0">
+      <div class="card" style="margin-bottom:0">
         <div class="card-hd"><span class="card-title">Frequent players — top 9</span></div>
         <div class="card-body" style="padding:10px">
           <div class="pgrid">
@@ -349,7 +349,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="card" style="margin-bottom:0">
         <div class="card-hd">
           <span class="card-title"><i class="ti ti-trophy" style="color:#B8860B;font-size:14px"></i> Top skor — total gol</span>
-          <div class="chips"><span class="chip active" onclick="smsScorer('all',this)">All time</span><span class="chip" onclick="smsScorer('2026',this)">2026</span></div>
+          <div class="chips"><span class="chip active">All time</span><span class="chip">2026</span></div>
         </div>
         <div class="card-body" style="padding:8px 0" id="d-scorer"></div>
       </div>
@@ -450,23 +450,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div><div class="pg-title">Transaksi match</div><div class="pg-sub">Input dan kelola match aktif</div></div>
     <button class="btn btn-prim" onclick="openModal('m-match-baru')"><i class="ti ti-plus"></i> Match baru</button>
   </div>
-  <!-- SMS list section -->
-  <div id="sms-list-section">
-    <div id="sms-list-wrap" style="margin-bottom:8px"></div>
-    <a href="#" onclick="goPage('reporting');return false" style="font-size:12px;color:var(--nv)"><i class="ti ti-history" style="font-size:11px"></i> Lihat match selesai →</a>
-  </div>
-  <!-- SMS detail section -->
-  <div id="sms-detail-section" style="display:none">
-    <div style="margin-bottom:10px">
-      <button class="btn btn-sm" onclick="smsBackToList()"><i class="ti ti-arrow-left" style="font-size:11px"></i> Semua match</button>
-    </div>
-  </div>
-  <div class="card" id="sms-match-card">
+  <div class="card">
     <div class="mhd">
       <div>
-        <button class="btn btn-sm" onclick="smsBackToList()" style="margin-bottom:6px;font-size:11px"><i class="ti ti-arrow-left" style="font-size:10px"></i> Semua match</button>
-        <div id="sms-match-title" style="font-size:14px;font-weight:600">—</div>
-        <div id="sms-match-sub" style="font-size:11px;color:var(--mu);margin-top:2px">—</div>
+        <div style="font-size:14px;font-weight:600">6 September 2026 — Internal SMS</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:2px">Futsal Menteng · Lapangan Kecil · HTM Rp 95.000 · GK Rp 35.000</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="b b-gn" style="font-size:12px;padding:5px 10px"><span class="sd sdg"></span>Match aktif</span>
@@ -480,7 +468,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="mb-cell profit"><div class="mb-lbl" style="color:var(--gn)">Margin proyeksi</div><div class="mb-val" style="color:var(--gn)">+Rp 11.000</div></div>
     </div>
 
-    <div class="trx-wrap" id="sms-trx-wrap" style="border-radius:0;border:none;border-top:1px solid var(--bd)">
+    <div class="trx-wrap" style="border-radius:0;border:none;border-top:1px solid var(--bd)">
       <div class="trx-side">
         <div class="trx-st active" onclick="trxTab('slot',this)"><i class="ti ti-users" style="font-size:13px"></i> Slot player</div>
         <div class="trx-st" onclick="trxTab('biaya',this)"><i class="ti ti-receipt" style="font-size:13px"></i> Biaya match</div>
@@ -546,7 +534,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr style="background:#FFF5F5">
                 <td style="color:var(--hi)">1</td>
@@ -573,7 +561,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
                 <td style="color:var(--hi)">2</td>
@@ -600,7 +588,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
                 <td style="color:var(--hi)">3</td>
@@ -627,7 +615,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr class="sem">
                 <td style="color:var(--hi)">4</td>
@@ -654,7 +642,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
             </tbody>
           </table>
@@ -666,10 +654,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
           <table class="stbl">
             <thead><tr><th>Item</th><th>Tipe</th><th>Rencana (Rp)</th><th>Realisasi (Rp)</th><th>Malik 60%</th><th>Filan 40%</th><th>Aksi</th></tr></thead>
             <tbody>
-              <tr><td style="font-weight:500">Sewa lapangan</td><td><span class="b b-gy">Ops</span></td><td>1.300.000</td><td>1.300.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Wasit</td><td><span class="b b-gy">Ops</span></td><td>200.000</td><td>200.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Air + laundry</td><td><span class="b b-gy">Ops</span></td><td>85.000</td><td>85.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Gimmick voucher</td><td><span class="b b-gy">Ops</span></td><td>29.000</td><td>29.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Sewa lapangan</td><td><span class="b b-gy">Ops</span></td><td>1.300.000</td><td>1.300.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Wasit</td><td><span class="b b-gy">Ops</span></td><td>200.000</td><td>200.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Air + laundry</td><td><span class="b b-gy">Ops</span></td><td>85.000</td><td>85.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Gimmick voucher</td><td><span class="b b-gy">Ops</span></td><td>29.000</td><td>29.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
             </tbody>
             <tfoot><tr><td colspan="2">Total operasional</td><td>Rp 1.614.000</td><td style="color:var(--rd)">Rp 1.614.000</td><td colspan="3"></td></tr></tfoot>
           </table>
@@ -683,7 +671,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
               <div style="font-weight:500;min-width:100px">Wayan</div>
               <div style="font-size:14px;font-weight:700;color:var(--am);min-width:90px">Rp 70.000</div>
               <div style="flex:1;font-size:11px;color:var(--mu)">Saldo aktif · dapat dipakai di match ini</div>
-              <div class="acts"><button class="ib" onclick="smsEditDeposit(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusDeposit(this)"><i class="ti ti-trash"></i></button></div>
+              <div class="acts"><button class="ib"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div>
             </div>
             <div style="border-top:1px solid var(--bd);margin-top:14px;padding-top:14px">
               <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Log transaksi deposit</div>
@@ -918,7 +906,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       </div>
       <div style="font-size:16px;font-weight:600;text-align:center;margin-bottom:4px">Login admin</div>
       <div style="font-size:12px;color:var(--mu);text-align:center;margin-bottom:20px">Akses Transaksi dan menu Admin</div>
-      <div class="fg" style="margin-bottom:18px"><div class="fl">Password</div><input type="password" id="sms-pw" placeholder="Password admin" autocomplete="current-password"></div>
+      <div class="fg" style="margin-bottom:18px"><div class="fl">Password</div><input type="password" id="sms-pw" placeholder="Password admin"></div>
       <button class="btn btn-prim" style="width:100%;justify-content:center;padding:9px" onclick="smsLogin()"><i class="ti ti-login"></i> Masuk sebagai admin</button>
       <div style="text-align:center;margin-top:12px"><a href="#" onclick="goPage('dashboard')" style="font-size:12px;color:var(--mu);text-decoration:none">← Kembali ke dashboard</a></div>
     </div>
@@ -977,7 +965,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div class="fg"><div class="fl">Kuota Field (Player)</div><input type="number" value="24" min="1" placeholder="mis. 24"></div>
       </div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-match-baru')">Batal</button><button class="btn btn-prim" onclick="smsBuatMatch()"><i class="ti ti-check"></i> Buat match</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-match-baru')">Batal</button><button class="btn btn-prim"><i class="ti ti-check"></i> Buat match</button></div>
   </div>
 </div>
 
@@ -994,7 +982,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       </div>
       <div class="info info-gn"><i class="ti ti-file-text"></i> PDF laporan otomatis digenerate setelah match ditutup.</div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng" onclick="smsTutupMatch()"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
   </div>
 </div>
 
@@ -1198,27 +1186,15 @@ const MD={
   l44:Array.from({length:44},(_,i)=>'M'+(i+1)),
   d44:[120,80,150,-60,200,180,90,110,75,-80,160,130,100,200,85,95,110,140,87,-45,112,287,144,229,102,243,135,-98,201,163,187,489,243,489,201,249,145,87,60,243,201,87,163,249]
 };
-const SCORERS_ALL=[
+const SCORERS=[
   {rank:'🥇',name:'Annas',cat:'BMR',gol:19,pct:100},
   {rank:'🥈',name:'Bambang',cat:'SMS',gol:13,pct:68},
   {rank:'🥉',name:'Jayadi',cat:'Umum',gol:10,pct:53},
   {rank:'4',name:'Ibnu',cat:'Umum',gol:7,pct:37},
   {rank:'5',name:'Wasis',cat:'Umum',gol:7,pct:37},
   {rank:'6',name:'Arsya',cat:'Umum',gol:4,pct:21},
-  {rank:'7',name:'Haidar',cat:'Umum',gol:4,pct:21},
-  {rank:'8',name:'Eri',cat:'SMS',gol:4,pct:21},
-  {rank:'9',name:'Indra',cat:'Umum',gol:4,pct:21},
-  {rank:'10',name:'Jefri',cat:'Umum',gol:4,pct:21},
+  {rank:'7',name:'Eri',cat:'SMS',gol:4,pct:21},
 ];
-const SCORERS_2026=[
-  {rank:'🥇',name:'Annas',cat:'BMR',gol:7,pct:100},
-  {rank:'🥈',name:'Wasis',cat:'Umum',gol:6,pct:86},
-  {rank:'3',name:'Indra',cat:'Umum',gol:4,pct:57},
-  {rank:'4',name:'Alfi',cat:'Umum',gol:3,pct:43},
-  {rank:'5',name:'Jayadi',cat:'Umum',gol:2,pct:29},
-  {rank:'6',name:'Ferdi',cat:'Umum',gol:2,pct:29},
-];
-let SCORERS=SCORERS_ALL;
 const MATCH_SCORERS=[{rank:1,name:'Jayadi',gol:3,pct:100},{rank:2,name:'Ricky',gol:2,pct:67},{rank:3,name:'Wayan',gol:1,pct:33}];
 
 // Lapangan data per tipe
@@ -1549,14 +1525,8 @@ function setGameMode(mode) {
   isFootball = (mode === 'football');
   const th = document.getElementById('th-formasi');
   const tds = document.querySelectorAll('.td-formasi');
-  if(th) th.style.display = '';
-  tds.forEach(td => {
-    let d=td.querySelector('.f-dash');
-    if(!d){d=document.createElement('span');d.className='f-dash';d.style.cssText='color:var(--mu);font-size:12px';d.textContent='—';td.insertBefore(d,td.firstChild);}
-    const s=td.querySelector('select');
-    if(s)s.style.display=isFootball?'':'none';
-    d.style.display=isFootball?'none':'';
-  });
+  if(th) th.style.display = isFootball ? '' : 'none';
+  tds.forEach(td => td.style.display = isFootball ? '' : 'none');
 }
 
 // ── LINE UP VIEW ──
@@ -1651,202 +1621,34 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-
 <script>
-// ═══ GAS API ═══════════════════════════════════════════
-const GAS_URL='https://script.google.com/macros/s/AKfycbwyhpWM7QmS3cz6MgY1MhwOMswMtgO4ZWMYYX_QzWt8B8Yvy8aW0L8qAgS7-7a75j6-Ag/exec';
-async function gasGet(a,p={}){const u=new URL(GAS_URL);u.searchParams.set('action',a);Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,v));return(await(await fetch(u)).json());}
-async function gasPost(a,p={}){return(await(await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a,...p})})).json());}
-
-// ═══ AUTH ═══════════════════════════════════════════════
 const SMS_PW='sms2024';
 function smsLogin(){
   const el=document.getElementById('sms-pw');
-  if(!el){alert('Error: form tidak ditemukan');return;}
+  if(!el)return;
   if(el.value===SMS_PW){
     localStorage.setItem('sms_ok','1');
-    smsShowAdmin();
+    ['ntab-transaksi','ntab-admin'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='';});
+    document.getElementById('sms-logout').style.display='flex';
+    document.getElementById('sms-login').style.display='none';
     goPage('transaksi');
-  }else{
-    alert('Password salah.');
-    el.value='';el.focus();
-  }
+  }else{alert('Password salah.');el.value='';el.focus();}
 }
 function smsLogout(){
   localStorage.removeItem('sms_ok');
-  smsHideAdmin();
+  ['ntab-transaksi','ntab-admin'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  document.getElementById('sms-logout').style.display='none';
+  document.getElementById('sms-login').style.display='flex';
   goPage('dashboard');
 }
-function smsShowAdmin(){
-  ['ntab-transaksi','ntab-admin'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display='';
-  });
-  const lo=document.getElementById('sms-logout');
-  const li=document.getElementById('sms-login');
-  if(lo)lo.style.display='flex';
-  if(li)li.style.display='none';
-}
-function smsHideAdmin(){
-  ['ntab-transaksi','ntab-admin'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display='none';
-  });
-  const lo=document.getElementById('sms-logout');
-  const li=document.getElementById('sms-login');
-  if(lo)lo.style.display='none';
-  if(li)li.style.display='flex';
-}
-
-// ═══ SCORER ═════════════════════════════════════════════
-function smsScorer(mode,btn){
-  btn.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
-  renderScorer('d-scorer', mode==='2026'?SCORERS_2026:SCORERS_ALL);
-}
-
-// ═══ MATCH LIST ══════════════════════════════════════════
-let SMS_MATCHES=[];
-let SMS_ACTIVE_ID=null;
-
-function smsFmt(n){return Number(n||0).toLocaleString('id-ID');}
-
-function smsRenderList(){
-  const wrap=document.getElementById('sms-list-wrap');
-  if(!wrap)return;
-  const aktif=SMS_MATCHES.filter(m=>m.status==='aktif');
-  if(!aktif.length){
-    wrap.innerHTML='<p style="color:var(--mu);font-size:13px;margin:0">Belum ada match aktif. Klik <b>+ Match baru</b>.</p>';
-    return;
-  }
-  wrap.innerHTML=aktif.map(m=>{
-    const kuota=(m.kuotaKiper||4)+(m.kuotaField||24);
-    const margin=(m.salesPasti||0)-(m.totalCost||0);
-    const mc=margin>=0?'var(--gn)':'var(--rd)';
-    return `<div onclick="smsOpenMatch('${m.id}')" style="background:var(--su);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div>
-        <div style="font-size:14px;font-weight:600">${m.tanggal} — ${m.tipeEvent}</div>
-        <div style="font-size:11px;color:var(--mu);margin-top:3px">${m.venue} · ${m.tipeLapangan} · HTM Rp ${smsFmt(m.htmPlayer)} · GK Rp ${smsFmt(m.htmGk)}</div>
-        <div style="font-size:11px;color:var(--mu);margin-top:5px">⚽ ${m.slotTerisi||0}/${kuota} player &nbsp;&nbsp; <span style="color:${mc};font-weight:600">Margin: ${margin>=0?'+':''}Rp ${smsFmt(Math.abs(margin))}</span></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="b b-gn" style="font-size:11px;padding:4px 9px"><span class="sd sdg"></span>Aktif</span>
-        <i class="ti ti-chevron-right" style="color:var(--mu)"></i>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function smsOpenMatch(id){
-  SMS_ACTIVE_ID=id;
-  const m=SMS_MATCHES.find(x=>x.id===id);
-  if(m){
-    const t=document.getElementById('sms-match-title');
-    const s=document.getElementById('sms-match-sub');
-    if(t) t.textContent=m.tanggal+' — '+m.tipeEvent;
-    if(s) s.textContent=(m.venue||'—')+' · Lapangan '+(m.tipeLapangan||'—')+' · HTM Rp '+smsFmt(m.htmPlayer)+' · GK Rp '+smsFmt(m.htmGk);
-    setGameMode(m.jenisGame&&m.jenisGame.includes('Football')?'football':'mini');
-  }
-  // Sembunyikan list, tampilkan detail
-  document.getElementById('sms-list-section').style.display='none';
-  const mc=document.getElementById('sms-match-card');
-  const tw=document.getElementById('sms-trx-wrap');
-  if(mc) mc.style.display='';
-  if(tw) tw.style.display='';
-}
-
-function smsBackToList(){
-  SMS_ACTIVE_ID=null;
-  document.getElementById('sms-list-section').style.display='';
-  const mc=document.getElementById('sms-match-card');
-  const tw=document.getElementById('sms-trx-wrap');
-  if(mc) mc.style.display='none';
-  if(tw) tw.style.display='none';
-  smsRenderList();
-}
-
-function smsBuatMatch(){
-  const modal=document.getElementById('m-match-baru');
-  if(!modal)return;
-  const tglEl=modal.querySelector('input[type=date]');
-  const sels=modal.querySelectorAll('select');
-  const nums=modal.querySelectorAll('input[type=number]');
-  const venueEl=modal.querySelector('input[type=text]');
-  const tgl=tglEl?tglEl.value:'';
-  const d=tgl?new Date(tgl):new Date();
-  const tglStr=d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-  const m={
-    id:'m'+Date.now(),
-    tanggal:tglStr,
-    jenisGame:sels[0]?sels[0].value:'Minisoccer (7 vs 7)',
-    tipeLapangan:sels[1]?sels[1].value:'Kecil',
-    tipeEvent:sels[2]?sels[2].value:'Internal SMS',
-    venue:venueEl?venueEl.value:'—',
-    htmPlayer:parseInt(nums[0]?nums[0].value:95000),
-    htmGk:parseInt(nums[1]?nums[1].value:35000),
-    kuotaKiper:parseInt(nums[2]?nums[2].value:4),
-    kuotaField:parseInt(nums[3]?nums[3].value:24),
-    status:'aktif',slotTerisi:0,salesPasti:0,salesSem:0,totalCost:0
-  };
-  SMS_MATCHES.push(m);
-  closeModal('m-match-baru');
-  smsOpenMatch(m.id);
-}
-
-function smsTutupMatch(){
-  if(!SMS_ACTIVE_ID)return;
-  const i=SMS_MATCHES.findIndex(m=>m.id===SMS_ACTIVE_ID);
-  if(i>=0)SMS_MATCHES[i].status='tutup';
-  closeModal('m-tutup-match');
-  smsBackToList();
-}
-
-// ═══ SLOT / BIAYA / DEPOSIT ACTIONS ═════════════════════
-function smsEditSlot(btn){
-  const row=btn.closest('tr');
-  const nama=(row.querySelectorAll('td')[1]||{}).innerText||'';
-  openModal('m-tambah-player');
-  setTimeout(()=>{const inp=document.querySelector('#m-tambah-player input[type=text]');if(inp)inp.value=nama.trim();},60);
-}
-function smsHapusSlot(btn){
-  const row=btn.closest('tr');
-  if(confirm('Hapus player ini dari slot?'))row.remove();
-}
-function smsEditBiaya(btn){
-  openModal('m-tambah-biaya');
-}
-function smsHapusBiaya(btn){
-  if(confirm('Hapus item biaya ini?'))btn.closest('tr').remove();
-}
-function smsEditDeposit(btn){openModal('m-tambah-deposit');}
-function smsHapusDeposit(btn){if(confirm('Hapus deposit ini?'))btn.closest('tr').remove();}
-
-// ═══ INIT ════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
-  if(localStorage.getItem('sms_ok')==='1')smsShowAdmin();
-  else smsHideAdmin();
-  // Sembunyikan detail, tampilkan list
-  const mc=document.getElementById('sms-match-card');
-  const tw=document.getElementById('sms-trx-wrap');
-  if(mc) mc.style.display='none';
-  if(tw) tw.style.display='none';
-  smsRenderList();
-});
-
-// Patch goPage untuk transaksi (tanpa override recursive)
-const _smsOrigGoPage = goPage;
-goPage = function(id){
-  _smsOrigGoPage(id);
-  if(id==='transaksi'){
-    document.getElementById('sms-list-section').style.display='';
-    const mc=document.getElementById('sms-match-card');
-    const tw=document.getElementById('sms-trx-wrap');
-    if(mc) mc.style.display='none';
-    if(tw) tw.style.display='none';
-    smsRenderList();
+  if(localStorage.getItem('sms_ok')==='1'){
+    ['ntab-transaksi','ntab-admin'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='';});
+    document.getElementById('sms-logout').style.display='flex';
+    document.getElementById('sms-login').style.display='none';
   }
-};
+});
+const GAS_URL='https://script.google.com/macros/s/AKfycbwyhpWM7QmS3cz6MgY1MhwOMswMtgO4ZWMYYX_QzWt8B8Yvy8aW0L8qAgS7-7a75j6-Ag/exec';
 </script>
-
 </body>
 </html>
