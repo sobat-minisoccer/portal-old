@@ -222,41 +222,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 .login-wrap{max-width:340px;margin:50px auto;padding:0 20px}
 .login-card{background:var(--su);border:1px solid var(--bd);border-radius:14px;padding:28px}
 </style>
-
-<style>
-/* Auth: hide admin tabs when not logged in */
-.nav-tab.lock-tab { display: none !important; }
-body.admin-mode .nav-tab.lock-tab { display: flex !important; }
-
-/* Match list */
-.match-card { background:var(--su); border:1px solid var(--bd); border-radius:10px;
-  padding:14px 16px; margin-bottom:10px; cursor:pointer;
-  transition:box-shadow .15s,border-color .15s;
-  display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.match-card:hover { box-shadow:0 2px 10px rgba(0,0,0,.08); border-color:var(--nv); }
-.match-card-info { flex:1; min-width:0; }
-.match-card-title { font-size:14px; font-weight:600; }
-.match-card-sub   { font-size:11px; color:var(--mu); margin-top:3px; }
-.match-card-meta  { font-size:11px; color:var(--mu); margin-top:5px; display:flex; gap:12px; }
-
-/* Hide frequent players section */
-#section-freq { display: none; }
-
-/* Transaksi list/detail toggle */
-#trx-list-section { display: block; }
-#trx-detail-section { display: none; }
-body.trx-detail-mode #trx-list-section { display: none; }
-
-
-/* Tombol back di transaksi */
-.btn-back { display:none; }
-body.trx-detail-mode .btn-back { display:inline-flex; }
-body.trx-detail-mode .btn-match-new { display:none; }
-body.trx-detail-mode #trx-detail-section { display: block; }
-</style>
-<style>
-#section-freq-wrap > div:first-child { display: none; } /* Sembunyikan card frequent */
-</style></head>
+</head>
 <body>
 
 <nav class="nav">
@@ -267,12 +233,12 @@ body.trx-detail-mode #trx-detail-section { display: block; }
   <div class="nav-tabs">
     <div class="nav-tab active" id="ntab-dashboard" onclick="goPage('dashboard')"><i class="ti ti-layout-dashboard" style="font-size:14px"></i> Dashboard</div>
     <div class="nav-tab" id="ntab-reporting" onclick="goPage('reporting')"><i class="ti ti-chart-bar" style="font-size:14px"></i> Reporting</div>
-    <div class="nav-tab lock-tab" id="ntab-transaksi" onclick="goPage('transaksi')"><i class="ti ti-clipboard-list" style="font-size:14px"></i> Transaksi </div>
-    <div class="nav-tab lock-tab" id="ntab-admin" onclick="goPage('admin')"><i class="ti ti-settings" style="font-size:14px"></i> Admin </div>
+    <div class="nav-tab" id="ntab-transaksi" style="display:none" onclick="goPage('transaksi')"><i class="ti ti-clipboard-list" style="font-size:14px"></i> Transaksi </div>
+    <div class="nav-tab" id="ntab-admin" style="display:none" onclick="goPage('admin')"><i class="ti ti-settings" style="font-size:14px"></i> Admin </div>
   </div>
   <div class="nav-right">
-    <button id="btn-logout" class="btn-nav" onclick="doLogout()" style="display:none;color:#DC2626"><i class="ti ti-logout" style="font-size:13px"></i> Logout</button>
-    <button id="btn-login" class="btn-nav" onclick="goPage('login')"><i class="ti ti-login" style="font-size:13px"></i> Login admin</button>
+    <button id="sms-logout" class="btn-nav" onclick="smsLogout()" style="display:none;color:#DC2626"><i class="ti ti-logout" style="font-size:13px"></i> Logout</button>
+    <button id="sms-login" class="btn-nav" onclick="goPage('login')"><i class="ti ti-login" style="font-size:13px"></i> Login admin</button>
   </div>
 </nav>
 
@@ -363,8 +329,8 @@ body.trx-detail-mode #trx-detail-section { display: block; }
     </div>
 
     <!-- Frequent + top skor -->
-    <div id="section-freq-wrap" style="display:flex;flex-direction:column;gap:12px">
-      <div class="card" style="margin-bottom:0">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card" style="display:none" style="margin-bottom:0">
         <div class="card-hd"><span class="card-title">Frequent players — top 9</span></div>
         <div class="card-body" style="padding:10px">
           <div class="pgrid">
@@ -383,7 +349,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
       <div class="card" style="margin-bottom:0">
         <div class="card-hd">
           <span class="card-title"><i class="ti ti-trophy" style="color:#B8860B;font-size:14px"></i> Top skor — total gol</span>
-          <div class="chips"><span class="chip active" onclick="switchScorer('alltime',this)">All time</span><span class="chip" onclick="switchScorer('2026',this)">2026</span></div>
+          <div class="chips"><span class="chip active" onclick="smsScorer('all',this)">All time</span><span class="chip" onclick="smsScorer('2026',this)">2026</span></div>
         </div>
         <div class="card-body" style="padding:8px 0" id="d-scorer"></div>
       </div>
@@ -422,12 +388,12 @@ body.trx-detail-mode #trx-detail-section { display: block; }
       <thead><tr><th>Player</th><th>HTM (Rp)</th><th>Label</th><th>Deposit</th><th>Metode</th><th>Jumlah (Rp)</th><th>Tgl Bayar</th><th>Status</th></tr></thead>
       <tbody>
         <tr><td class="pri">Malik</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td>95.000</td><td>—</td><td>—</td><td>02/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Ricky <span class="b b-sh" style="font-size:9px">SHTM</span></td><td>50.000</td><td><span class="b b-sh">SHTM</span></td><td>—</td><td><span class="b b-ac">BSI</span></td><td>50.000</td><td>04/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Wayan <span class="b b-dp" style="font-size:9px">Dep 70rb</span></td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td style="color:var(--am)">Rp 70.000</td><td><span class="b b-gy">Cash</span></td><td>25.000</td><td>05/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Jayadi</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td><span class="b b-ac">BSI</span></td><td>95.000</td><td>03/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Heru</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b b-am"><span class="sd sda"></span>Sementara</span></td></tr>
+        <tr><td class="pri">Ricky <span class="b b-sh" style="font-size:9px">SHTM</span></td><td>50.000</td><td><span class="b b-sh">SHTM</span></td><td>—</td><td>—</td><td>50.000</td><td>—</td><td>04/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
+        <tr><td class="pri">Wayan <span class="b b-dp" style="font-size:9px">Dep 70rb</span></td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td style="color:var(--am);font-weight:500">70.000</td><td>—</td><td>—</td><td>25.000</td><td>05/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
+        <tr><td class="pri">Jayadi</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td>—</td><td>95.000</td><td>—</td><td>03/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
+        <tr><td class="pri">Heru</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b b-am"><span class="sd sda"></span>Sementara</span></td></tr>
       </tbody>
-      <tfoot><tr><td colspan="3">Total terkumpul</td><td style="color:var(--am)">Rp 70.000</td><td></td><td style="color:var(--gn);font-weight:600">= Rp 1.530.000</td><td colspan="2"></td></tr></tfoot>
+      <tfoot><tr><td colspan="3">Total terkumpul</td><td style="color:var(--am)">Rp 70.000</td><td>Rp 95.000</td><td>Rp 180.000</td><td>Rp 25.000</td><td colspan="2" style="color:var(--gn)">= Rp 1.530.000</td></tr></tfoot>
     </table>
   </div>
   <div id="rpt-operasional" class="tab-p">
@@ -484,24 +450,23 @@ body.trx-detail-mode #trx-detail-section { display: block; }
     <div><div class="pg-title">Transaksi match</div><div class="pg-sub">Input dan kelola match aktif</div></div>
     <button class="btn btn-prim" onclick="openModal('m-match-baru')"><i class="ti ti-plus"></i> Match baru</button>
   </div>
-
-  <!-- ── TRANSAKSI LIST VIEW ── -->
-  <div id="trx-list-section">
-    <div id="match-list-cards"></div>
-    <div id="match-list-empty" style="color:var(--mu);font-size:13px;padding:12px 0"></div>
-    <a href="#" onclick="goPage('reporting');return false" style="font-size:12px;color:var(--nv);margin-top:4px;display:inline-block"><i class="ti ti-history" style="font-size:11px"></i> Lihat match selesai →</a>
+  <!-- SMS list section -->
+  <div id="sms-list-section">
+    <div id="sms-list-wrap" style="margin-bottom:8px"></div>
+    <a href="#" onclick="goPage('reporting');return false" style="font-size:12px;color:var(--nv)"><i class="ti ti-history" style="font-size:11px"></i> Lihat match selesai →</a>
   </div>
-
-  <!-- ── TRANSAKSI DETAIL VIEW ── -->
-  <div id="trx-detail-section">
+  <!-- SMS detail section -->
+  <div id="sms-detail-section" style="display:none">
     <div style="margin-bottom:10px">
-      <button class="btn btn-sm" onclick="backToList()"><i class="ti ti-arrow-left" style="font-size:11px"></i> Semua match</button>
+      <button class="btn btn-sm" onclick="smsBackToList()"><i class="ti ti-arrow-left" style="font-size:11px"></i> Semua match</button>
     </div>
+  </div>
   <div class="card">
     <div class="mhd">
       <div>
-        <div id="detail-match-title" style="font-size:14px;font-weight:600">—</div>
-        <div id="detail-match-sub" style="font-size:11px;color:var(--mu);margin-top:2px">—</div>
+        <button class="btn btn-sm" onclick="smsBackToList()" style="margin-bottom:6px;font-size:11px"><i class="ti ti-arrow-left" style="font-size:10px"></i> Semua match</button>
+        <div id="sms-match-title" style="font-size:14px;font-weight:600">—</div>
+        <div id="sms-match-sub" style="font-size:11px;color:var(--mu);margin-top:2px">—</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="b b-gn" style="font-size:12px;padding:5px 10px"><span class="sd sdg"></span>Match aktif</span>
@@ -581,7 +546,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="editSlotPlayer(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusSlotPlayer(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr style="background:#FFF5F5">
                 <td style="color:var(--hi)">1</td>
@@ -608,7 +573,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="editSlotPlayer(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusSlotPlayer(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
                 <td style="color:var(--hi)">2</td>
@@ -635,7 +600,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="editSlotPlayer(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusSlotPlayer(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
                 <td style="color:var(--hi)">3</td>
@@ -662,7 +627,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="editSlotPlayer(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusSlotPlayer(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr class="sem">
                 <td style="color:var(--hi)">4</td>
@@ -689,7 +654,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
                     <option>CMF</option><option>CF</option><option>SS</option>
                   </select>
                 </td>
-                <td><div class="acts"><button class="ib" onclick="editSlotPlayer(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusSlotPlayer(this)"><i class="ti ti-trash"></i></button></div></td>
+                <td><div class="acts"><button class="ib" onclick="smsEditSlot(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusSlot(this)"><i class="ti ti-trash"></i></button></div></td>
               </tr>
             </tbody>
           </table>
@@ -701,10 +666,10 @@ body.trx-detail-mode #trx-detail-section { display: block; }
           <table class="stbl">
             <thead><tr><th>Item</th><th>Tipe</th><th>Rencana (Rp)</th><th>Realisasi (Rp)</th><th>Malik 60%</th><th>Filan 40%</th><th>Aksi</th></tr></thead>
             <tbody>
-              <tr><td style="font-weight:500">Sewa lapangan</td><td><span class="b b-gy">Ops</span></td><td>1.300.000</td><td>1.300.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="editBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Wasit</td><td><span class="b b-gy">Ops</span></td><td>200.000</td><td>200.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="editBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Air + laundry</td><td><span class="b b-gy">Ops</span></td><td>85.000</td><td>85.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="editBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
-              <tr><td style="font-weight:500">Gimmick voucher</td><td><span class="b b-gy">Ops</span></td><td>29.000</td><td>29.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="editBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Sewa lapangan</td><td><span class="b b-gy">Ops</span></td><td>1.300.000</td><td>1.300.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Wasit</td><td><span class="b b-gy">Ops</span></td><td>200.000</td><td>200.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Air + laundry</td><td><span class="b b-gy">Ops</span></td><td>85.000</td><td>85.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
+              <tr><td style="font-weight:500">Gimmick voucher</td><td><span class="b b-gy">Ops</span></td><td>29.000</td><td>29.000</td><td>—</td><td>—</td><td><div class="acts"><button class="ib" onclick="smsEditBiaya(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusBiaya(this)"><i class="ti ti-trash"></i></button></div></td></tr>
             </tbody>
             <tfoot><tr><td colspan="2">Total operasional</td><td>Rp 1.614.000</td><td style="color:var(--rd)">Rp 1.614.000</td><td colspan="3"></td></tr></tfoot>
           </table>
@@ -718,7 +683,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
               <div style="font-weight:500;min-width:100px">Wayan</div>
               <div style="font-size:14px;font-weight:700;color:var(--am);min-width:90px">Rp 70.000</div>
               <div style="flex:1;font-size:11px;color:var(--mu)">Saldo aktif · dapat dipakai di match ini</div>
-              <div class="acts"><button class="ib" onclick="editDeposit(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="hapusDeposit(this)"><i class="ti ti-trash"></i></button></div>
+              <div class="acts"><button class="ib" onclick="smsEditDeposit(this)"><i class="ti ti-edit"></i></button><button class="ib del" onclick="smsHapusDeposit(this)"><i class="ti ti-trash"></i></button></div>
             </div>
             <div style="border-top:1px solid var(--bd);margin-top:14px;padding-top:14px">
               <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Log transaksi deposit</div>
@@ -764,7 +729,6 @@ body.trx-detail-mode #trx-detail-section { display: block; }
       </div>
     </div>
   </div>
-  </div><!-- /trx-detail-section -->
 </div>
 </div>
 
@@ -954,9 +918,8 @@ body.trx-detail-mode #trx-detail-section { display: block; }
       </div>
       <div style="font-size:16px;font-weight:600;text-align:center;margin-bottom:4px">Login admin</div>
       <div style="font-size:12px;color:var(--mu);text-align:center;margin-bottom:20px">Akses Transaksi dan menu Admin</div>
-      <div class="fg"><div class="fl">Email</div><input type="email" placeholder="sobat.minisoccer@gmail.com"></div>
-      <div class="fg" style="margin-bottom:18px"><div class="fl">Password</div><input type="password" placeholder="Password admin" id="pw-admin"></div>
-      <button class="btn btn-prim" style="width:100%;justify-content:center;padding:9px" onclick="doLogin()"><i class="ti ti-login"></i> Masuk sebagai admin</button>
+      <div class="fg" style="margin-bottom:18px"><div class="fl">Password</div><input type="password" id="sms-pw" placeholder="Password admin" autocomplete="current-password"></div>
+      <button class="btn btn-prim" style="width:100%;justify-content:center;padding:9px" onclick="smsLogin()"><i class="ti ti-login"></i> Masuk sebagai admin</button>
       <div style="text-align:center;margin-top:12px"><a href="#" onclick="goPage('dashboard')" style="font-size:12px;color:var(--mu);text-decoration:none">← Kembali ke dashboard</a></div>
     </div>
   </div>
@@ -1014,7 +977,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
         <div class="fg"><div class="fl">Kuota Field (Player)</div><input type="number" value="24" min="1" placeholder="mis. 24"></div>
       </div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-match-baru')">Batal</button><button class="btn btn-prim" onclick="submitMatchBaru()"><i class="ti ti-check"></i> Buat match</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-match-baru')">Batal</button><button class="btn btn-prim" onclick="smsBuatMatch()"><i class="ti ti-check"></i> Buat match</button></div>
   </div>
 </div>
 
@@ -1031,7 +994,7 @@ body.trx-detail-mode #trx-detail-section { display: block; }
       </div>
       <div class="info info-gn"><i class="ti ti-file-text"></i> PDF laporan otomatis digenerate setelah match ditutup.</div>
     </div>
-    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng" onclick="tutupMatch()"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng" onclick="smsTutupMatch()"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
   </div>
 </div>
 
@@ -1235,7 +1198,7 @@ const MD={
   l44:Array.from({length:44},(_,i)=>'M'+(i+1)),
   d44:[120,80,150,-60,200,180,90,110,75,-80,160,130,100,200,85,95,110,140,87,-45,112,287,144,229,102,243,135,-98,201,163,187,489,243,489,201,249,145,87,60,243,201,87,163,249]
 };
-const SCORERS_ALLTIME=[
+const SCORERS_ALL=[
   {rank:'🥇',name:'Annas',cat:'BMR',gol:19,pct:100},
   {rank:'🥈',name:'Bambang',cat:'SMS',gol:13,pct:68},
   {rank:'🥉',name:'Jayadi',cat:'Umum',gol:10,pct:53},
@@ -1254,10 +1217,8 @@ const SCORERS_2026=[
   {rank:'4',name:'Alfi',cat:'Umum',gol:3,pct:43},
   {rank:'5',name:'Jayadi',cat:'Umum',gol:2,pct:29},
   {rank:'6',name:'Ferdi',cat:'Umum',gol:2,pct:29},
-  {rank:'7',name:'Eri',cat:'SMS',gol:1,pct:14},
-  {rank:'8',name:'Rijal',cat:'Umum',gol:1,pct:14},
 ];
-let SCORERS=SCORERS_ALLTIME;
+let SCORERS=SCORERS_ALL;
 const MATCH_SCORERS=[{rank:1,name:'Jayadi',gol:3,pct:100},{rank:2,name:'Ricky',gol:2,pct:67},{rank:3,name:'Wayan',gol:1,pct:33}];
 
 // Lapangan data per tipe
@@ -1327,10 +1288,6 @@ function renderScorer(id,data){
 }
 
 function goPage(id){
-  if(id==='transaksi'){
-    document.body.classList.remove('trx-detail-mode');
-    setTimeout(renderMatchList,50);
-  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -1591,13 +1548,14 @@ let isFootball = false;
 function setGameMode(mode) {
   isFootball = (mode === 'football');
   const th = document.getElementById('th-formasi');
+  const tds = document.querySelectorAll('.td-formasi');
   if(th) th.style.display = '';
-  document.querySelectorAll('.td-formasi').forEach(td => {
-    let dash = td.querySelector('.f-dash');
-    if(!dash){ dash=document.createElement('span'); dash.className='f-dash'; dash.style.cssText='color:var(--mu);font-size:12px'; dash.textContent='—'; td.insertBefore(dash,td.firstChild); }
-    const sel = td.querySelector('select');
-    if(sel) sel.style.display = isFootball?'':'none';
-    dash.style.display = isFootball?'none':'';
+  tds.forEach(td => {
+    let d=td.querySelector('.f-dash');
+    if(!d){d=document.createElement('span');d.className='f-dash';d.style.cssText='color:var(--mu);font-size:12px';d.textContent='—';td.insertBefore(d,td.firstChild);}
+    const s=td.querySelector('select');
+    if(s)s.style.display=isFootball?'':'none';
+    d.style.display=isFootball?'none':'';
   });
 }
 
@@ -1695,45 +1653,81 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-// ── GAS API ──────────────────────────────────────────────
+// ═══ GAS API ═══════════════════════════════════════════
 const GAS_URL='https://script.google.com/macros/s/AKfycbwyhpWM7QmS3cz6MgY1MhwOMswMtgO4ZWMYYX_QzWt8B8Yvy8aW0L8qAgS7-7a75j6-Ag/exec';
-async function gasGet(a,p={}){const u=new URL(GAS_URL);u.searchParams.set('action',a);Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,v));const r=await fetch(u);const d=await r.json();if(d.error)throw new Error(d.error);return d;}
-async function gasPost(a,p={}){const r=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a,...p})});const d=await r.json();if(d.error)throw new Error(d.error);return d;}
-const API={getDashboard:()=>gasGet('getDashboard'),getPlayers:()=>gasGet('getPlayers'),getMatches:()=>gasGet('getMatches'),getStokJersey:()=>gasGet('getStokJersey'),getShtm:()=>gasGet('getShtm'),getDeposit:()=>gasGet('getDeposit'),getConfig:()=>gasGet('getConfig'),createMatch:p=>gasPost('createMatch',p),closeMatch:p=>gasPost('closeMatch',p),addPlayer:p=>gasPost('addPlayer',p),updatePlayer:p=>gasPost('updatePlayer',p),deletePlayer:p=>gasPost('deletePlayer',p),addBiaya:p=>gasPost('addBiaya',p),addGol:p=>gasPost('addGol',p),flagShtm:p=>gasPost('flagShtm',p),addDeposit:p=>gasPost('addDeposit',p),updateStokJersey:p=>gasPost('updateStokJersey',p),addNewPlayer:p=>gasPost('addNewPlayer',p),updateConfig:p=>gasPost('updateConfig',p)};
+async function gasGet(a,p={}){const u=new URL(GAS_URL);u.searchParams.set('action',a);Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,v));return(await(await fetch(u)).json());}
+async function gasPost(a,p={}){return(await(await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a,...p})})).json());}
 
-// ── AUTH ─────────────────────────────────────────────────
-const AUTH={PASSWORD:'sms2024',login(pw){if(pw===this.PASSWORD){localStorage.setItem('sms_auth',btoa(pw+Date.now()));return true;}return false;},logout(){localStorage.removeItem('sms_auth');},isLoggedIn(){return!!localStorage.getItem('sms_auth');}};
-function showAdminUI(){document.body.classList.add('admin-mode');document.getElementById('btn-logout').style.display='flex';document.getElementById('btn-login').style.display='none';}
-function hideAdminUI(){document.body.classList.remove('admin-mode');document.getElementById('btn-logout').style.display='none';document.getElementById('btn-login').style.display='flex';}
-function doLogin(){const pw=document.getElementById('pw-admin');if(!pw)return;if(AUTH.login(pw.value.trim())){showAdminUI();goPage('transaksi');}else{alert('Password salah.');pw.value='';pw.focus();}}
-function doLogout(){AUTH.logout();hideAdminUI();goPage('dashboard');}
+// ═══ AUTH ═══════════════════════════════════════════════
+const SMS_PW='sms2024';
+function smsLogin(){
+  const el=document.getElementById('sms-pw');
+  if(!el){alert('Error: form tidak ditemukan');return;}
+  if(el.value===SMS_PW){
+    localStorage.setItem('sms_ok','1');
+    smsShowAdmin();
+    goPage('transaksi');
+  }else{
+    alert('Password salah.');
+    el.value='';el.focus();
+  }
+}
+function smsLogout(){
+  localStorage.removeItem('sms_ok');
+  smsHideAdmin();
+  goPage('dashboard');
+}
+function smsShowAdmin(){
+  ['ntab-transaksi','ntab-admin'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display='';
+  });
+  const lo=document.getElementById('sms-logout');
+  const li=document.getElementById('sms-login');
+  if(lo)lo.style.display='flex';
+  if(li)li.style.display='none';
+}
+function smsHideAdmin(){
+  ['ntab-transaksi','ntab-admin'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display='none';
+  });
+  const lo=document.getElementById('sms-logout');
+  const li=document.getElementById('sms-login');
+  if(lo)lo.style.display='none';
+  if(li)li.style.display='flex';
+}
 
-// ── SCORER ───────────────────────────────────────────────
-function switchScorer(mode,btn){btn.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');SCORERS=mode==='2026'?SCORERS_2026:SCORERS_ALLTIME;renderScorer('d-scorer',SCORERS);}
+// ═══ SCORER ═════════════════════════════════════════════
+function smsScorer(mode,btn){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderScorer('d-scorer', mode==='2026'?SCORERS_2026:SCORERS_ALL);
+}
 
-// ── MULTI-MATCH ───────────────────────────────────────────
-let matchList=[];
-let activeMatchId=null;
-function fmtNum(n){return Number(n||0).toLocaleString('id-ID');}
-function renderMatchList(){
-  const c=document.getElementById('match-list-cards');
-  const e=document.getElementById('match-list-empty');
-  if(!c)return;
-  const aktif=matchList.filter(m=>m.status==='aktif');
-  if(!aktif.length){if(e){e.style.display='';e.innerHTML='Belum ada match aktif. Klik <b>+ Match baru</b>.';}c.innerHTML='';return;}
-  if(e)e.style.display='none';
-  c.innerHTML=aktif.map(m=>{
-    const kuota=m.kuotaKiper+m.kuotaField;
-    const margin=m.salesPasti-m.totalCost;
+// ═══ MATCH LIST ══════════════════════════════════════════
+let SMS_MATCHES=[];
+let SMS_ACTIVE_ID=null;
+
+function smsFmt(n){return Number(n||0).toLocaleString('id-ID');}
+
+function smsRenderList(){
+  const wrap=document.getElementById('sms-list-wrap');
+  if(!wrap)return;
+  const aktif=SMS_MATCHES.filter(m=>m.status==='aktif');
+  if(!aktif.length){
+    wrap.innerHTML='<p style="color:var(--mu);font-size:13px;margin:0">Belum ada match aktif. Klik <b>+ Match baru</b>.</p>';
+    return;
+  }
+  wrap.innerHTML=aktif.map(m=>{
+    const kuota=(m.kuotaKiper||4)+(m.kuotaField||24);
+    const margin=(m.salesPasti||0)-(m.totalCost||0);
     const mc=margin>=0?'var(--gn)':'var(--rd)';
-    return `<div class="match-card" onclick="openMatchDetail('${m.id}')">
-      <div class="match-card-info">
-        <div class="match-card-title">${m.tanggal} — ${m.tipeEvent}</div>
-        <div class="match-card-sub">${m.venue} · ${m.tipeLapangan} · HTM Rp ${fmtNum(m.htmPlayer)} · GK Rp ${fmtNum(m.htmGk)}</div>
-        <div class="match-card-meta">
-          <span>⚽ ${m.slotTerisi||0}/${kuota} player</span>
-          <span style="color:${mc};font-weight:600">Margin: ${margin>=0?'+':''}Rp ${fmtNum(Math.abs(margin))}</span>
-        </div>
+    return `<div onclick="smsOpenMatch('${m.id}')" style="background:var(--su);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div>
+        <div style="font-size:14px;font-weight:600">${m.tanggal} — ${m.tipeEvent}</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:3px">${m.venue} · ${m.tipeLapangan} · HTM Rp ${smsFmt(m.htmPlayer)} · GK Rp ${smsFmt(m.htmGk)}</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:5px">⚽ ${m.slotTerisi||0}/${kuota} player &nbsp;&nbsp; <span style="color:${mc};font-weight:600">Margin: ${margin>=0?'+':''}Rp ${smsFmt(Math.abs(margin))}</span></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="b b-gn" style="font-size:11px;padding:4px 9px"><span class="sd sdg"></span>Aktif</span>
@@ -1742,64 +1736,108 @@ function renderMatchList(){
     </div>`;
   }).join('');
 }
-function openMatchDetail(id){
-  activeMatchId=id;
-  const m=matchList.find(x=>x.id===id);
-  if(m){
-    const t=document.getElementById('detail-match-title');
-    const s=document.getElementById('detail-match-sub');
-    if(t) t.textContent=m.tanggal+' — '+m.tipeEvent;
-    if(s) s.textContent=m.venue+' · Lapangan '+m.tipeLapangan+' · HTM Rp '+fmtNum(m.htmPlayer)+' · GK Rp '+fmtNum(m.htmGk);
-    // Update estimasi
-    const ep=document.querySelector('.mb-cell:nth-child(1) .mb-val');
-    const es=document.querySelector('.mb-cell:nth-child(2) .mb-val');
-    const ec=document.querySelector('.mb-cell:nth-child(3) .mb-val');
-    const em=document.querySelector('.mb-cell.profit .mb-val');
-    if(ep) ep.textContent='Rp '+fmtNum(m.salesPasti||0);
-    if(es) es.textContent='Rp '+fmtNum(m.salesSem||0);
-    if(ec) ec.textContent='Rp '+fmtNum(m.totalCost||0);
-    if(em){const mg=(m.salesPasti||0)-(m.totalCost||0);em.textContent=(mg>=0?'+':'')+' Rp '+fmtNum(Math.abs(mg));em.style.color=mg>=0?'var(--gn)':'var(--rd)';}
-    // Set game mode
-    setGameMode(m.jenisGame&&m.jenisGame.includes('Football')?'football':'mini');
-  }
-  document.body.classList.add('trx-detail-mode');
+
+function smsOpenMatch(id){
+  SMS_ACTIVE_ID=id;
+  const m=SMS_MATCHES.find(x=>x.id===id);
+  // Update header
+  const t=document.getElementById('sms-match-title');
+  const s=document.getElementById('sms-match-sub');
+  if(t&&m) t.textContent=m.tanggal+' — '+m.tipeEvent;
+  if(s&&m) s.textContent=(m.venue||'—')+' · Lapangan '+(m.tipeLapangan||'—')+' · HTM Rp '+smsFmt(m.htmPlayer)+' · GK Rp '+smsFmt(m.htmGk);
+  // Toggle: sembunyikan list, tampilkan detail
+  document.getElementById('sms-list-section').style.display='none';
+  document.getElementById('sms-detail-section').style.display='';
+  if(m) setGameMode(m.jenisGame&&m.jenisGame.includes('Football')?'football':'mini');
 }
-function backToList(){
-  activeMatchId=null;
-  document.body.classList.remove('trx-detail-mode');
-  renderMatchList();
+
+function smsBackToList(){
+  SMS_ACTIVE_ID=null;
+  document.getElementById('sms-list-section').style.display='';
+  document.getElementById('sms-detail-section').style.display='none';
+  smsRenderList();
 }
-function submitMatchBaru(){
+
+function smsBuatMatch(){
   const modal=document.getElementById('m-match-baru');
   if(!modal)return;
   const tglEl=modal.querySelector('input[type=date]');
   const sels=modal.querySelectorAll('select');
   const nums=modal.querySelectorAll('input[type=number]');
-  const venue=modal.querySelector('input[type=text]');
+  const venueEl=modal.querySelector('input[type=text]');
   const tgl=tglEl?tglEl.value:'';
   const d=tgl?new Date(tgl):new Date();
   const tglStr=d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-  matchList.push({id:'match-'+tgl.replace(/-/g,'')+'-'+String(matchList.length+1).padStart(3,'0'),tanggal:tglStr,jenisGame:sels[0]?.value||'Minisoccer (7 vs 7)',tipeLapangan:sels[1]?.value||'Kecil',tipeEvent:sels[2]?.value||'Internal SMS',venue:venue?.value||'—',htmPlayer:parseInt(nums[0]?.value||95000),htmGk:parseInt(nums[1]?.value||35000),kuotaKiper:parseInt(nums[2]?.value||4),kuotaField:parseInt(nums[3]?.value||24),status:'aktif',slotTerisi:0,salesPasti:0,salesSem:0,totalCost:0});
+  const m={
+    id:'m'+Date.now(),
+    tanggal:tglStr,
+    jenisGame:sels[0]?sels[0].value:'Minisoccer (7 vs 7)',
+    tipeLapangan:sels[1]?sels[1].value:'Kecil',
+    tipeEvent:sels[2]?sels[2].value:'Internal SMS',
+    venue:venueEl?venueEl.value:'—',
+    htmPlayer:parseInt(nums[0]?nums[0].value:95000),
+    htmGk:parseInt(nums[1]?nums[1].value:35000),
+    kuotaKiper:parseInt(nums[2]?nums[2].value:4),
+    kuotaField:parseInt(nums[3]?nums[3].value:24),
+    status:'aktif',slotTerisi:0,salesPasti:0,salesSem:0,totalCost:0
+  };
+  SMS_MATCHES.push(m);
   closeModal('m-match-baru');
-  renderMatchList();
-  // Langsung buka match yang baru dibuat
-  openMatchDetail(newMatch.id);
+  smsOpenMatch(m.id);
 }
-function tutupMatch(){if(!activeMatchId)return;const i=matchList.findIndex(m=>m.id===activeMatchId);if(i>=0)matchList[i].status='tutup';closeModal('m-tutup-match');backToList();}
 
-// ── SLOT/BIAYA/DEPOSIT ACTIONS ────────────────────────────
-function editSlotPlayer(btn){const row=btn.closest('tr');const nama=row?.querySelectorAll('td')[1]?.innerText?.trim()||'';openModal('m-tambah-player');setTimeout(()=>{const inp=document.querySelector('#m-tambah-player input[type=text]');if(inp)inp.value=nama;},50);}
-function hapusSlotPlayer(btn){const row=btn.closest('tr');const nama=row?.querySelectorAll('td')[1]?.innerText||'player';if(confirm('Hapus '+nama+'?'))row?.remove();}
-function editBiaya(btn){const row=btn.closest('tr');openModal('m-tambah-biaya');setTimeout(()=>{const inp=document.querySelectorAll('#m-tambah-biaya input');if(inp[0])inp[0].value=row?.querySelectorAll('td')[0]?.innerText||'';},50);}
-function hapusBiaya(btn){if(confirm('Hapus item biaya ini?'))btn.closest('tr')?.remove();}
-function editDeposit(btn){openModal('m-tambah-deposit');}
-function hapusDeposit(btn){if(confirm('Hapus entri deposit?'))btn.closest('tr')?.remove();}
+function smsTutupMatch(){
+  if(!SMS_ACTIVE_ID)return;
+  const i=SMS_MATCHES.findIndex(m=>m.id===SMS_ACTIVE_ID);
+  if(i>=0)SMS_MATCHES[i].status='tutup';
+  closeModal('m-tutup-match');
+  smsBackToList();
+}
 
-// ── INIT ─────────────────────────────────────────────────
+// ═══ SLOT / BIAYA / DEPOSIT ACTIONS ═════════════════════
+function smsEditSlot(btn){
+  const row=btn.closest('tr');
+  const nama=(row.querySelectorAll('td')[1]||{}).innerText||'';
+  openModal('m-tambah-player');
+  setTimeout(()=>{const inp=document.querySelector('#m-tambah-player input[type=text]');if(inp)inp.value=nama.trim();},60);
+}
+function smsHapusSlot(btn){
+  const row=btn.closest('tr');
+  if(confirm('Hapus player ini dari slot?'))row.remove();
+}
+function smsEditBiaya(btn){
+  openModal('m-tambah-biaya');
+}
+function smsHapusBiaya(btn){
+  if(confirm('Hapus item biaya ini?'))btn.closest('tr').remove();
+}
+function smsEditDeposit(btn){openModal('m-tambah-deposit');}
+function smsHapusDeposit(btn){if(confirm('Hapus deposit ini?'))btn.closest('tr').remove();}
+
+// ═══ INIT ════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
-  if(AUTH.isLoggedIn())showAdminUI();else hideAdminUI();
-  renderMatchList();
+  if(localStorage.getItem('sms_ok')==='1')smsShowAdmin();
+  else smsHideAdmin();
+  // Setup list/detail sections
+  const ls=document.getElementById('sms-list-section');
+  const ds=document.getElementById('sms-detail-section');
+  if(ls)ls.style.display='';
+  if(ds)ds.style.display='none';
+  smsRenderList();
 });
+
+// Override goPage untuk transaksi
+const _origGoPage=goPage;
+function goPage(id){
+  _origGoPage(id);
+  if(id==='transaksi'){
+    const ls=document.getElementById('sms-list-section');
+    const ds=document.getElementById('sms-detail-section');
+    if(ls)ls.style.display='';
+    if(ds)ds.style.display='none';
+    smsRenderList();
+  }
+}
 </script>
 
 </body>
