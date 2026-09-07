@@ -499,8 +499,8 @@ body.trx-detail-mode .btn-match-new { display:none; }
   <div class="card">
     <div class="mhd">
       <div>
-        <div style="font-size:14px;font-weight:600">6 September 2026 — Internal SMS</div>
-        <div style="font-size:11px;color:var(--mu);margin-top:2px">Futsal Menteng · Lapangan Kecil · HTM Rp 95.000 · GK Rp 35.000</div>
+        <div id="detail-match-title" style="font-size:14px;font-weight:600">—</div>
+        <div id="detail-match-sub" style="font-size:11px;color:var(--mu);margin-top:2px">—</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="b b-gn" style="font-size:12px;padding:5px 10px"><span class="sd sdg"></span>Match aktif</span>
@@ -1326,6 +1326,13 @@ function renderScorer(id,data){
 }
 
 function goPage(id){
+  if(id==='transaksi'){
+    document.body.classList.remove('trx-detail-mode');
+  }
+  if(id==='transaksi'){
+    document.body.classList.remove('trx-detail-mode');
+    setTimeout(renderMatchList,50);
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -1707,7 +1714,7 @@ function doLogout(){AUTH.logout();hideAdminUI();goPage('dashboard');}
 function switchScorer(mode,btn){btn.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');SCORERS=mode==='2026'?SCORERS_2026:SCORERS_ALLTIME;renderScorer('d-scorer',SCORERS);}
 
 // ── MULTI-MATCH ───────────────────────────────────────────
-let matchList=[{id:'match-20260906-001',tanggal:'6 September 2026',tipeEvent:'Internal SMS',jenisGame:'Minisoccer (7 vs 7)',venue:'Futsal Menteng',tipeLapangan:'Kecil',htmPlayer:95000,htmGk:35000,kuotaKiper:4,kuotaField:24,status:'aktif',slotTerisi:6,salesPasti:1530000,salesSem:95000,totalCost:1614000}];
+let matchList=[];
 let activeMatchId=null;
 function fmtNum(n){return Number(n||0).toLocaleString('id-ID');}
 function renderMatchList(){
@@ -1739,6 +1746,24 @@ function renderMatchList(){
 }
 function openMatchDetail(id){
   activeMatchId=id;
+  const m=matchList.find(x=>x.id===id);
+  if(m){
+    const t=document.getElementById('detail-match-title');
+    const s=document.getElementById('detail-match-sub');
+    if(t) t.textContent=m.tanggal+' — '+m.tipeEvent;
+    if(s) s.textContent=m.venue+' · Lapangan '+m.tipeLapangan+' · HTM Rp '+fmtNum(m.htmPlayer)+' · GK Rp '+fmtNum(m.htmGk);
+    // Update estimasi
+    const ep=document.querySelector('.mb-cell:nth-child(1) .mb-val');
+    const es=document.querySelector('.mb-cell:nth-child(2) .mb-val');
+    const ec=document.querySelector('.mb-cell:nth-child(3) .mb-val');
+    const em=document.querySelector('.mb-cell.profit .mb-val');
+    if(ep) ep.textContent='Rp '+fmtNum(m.salesPasti||0);
+    if(es) es.textContent='Rp '+fmtNum(m.salesSem||0);
+    if(ec) ec.textContent='Rp '+fmtNum(m.totalCost||0);
+    if(em){const mg=(m.salesPasti||0)-(m.totalCost||0);em.textContent=(mg>=0?'+':'')+' Rp '+fmtNum(Math.abs(mg));em.style.color=mg>=0?'var(--gn)':'var(--rd)';}
+    // Set game mode
+    setGameMode(m.jenisGame&&m.jenisGame.includes('Football')?'football':'mini');
+  }
   document.body.classList.add('trx-detail-mode');
 }
 function backToList(){
@@ -1759,6 +1784,8 @@ function submitMatchBaru(){
   matchList.push({id:'match-'+tgl.replace(/-/g,'')+'-'+String(matchList.length+1).padStart(3,'0'),tanggal:tglStr,jenisGame:sels[0]?.value||'Minisoccer (7 vs 7)',tipeLapangan:sels[1]?.value||'Kecil',tipeEvent:sels[2]?.value||'Internal SMS',venue:venue?.value||'—',htmPlayer:parseInt(nums[0]?.value||95000),htmGk:parseInt(nums[1]?.value||35000),kuotaKiper:parseInt(nums[2]?.value||4),kuotaField:parseInt(nums[3]?.value||24),status:'aktif',slotTerisi:0,salesPasti:0,salesSem:0,totalCost:0});
   closeModal('m-match-baru');
   renderMatchList();
+  // Langsung buka match yang baru dibuat
+  openMatchDetail(newMatch.id);
 }
 function tutupMatch(){if(!activeMatchId)return;const i=matchList.findIndex(m=>m.id===activeMatchId);if(i>=0)matchList[i].status='tutup';closeModal('m-tutup-match');backToList();}
 
@@ -1773,6 +1800,7 @@ function hapusDeposit(btn){if(confirm('Hapus entri deposit?'))btn.closest('tr')?
 // ── INIT ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',()=>{
   if(AUTH.isLoggedIn())showAdminUI();else hideAdminUI();
+  renderMatchList();
 });
 </script>
 
