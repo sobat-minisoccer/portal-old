@@ -1826,10 +1826,10 @@ window.addEventListener('DOMContentLoaded',()=>{
   smsRenderList();
 });
 
-// Override goPage untuk transaksi
-const _origGoPage=goPage;
-function goPage(id){
-  _origGoPage(id);
+// Patch goPage untuk transaksi (tanpa override recursive)
+const _smsOrigGoPage = goPage;
+goPage = function(id){
+  _smsOrigGoPage(id);
   if(id==='transaksi'){
     const ls=document.getElementById('sms-list-section');
     const ds=document.getElementById('sms-detail-section');
@@ -1837,7 +1837,7 @@ function goPage(id){
     if(ds)ds.style.display='none';
     smsRenderList();
   }
-}
+};
 </script>
 
 </body>
