@@ -518,6 +518,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <th style="width:76px">Label</th>
                 <th style="width:76px">Deposit</th>
                 <th style="width:76px">Bank/Cash</th>
+                <th style="width:70px">Tgl Bayar</th>
                 <th style="width:50px">Posisi</th>
                 <th style="width:120px">Jersey</th>
                 <th style="width:48px">Ukuran</th>
@@ -533,6 +534,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td style="font-weight:500">Malik <button class="sf sf-off" onclick="toggleSf(this,'Malik','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
                 <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
                 <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="BCA"><span class="b b-ac">BCA</span></td>
+                <td data-edit-type="tglbayar" data-date="2026-09-02">02/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">GK</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="gk" onchange="onJerseyChange(this)">
@@ -561,6 +563,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td style="font-weight:500">Ricky <span class="b b-sh" style="font-size:9px">SHTM</span><button class="sf sf-off" onclick="toggleSf(this,'Ricky','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
                 <td>50.000</td><td data-edit-type="label"><span class="b b-sh">SHTM</span></td>
                 <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="BSI"><span class="b b-ac">BSI</span></td>
+                <td data-edit-type="tglbayar" data-date="2026-09-04">04/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
@@ -589,6 +592,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td style="font-weight:500">Wayan <span class="b b-dp" style="font-size:9px">Dep 70rb</span><button class="sf sf-off" onclick="toggleSf(this,'Wayan','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
                 <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
                 <td style="color:var(--am);font-weight:500" data-no-edit="1">-70.000</td><td data-edit-type="bank" data-bank-val="Cash"><span class="b b-ac">Cash</span><div style="font-size:9px;color:var(--mu);margin-top:2px">25rb</div></td>
+                <td data-edit-type="tglbayar" data-date="2026-09-05">05/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
@@ -617,6 +621,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td style="font-weight:500">Jayadi <button class="sf sf-on" onclick="toggleSf(this,'Jayadi','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> SHTM Next ✓</button></td>
                 <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
                 <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="BSI"><span class="b b-ac">BSI</span></td>
+                <td data-edit-type="tglbayar" data-date="2026-09-03">03/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
@@ -645,6 +650,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td style="font-weight:500">Heru <button class="sf sf-off" onclick="toggleSf(this,'Heru','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
                 <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
                 <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="" style="color:var(--mu)">—</td>
+                <td data-edit-type="tglbayar" data-date="" style="color:var(--mu)">—</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
@@ -777,9 +783,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <thead><tr><th colspan="4" style="background:var(--su2);font-size:11px;color:var(--mu)">Jersey Pribadi (tidak dihitung stok)</th></tr>
       <tr><th>Player</th><th>Jersey</th><th>Ukuran</th><th>Keterangan</th></tr></thead>
       <tbody>
-        <tr><td class="pri">Bambang</td><td>SMS Merah · SMS Biru</td><td>XL</td><td>Milik sendiri</td></tr>
-        <tr><td class="pri">Filan</td><td>SMS Hijau</td><td>L</td><td>Milik sendiri</td></tr>
-        <tr><td class="pri">Bagus Suryo</td><td>SMS Hijau</td><td>2XL</td><td>Milik sendiri</td></tr>
       </tbody>
     </table>
   </div>
@@ -804,54 +807,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         </tr>
       </thead>
       <tbody>
-        <tr style="background:#FFF5F5">
-          <td data-no-edit="1">1</td><td class="pri">Jayadi</td>
-          <td>6 Sept 2026</td><td style="color:var(--hi)">—</td>
-          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
-        <tr style="background:#FFF5F5">
-          <td data-no-edit="1">2</td><td class="pri">Ricky</td>
-          <td>28 Sept 2025</td><td style="color:var(--hi)">—</td>
-          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
-        <tr style="background:#FFF5F5">
-          <td data-no-edit="1">3</td><td class="pri">Adam Nh</td>
-          <td>3 Nov 2025</td><td style="color:var(--hi)">—</td>
-          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
-        <tr style="background:#FFF5F5">
-          <td data-no-edit="1">4</td><td class="pri">Wage</td>
-          <td>21 Des 2025</td><td style="color:var(--hi)">—</td>
-          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
-        <tr style="background:#FFF5F5">
-          <td data-no-edit="1">5</td><td class="pri">Rizal Angga</td>
-          <td>17 Mei 2026</td><td style="color:var(--hi)">—</td>
-          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
-        <tr>
-          <td data-no-edit="1">6</td><td class="pri">Chessa</td>
-          <td>14 Sept 2025</td><td>28 Sept 2025</td>
-          <td data-edit-type="shtm-status"><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
-        <tr>
-          <td data-no-edit="1">7</td><td class="pri">Didik</td>
-          <td>12 Juli 2026</td><td>26 Juli 2026</td>
-          <td data-edit-type="shtm-status"><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
-        <tr>
-          <td data-no-edit="1">8</td><td class="pri">Fauzan</td>
-          <td>26 Des 2025</td><td>11 Jan 2026</td>
-          <td data-edit-type="shtm-status"><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
-        </tr>
       </tbody>
     </table>
 
@@ -881,9 +836,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <table class="tbl">
       <thead><tr><th>No</th><th>Nama</th><th>Alias</th><th>Kategori</th><th>Hadir</th><th>Last match</th><th>Deposit</th><th>SHTM</th><th>Aksi</th></tr></thead>
       <tbody id="player-tbody">
-        <tr><td data-no-edit="1">1</td><td class="pri">Malik</td><td>—</td><td data-edit-type="kategori"><span class="b b-gy">SMS</span></td><td>40</td><td>6 Sept</td><td data-edit-type="deposit">—</td><td data-edit-type="shtm-status">—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
-        <tr style="background:#FFF5F5"><td data-no-edit="1">2</td><td class="pri">Ricky</td><td>—</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td>6</td><td>6 Sept</td><td data-edit-type="deposit">—</td><td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
-        <tr style="background:var(--am2)"><td data-no-edit="1">3</td><td class="pri">Wayan</td><td>—</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td>8</td><td>6 Sept</td><td data-edit-type="deposit" style="color:var(--am);font-weight:500">Rp 70.000</td><td data-edit-type="shtm-status">—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -1761,8 +1713,8 @@ function renderLineupView() {
     const noCell = row.cells[0];
     const namaCell = row.cells[1];
     const jerseyCell = row.querySelector('.jersey-sel');
-    const posisiCell = row.cells[6];
-    const ukuranCell = row.cells[8];
+    const posisiCell = row.cells[7];
+    const ukuranCell = row.cells[9];
     const formasiCell = row.querySelector('.formasi-sel');
 
     if(!jerseyCell || !jerseyCell.value) return;
@@ -1919,7 +1871,7 @@ function computeJerseyUsage(){
     const warna = jerseySel.value;
     if(!warna) return;
     const posisi = jerseySel.dataset.posisi === 'gk' ? 'gk' : 'field';
-    const ukuranTd = row.children[8];
+    const ukuranTd = row.children[9];
     const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
     if(!ukuran) return;
     const key = warna + '|' + posisi;
@@ -2017,6 +1969,29 @@ function parseRupiah(s){
 function fmtRupiah(n){
   return Math.round(n).toLocaleString('id-ID');
 }
+// Format tanggal singkat "DD/MM" buat kolom Tgl Bayar di Slot Player —
+// dipakai pas player baru ditambah dgn status Lunas.
+function fmtTglBayarSingkat(d){
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return dd + '/' + mm;
+}
+// "YYYY-MM-DD" pakai komponen tanggal LOKAL (bukan d.toISOString(), yg
+// bisa geser -1 hari kalau timezone browser di belakang UTC) — dipakai
+// sbg value <input type="date"> dan data-date di kolom Tgl Bayar.
+function isoDate(d){
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return yyyy + '-' + mm + '-' + dd;
+}
+// "YYYY-MM-DD" -> "DD/MM" buat tampilan singkat kolom Tgl Bayar.
+function fmtTglBayarFromIso(iso){
+  if(!iso) return '—';
+  const parts = iso.split('-');
+  if(parts.length!==3) return '—';
+  return parts[2] + '/' + parts[1];
+}
 function showToast(msg){
   const el = document.getElementById('ms-toast-msg');
   const box = document.getElementById('ms-toast');
@@ -2105,6 +2080,12 @@ function enterEditCell(el){
     el.innerHTML = `<select class="ms-ed-input" data-edit-type="tahun" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
     return;
   }
+  if(el.dataset && el.dataset.editType==='tglbayar'){
+    // Date picker beneran (bukan free text) — sesuai request Sam.
+    const cur = el.dataset.date || '';
+    el.innerHTML = `<input class="ms-ed-input" type="date" data-edit-type="tglbayar" value="${cur}" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">`;
+    return;
+  }
   if(el.children.length===0){
     const val = el.textContent.trim();
     const w = Math.min(92,Math.max(30,val.length*7));
@@ -2184,6 +2165,14 @@ function commitInput(input){
   if(input.dataset.editType==='tahun'){
     const td = input.parentNode;
     td.innerHTML = `<span class="b b-gy">${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='tglbayar'){
+    const td = input.parentNode;
+    const iso = input.value || '';
+    td.dataset.date = iso;
+    td.textContent = fmtTglBayarFromIso(iso);
+    td.style.color = iso ? '' : 'var(--mu)';
     return;
   }
   let val = input.value.trim();
@@ -2272,7 +2261,7 @@ function afterRowChange(row){
    "GK (jersey kiper)" khusus, Field cuma daftar warna tim biasa — supaya
    stok jersey & tampilan Lihat line up tetap konsisten. */
 function syncPosisiToJersey(row){
-  const posisiTd = row.cells[6];
+  const posisiTd = row.cells[7];
   const jerseySel = row.querySelector('.jersey-sel');
   if(!posisiTd || !jerseySel) return;
   const isGk = posisiTd.textContent.trim() === 'GK';
@@ -2376,7 +2365,7 @@ function recalcSlot(){
   rows.forEach(tr=>{
     const tds = tr.querySelectorAll(':scope > td');
     const htm = parseRupiah(tds[2] ? tds[2].textContent : '');
-    const statusTxt = tds[9] ? tds[9].textContent : '';
+    const statusTxt = tds[10] ? tds[10].textContent : '';
     if(/Lunas/i.test(statusTxt)) pasti += htm;
     else if(/Sementara/i.test(statusTxt)) sementara += htm;
   });
@@ -2461,7 +2450,7 @@ function computeFinancialsFromLiveDom(){
   document.querySelectorAll('#slot-tbody tr').forEach(tr=>{
     const tds = tr.querySelectorAll(':scope > td');
     const htm = parseRupiah(tds[2] ? tds[2].textContent : '');
-    const statusTxt = tds[9] ? tds[9].textContent : '';
+    const statusTxt = tds[10] ? tds[10].textContent : '';
     if(/Lunas/i.test(statusTxt)) pasti += htm;
     else if(/Sementara/i.test(statusTxt)) sementara += htm;
   });
@@ -2486,7 +2475,7 @@ function computeMatchFinancials(m){
   slotTmp.querySelectorAll('tr').forEach(tr=>{
     const tds = tr.querySelectorAll(':scope > td');
     const htm = parseRupiah(tds[2] ? tds[2].textContent : '');
-    const statusTxt = tds[9] ? tds[9].textContent : '';
+    const statusTxt = tds[10] ? tds[10].textContent : '';
     if(/Lunas/i.test(statusTxt)) pasti += htm;
     else if(/Sementara/i.test(statusTxt)) sementara += htm;
   });
@@ -2554,19 +2543,20 @@ function generateLaporanPdf(id){
     return {
       no: tds[0] ? tds[0].textContent.trim() : '',
       nama: slotRowNama(tr),
-      posisi: tds[6] ? tds[6].textContent.trim() : '',
+      posisi: tds[7] ? tds[7].textContent.trim() : '',
       label: tds[3] ? tds[3].textContent.trim() : '',
       bank: tds[5] ? (tds[5].dataset.bankVal || '') : '',
+      tglBayar: tds[6] ? tds[6].textContent.trim() : '',
       htm: tds[2] ? tds[2].textContent.trim() : '',
-      status: tds[9] ? tds[9].textContent.trim() : ''
+      status: tds[10] ? tds[10].textContent.trim() : ''
     };
   });
   const shtmDipakai = slotRows.filter(r=>r.label==='SHTM').map(r=>r.nama);
 
   const biayaHtml = biayaRows.map(b=>`<tr><td>${escAttr(b.item)}</td><td>${escAttr(b.kategori)}</td><td style="text-align:right">${escAttr(b.realisasi)}</td></tr>`).join('')
     || '<tr><td colspan="3" style="color:var(--mu)">Belum ada biaya tercatat</td></tr>';
-  const playerHtml = slotRows.map(p=>`<tr><td>${escAttr(p.no)}</td><td>${escAttr(p.nama)}</td><td>${escAttr(p.posisi)}</td><td>${escAttr(p.label)}</td><td>${escAttr(p.bank||'—')}</td><td>${escAttr(p.status)}</td><td style="text-align:right">${escAttr(p.htm)}</td></tr>`).join('')
-    || '<tr><td colspan="7" style="color:var(--mu)">Belum ada player tercatat</td></tr>';
+  const playerHtml = slotRows.map(p=>`<tr><td>${escAttr(p.no)}</td><td>${escAttr(p.nama)}</td><td>${escAttr(p.posisi)}</td><td>${escAttr(p.label)}</td><td>${escAttr(p.bank||'—')}</td><td>${escAttr(p.tglBayar||'—')}</td><td>${escAttr(p.status)}</td><td style="text-align:right">${escAttr(p.htm)}</td></tr>`).join('')
+    || '<tr><td colspan="8" style="color:var(--mu)">Belum ada player tercatat</td></tr>';
 
   const generatedAt = new Date().toLocaleString('id-ID', {dateStyle:'long', timeStyle:'short'});
 
@@ -2607,7 +2597,7 @@ function generateLaporanPdf(id){
       <div class="lap-col">
         <div class="lap-sec-title">Pembayaran player (${slotRows.length})</div>
         <table class="lap-tbl">
-          <thead><tr><th>No</th><th>Pemain</th><th>Posisi</th><th>Tipe bayar</th><th>Metode</th><th>Status</th><th style="text-align:right">Jumlah</th></tr></thead>
+          <thead><tr><th>No</th><th>Pemain</th><th>Posisi</th><th>Tipe bayar</th><th>Metode</th><th>Tgl Bayar</th><th>Status</th><th style="text-align:right">Jumlah</th></tr></thead>
           <tbody>${playerHtml}</tbody>
         </table>
         <div class="lap-note">Status SHTM match ini — dipakai (harga dipotong): ${shtmDipakai.length ? escAttr(shtmDipakai.join(', ')) : '—'}. Riwayat lengkap siapa dapat/pakai SHTM ada di Admin → Daftar SHTM.</div>
@@ -2966,12 +2956,15 @@ function submitTambahPlayer(){
   const statusDot = status==='Lunas' ? '<span class="sd sdg"></span>' : (status==='Sementara' ? '<span class="sd sda"></span>' : '');
   const titleLine = document.getElementById('mhd-title').textContent;
   const tglLabel = titleLine.split('—')[0].trim();
+  const tglBayarIso = status==='Lunas' ? isoDate(new Date()) : '';
+  const tglBayar = tglBayarIso ? fmtTglBayarSingkat(new Date()) : '—';
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td style="color:var(--hi)" data-no-edit="1">${no}</td>
     <td style="font-weight:500">${nama} <button class="sf sf-off" onclick="toggleSf(this,'${nama.replace(/'/g,"\\'")}','${tglLabel}')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
     <td>${fmtRupiah(htm)}</td><td data-edit-type="label"><span class="b ${labelBadgeClass}">${label}</span></td>
     <td style="color:var(--mu)" data-no-edit="1">${depositCellHtml(nama, 0)}</td><td data-edit-type="bank" data-bank-val="${escAttr(metode)}"${metode?'':' style="color:var(--mu)"'}>${bankDisplayHtml(metode)}</td>
+    <td data-edit-type="tglbayar" data-date="${tglBayarIso}"${tglBayar==='—'?' style="color:var(--mu)"':''}>${tglBayar}</td>
     <td data-edit-type="posisi"><span class="b b-gy">${isGk?'GK':'Field'}</span></td>
     <td>${jerseySelectHtml(isGk?'gk':'field','')}</td>
     <td data-edit-type="ukuran"><span class="b b-gy">${ukuran}</span></td>
