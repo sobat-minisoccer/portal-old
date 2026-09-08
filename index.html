@@ -114,6 +114,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 .ib:hover{background:var(--su2)}
 .ib.del:hover{background:var(--rd2);color:var(--rd);border-color:#FECACA}
 .acts{display:flex;gap:4px}
+.ms-ed-input{font-family:var(--fn);font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);box-sizing:border-box;max-width:100%}
 
 /* SHTM FLAG inline */
 .sf{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:20px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid;white-space:nowrap;vertical-align:middle;margin-left:4px}
@@ -203,6 +204,31 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 .modal-ov.open{display:flex}
 .modal{background:var(--su);border-radius:12px;border:1px solid var(--bd);width:100%;max-width:440px;overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
 .modal-wide{max-width:760px}
+.modal-xwide{max-width:980px}
+
+/* LAPORAN PDF (Rekap akhir match) */
+.lap-hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--tx);padding-bottom:10px;margin-bottom:14px}
+.lap-h1{font-size:17px;font-weight:700}
+.lap-h2{font-size:13px;font-weight:600;margin-top:2px}
+.lap-h3{font-size:11px;color:var(--mu);margin-top:1px}
+.lap-gen{font-size:10px;color:var(--mu);white-space:nowrap}
+.lap-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start}
+.lap-sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);margin-bottom:6px}
+.lap-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.lap-tbl th{text-align:left;padding:5px 7px;border-bottom:1px solid var(--tx);font-size:10.5px;font-weight:600}
+.lap-tbl td{padding:4px 7px;border-bottom:1px solid var(--bd)}
+.lap-tbl tfoot td{border-top:1.5px solid var(--tx);border-bottom:none;padding-top:6px}
+.lap-tbl tr.lap-hl td{background:var(--gn2);color:var(--gn);font-weight:700}
+.lap-tbl tr.lap-hl.lap-neg td{background:var(--rd2);color:var(--rd)}
+.lap-note{font-size:10.5px;color:var(--mu);margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd)}
+@media print{
+  body *{visibility:hidden}
+  #laporan-pdf-content,#laporan-pdf-content *{visibility:visible}
+  .modal,.modal-ov{overflow:visible!important;max-height:none!important;background:none!important;box-shadow:none!important;padding:0!important;position:static!important}
+  #laporan-pdf-content{position:absolute;top:0;left:0;width:100%}
+  .no-print{display:none!important}
+}
+@page{size:A4 landscape;margin:10mm}
 .modal-hd{padding:13px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .modal-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
 .modal-body{padding:15px;overflow-y:auto;flex:1}
@@ -328,28 +354,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       </div>
     </div>
 
-    <!-- Frequent + top skor -->
+    <!-- Top skor -->
     <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card" style="margin-bottom:0">
-        <div class="card-hd"><span class="card-title">Frequent players — top 9</span></div>
-        <div class="card-body" style="padding:10px">
-          <div class="pgrid">
-            <div class="pcard"><span class="prk gd">1</span><div class="pav" style="background:#EFF6FF;color:#1D4ED8">MA</div><div class="pinf"><div class="pnm">Malik</div><div class="pmt">SMS · GK</div></div><div class="pcnt">40×</div></div>
-            <div class="pcard"><span class="prk sv">2</span><div class="pav" style="background:#F0FDF4;color:#15803D">FI</div><div class="pinf"><div class="pnm">Filan</div><div class="pmt">SMS · GK</div></div><div class="pcnt">37×</div></div>
-            <div class="pcard"><span class="prk bz">3</span><div class="pav" style="background:#FEF3C7;color:#92400E">JY</div><div class="pinf"><div class="pnm">Jayadi</div><div class="pmt">Umum</div></div><div class="pcnt">35×</div></div>
-            <div class="pcard"><span class="prk nm">4</span><div class="pav" style="background:#F3E8FF;color:#6D28D9">AN</div><div class="pinf"><div class="pnm">Annas</div><div class="pmt">BMR</div></div><div class="pcnt">33×</div></div>
-            <div class="pcard"><span class="prk nm">5</span><div class="pav" style="background:#EFF6FF;color:#1D4ED8">HS</div><div class="pinf"><div class="pnm">Hisyam</div><div class="pmt">SMS</div></div><div class="pcnt">30×</div></div>
-            <div class="pcard"><span class="prk nm">6</span><div class="pav" style="background:#F0FDF4;color:#15803D">TV</div><div class="pinf"><div class="pnm">Tavano</div><div class="pmt">Umum</div></div><div class="pcnt">28×</div></div>
-            <div class="pcard"><span class="prk nm">7</span><div class="pav" style="background:#FEF3C7;color:#92400E">BS</div><div class="pinf"><div class="pnm">Bagus Suryo</div><div class="pmt">Umum</div></div><div class="pcnt">27×</div></div>
-            <div class="pcard"><span class="prk nm">8</span><div class="pav" style="background:#F3E8FF;color:#6D28D9">BM</div><div class="pinf"><div class="pnm">Bambang</div><div class="pmt">Umum</div></div><div class="pcnt">26×</div></div>
-            <div class="pcard"><span class="prk nm">9</span><div class="pav" style="background:#EFF6FF;color:#1D4ED8">ND</div><div class="pinf"><div class="pnm">Nandha</div><div class="pmt">SMS · GK</div></div><div class="pcnt">25×</div></div>
-          </div>
-        </div>
-      </div>
       <div class="card" style="margin-bottom:0">
         <div class="card-hd">
           <span class="card-title"><i class="ti ti-trophy" style="color:#B8860B;font-size:14px"></i> Top skor — total gol</span>
-          <div class="chips"><span class="chip active">All time</span><span class="chip">2026</span></div>
+          <div class="chips"><span class="chip active" onclick="filterScorer('alltime',this)">All time</span><span class="chip" onclick="filterScorer('2026',this)">2026</span></div>
         </div>
         <div class="card-body" style="padding:8px 0" id="d-scorer"></div>
       </div>
@@ -370,7 +380,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 <div class="card" style="margin-bottom:0">
   <div style="padding:11px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <span class="flbl">Match</span>
-    <select style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)">
+    <select id="rpt-match-sel" style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)">
       <option>6 Sept 2026</option><option>15 Agust BOSS</option><option>26 Juli BIG</option><option>12 Juli BOSS</option>
     </select>
     <button class="btn btn-dl"><i class="ti ti-download" style="font-size:13px"></i> Download laporan PDF</button>
@@ -457,8 +467,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div style="font-size:14px;font-weight:600" id="mhd-title">6 September 2026 — Internal SMS</div>
         <div style="font-size:11px;color:var(--mu);margin-top:2px" id="mhd-sub">Futsal Menteng · Lapangan Kecil · HTM Rp 95.000 · GK Rp 35.000</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px" id="mhd-actions">
         <span class="b b-gn" style="font-size:12px;padding:5px 10px" id="mhd-status"><span class="sd sdg"></span>Match aktif</span>
+        <button class="btn" id="mhd-simpan-btn" onclick="msSimpanDraft()"><i class="ti ti-device-floppy"></i> Simpan</button>
+        <button class="btn" id="mhd-hapus-btn" onclick="msHapusMatchClick(this)"><i class="ti ti-trash"></i> Hapus match</button>
         <button class="btn btn-dng" id="mhd-tutup-btn" onclick="openModal('m-tutup-match')"><i class="ti ti-lock"></i> Tutup match</button>
       </div>
     </div>
@@ -511,11 +523,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
             <tbody id="slot-tbody">
               <!-- FIELD PLAYER -->
               <tr>
-                <td style="color:var(--hi)">GK</td>
+                <td style="color:var(--hi)" data-no-edit="1">1</td>
                 <td style="font-weight:500">Malik <button class="sf sf-off" onclick="toggleSf(this,'Malik','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
-                <td>95.000</td><td><span class="b b-gy">Normal</span></td>
-                <td style="color:var(--mu)">—</td><td><span class="b b-ac">BCA</span></td>
-                <td><span class="b b-gy">GK</span></td>
+                <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
+                <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="BCA"><span class="b b-ac">BCA</span></td>
+                <td data-edit-type="posisi"><span class="b b-gy">GK</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="gk" onchange="onJerseyChange(this)">
                     <option value="">— pilih</option>
@@ -526,7 +538,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                   </select>
                   <div class="jersey-notif" style="font-size:10px;margin-top:3px"></div>
                 </td>
-                <td><span class="b b-gy">M</span></td>
+                <td data-edit-type="ukuran"><span class="b b-gy">M</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
                 <td class="td-formasi">
                   <span class="formasi-dash" style="color:var(--mu)">—</span>
@@ -539,11 +551,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr style="background:#FFF5F5">
-                <td style="color:var(--hi)">1</td>
+                <td style="color:var(--hi)" data-no-edit="1">2</td>
                 <td style="font-weight:500">Ricky <span class="b b-sh" style="font-size:9px">SHTM</span><button class="sf sf-off" onclick="toggleSf(this,'Ricky','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
-                <td>50.000</td><td><span class="b b-sh">SHTM</span></td>
-                <td style="color:var(--mu)">—</td><td><span class="b b-ac">BSI</span></td>
-                <td><span class="b b-gy">Field</span></td>
+                <td>50.000</td><td data-edit-type="label"><span class="b b-sh">SHTM</span></td>
+                <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="BSI"><span class="b b-ac">BSI</span></td>
+                <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
                     <option value="">— pilih</option>
@@ -554,7 +566,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                   </select>
                   <div class="jersey-notif jok" style="font-size:10px;margin-top:3px"><i class="ti ti-check" style="font-size:9px"></i> OK</div>
                 </td>
-                <td><span class="b b-gy">M</span></td>
+                <td data-edit-type="ukuran"><span class="b b-gy">M</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
                 <td class="td-formasi">
                   <span class="formasi-dash" style="color:var(--mu)">—</span>
@@ -567,11 +579,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
-                <td style="color:var(--hi)">2</td>
+                <td style="color:var(--hi)" data-no-edit="1">3</td>
                 <td style="font-weight:500">Wayan <span class="b b-dp" style="font-size:9px">Dep 70rb</span><button class="sf sf-off" onclick="toggleSf(this,'Wayan','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
-                <td>95.000</td><td><span class="b b-gy">Normal</span></td>
-                <td style="color:var(--am);font-weight:500">-70.000</td><td><span class="b b-gy">Cash 25rb</span></td>
-                <td><span class="b b-gy">Field</span></td>
+                <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
+                <td style="color:var(--am);font-weight:500" data-no-edit="1">-70.000</td><td data-edit-type="bank" data-bank-val="Cash"><span class="b b-ac">Cash</span><div style="font-size:9px;color:var(--mu);margin-top:2px">25rb</div></td>
+                <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
                     <option value="">— pilih</option>
@@ -582,7 +594,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                   </select>
                   <div class="jersey-notif jok" style="font-size:10px;margin-top:3px"><i class="ti ti-check" style="font-size:9px"></i> OK</div>
                 </td>
-                <td><span class="b b-gy">L</span></td>
+                <td data-edit-type="ukuran"><span class="b b-gy">L</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
                 <td class="td-formasi">
                   <span class="formasi-dash" style="color:var(--mu)">—</span>
@@ -595,11 +607,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr>
-                <td style="color:var(--hi)">3</td>
+                <td style="color:var(--hi)" data-no-edit="1">4</td>
                 <td style="font-weight:500">Jayadi <button class="sf sf-on" onclick="toggleSf(this,'Jayadi','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> SHTM Next ✓</button></td>
-                <td>95.000</td><td><span class="b b-gy">Normal</span></td>
-                <td style="color:var(--mu)">—</td><td><span class="b b-ac">BSI</span></td>
-                <td><span class="b b-gy">Field</span></td>
+                <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
+                <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="BSI"><span class="b b-ac">BSI</span></td>
+                <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
                     <option value="">— pilih</option>
@@ -610,7 +622,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                   </select>
                   <div class="jersey-notif jwarn" style="font-size:10px;margin-top:3px"><i class="ti ti-alert-triangle" style="font-size:9px"></i> XL habis!</div>
                 </td>
-                <td><span class="b b-gy">XL</span></td>
+                <td data-edit-type="ukuran"><span class="b b-gy">XL</span></td>
                 <td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td>
                 <td class="td-formasi">
                   <span class="formasi-dash" style="color:var(--mu)">—</span>
@@ -623,11 +635,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
               </tr>
               <tr class="sem">
-                <td style="color:var(--hi)">4</td>
+                <td style="color:var(--hi)" data-no-edit="1">5</td>
                 <td style="font-weight:500">Heru <button class="sf sf-off" onclick="toggleSf(this,'Heru','6 Sept 2026')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
-                <td>95.000</td><td><span class="b b-gy">Normal</span></td>
-                <td style="color:var(--mu)">—</td><td style="color:var(--mu)">—</td>
-                <td><span class="b b-gy">Field</span></td>
+                <td>95.000</td><td data-edit-type="label"><span class="b b-gy">Normal</span></td>
+                <td style="color:var(--mu)" data-no-edit="1">—</td><td data-edit-type="bank" data-bank-val="" style="color:var(--mu)">—</td>
+                <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
                   <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
                     <option value="">— pilih</option>
@@ -638,7 +650,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                   </select>
                   <div class="jersey-notif jok" style="font-size:10px;margin-top:3px"><i class="ti ti-check" style="font-size:9px"></i> OK</div>
                 </td>
-                <td><span class="b b-gy">L</span></td>
+                <td data-edit-type="ukuran"><span class="b b-gy">L</span></td>
                 <td><span class="b b-am"><span class="sd sda"></span>Sementara</span></td>
                 <td class="td-formasi">
                   <span class="formasi-dash" style="color:var(--mu)">—</span>
@@ -676,8 +688,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
             <div id="dep-saldo-list">
             <div class="dep-row">
               <div style="font-weight:500;min-width:100px">Wayan</div>
-              <div style="font-size:14px;font-weight:700;color:var(--am);min-width:90px">Rp 70.000</div>
-              <div style="flex:1;font-size:11px;color:var(--mu)">Saldo aktif · dapat dipakai di match ini</div>
+              <div style="font-size:14px;font-weight:700;color:var(--mu);min-width:90px">Rp 0</div>
+              <div style="flex:1;font-size:11px;color:var(--mu)">Sudah terpakai penuh di match ini (Rp 70.000)</div>
               <div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div>
             </div>
             </div>
@@ -706,18 +718,21 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 
         <!-- REKAP AKHIR -->
         <div id="trx-rekap" class="trx-p">
-          <div class="sec-lbl">Rekap akhir match — 6 September 2026</div>
+          <div class="sec-lbl" id="rkg-title">Rekap akhir match — 6 September 2026</div>
           <div class="rkg">
-            <div class="rkg-c"><div class="rkg-lbl">Total sales aktual</div><div class="rkg-val">Rp 1.863.500</div></div>
-            <div class="rkg-c"><div class="rkg-lbl">Total biaya operasional</div><div class="rkg-val" style="color:var(--rd)">Rp 1.614.000</div></div>
-            <div class="rkg-c hi"><div class="rkg-lbl" style="color:var(--gn)">Margin match</div><div class="rkg-val" style="color:var(--gn)">+Rp 249.500</div></div>
-            <div class="rkg-c"><div class="rkg-lbl">Split Malik (60%)</div><div class="rkg-val" style="color:var(--nv)">+Rp 149.700</div></div>
-            <div class="rkg-c"><div class="rkg-lbl">Split Filan (40%)</div><div class="rkg-val" style="color:var(--gn)">+Rp 99.800</div></div>
-            <div class="rkg-c"><div class="rkg-lbl">Top gol match ini</div><div class="rkg-val" style="font-size:13px">Jayadi <span class="gol-chip">⚽ 3 gol</span></div></div>
+            <div class="rkg-c"><div class="rkg-lbl">Total sales aktual</div><div class="rkg-val" id="rkg-sales">Rp 1.863.500</div></div>
+            <div class="rkg-c"><div class="rkg-lbl">Total biaya operasional</div><div class="rkg-val" id="rkg-biaya" style="color:var(--rd)">Rp 1.614.000</div></div>
+            <div class="rkg-c hi"><div class="rkg-lbl" style="color:var(--gn)">Margin match</div><div class="rkg-val" id="rkg-margin" style="color:var(--gn)">+Rp 249.500</div></div>
+            <div class="rkg-c"><div class="rkg-lbl">Split Malik (60%)</div><div class="rkg-val" id="rkg-malik" style="color:var(--nv)">+Rp 149.700</div></div>
+            <div class="rkg-c"><div class="rkg-lbl">Split Filan (40%)</div><div class="rkg-val" id="rkg-filan" style="color:var(--gn)">+Rp 99.800</div></div>
+            <div class="rkg-c"><div class="rkg-lbl">Top gol match ini</div><div class="rkg-val" id="rkg-topgol" style="font-size:13px">Jayadi <span class="gol-chip">⚽ 3 gol</span></div></div>
+          </div>
+          <div style="padding:14px 16px;border-top:1px solid var(--bd);display:flex;gap:8px">
+            <button class="btn" onclick="generateLaporanPdf();openModal('m-laporan-pdf')"><i class="ti ti-file-text"></i> Lihat / cetak laporan PDF</button>
           </div>
           <div style="padding:14px 16px;border-top:1px solid var(--bd);background:var(--am2)">
             <div style="font-size:12px;font-weight:500;color:var(--am);margin-bottom:4px"><i class="ti ti-lock"></i> Tutup match untuk mengunci semua transaksi</div>
-            <div style="font-size:11px;color:var(--am);margin-bottom:10px">Setelah ditutup, data tidak bisa diubah. PDF laporan digenerate otomatis.</div>
+            <div style="font-size:11px;color:var(--am);margin-bottom:10px">Setelah ditutup, data tidak bisa diubah. Laporan PDF tetap bisa dilihat/dicetak kapan saja dari tombol di atas.</div>
             <button class="btn btn-dng" onclick="openModal('m-tutup-match')"><i class="ti ti-lock"></i> Tutup dan kunci match ini</button>
           </div>
         </div>
@@ -746,46 +761,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <!-- JERSEY STOK -->
   <div id="adm-jersey" class="tab-p active" style="background:var(--su);border:1px solid var(--bd);border-top:none;border-radius:0 0 12px 12px;padding:16px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:500">Stok jersey SMS — 4 tim · Field + GK</div>
+      <div style="font-size:13px;font-weight:500" id="jersey-stok-heading">Stok jersey SMS — Field + GK</div>
       <button class="btn btn-prim" onclick="openModal('m-tambah-stok')"><i class="ti ti-plus"></i> Tambah / update stok</button>
     </div>
-    <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Jersey Field</div>
-    <div class="jersey-grid">
-      <div class="jcard">
-        <div class="jcard-hd"><span class="jdot" style="background:#EF4444"></span>Tim Merah</div>
-        <div class="jrow"><span class="jlbl">M</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">2/2</span></div></div>
-        <div class="jrow"><span class="jlbl">L</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:66%;background:var(--gn)"></div></div><span class="jnum ok">2/3</span></div></div>
-        <div class="jrow"><span class="jlbl">XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill zero" style="width:0%;background:var(--rd)"></div></div><span class="jnum zero">0/4 <i class="ti ti-alert-triangle" style="font-size:10px"></i></span></div></div>
-        <div class="jrow"><span class="jlbl">2XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">1/1</span></div></div>
-      </div>
-      <div class="jcard">
-        <div class="jcard-hd"><span class="jdot" style="background:#EAB308"></span>Tim Kuning</div>
-        <div class="jrow"><span class="jlbl">M</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:50%;background:var(--gn)"></div></div><span class="jnum ok">1/2</span></div></div>
-        <div class="jrow"><span class="jlbl">L</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">3/3</span></div></div>
-        <div class="jrow"><span class="jlbl">XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill low" style="width:25%;background:var(--am)"></div></div><span class="jnum low">1/4 <i class="ti ti-alert-circle" style="font-size:10px"></i></span></div></div>
-        <div class="jrow"><span class="jlbl">2XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">1/1</span></div></div>
-      </div>
-      <div class="jcard">
-        <div class="jcard-hd"><span class="jdot" style="background:#3B82F6"></span>Tim Biru</div>
-        <div class="jrow"><span class="jlbl">M</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">2/2</span></div></div>
-        <div class="jrow"><span class="jlbl">L</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">3/3</span></div></div>
-        <div class="jrow"><span class="jlbl">XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:75%;background:var(--gn)"></div></div><span class="jnum ok">3/4</span></div></div>
-        <div class="jrow"><span class="jlbl">2XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">1/1</span></div></div>
-      </div>
-      <div class="jcard">
-        <div class="jcard-hd"><span class="jdot" style="background:#16A34A"></span>Tim Hijau</div>
-        <div class="jrow"><span class="jlbl">M</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">2/2</span></div></div>
-        <div class="jrow"><span class="jlbl">L</span><div class="jstock"><div class="jbar"><div class="jbar-fill low" style="width:33%;background:var(--am)"></div></div><span class="jnum low">1/3 <i class="ti ti-alert-circle" style="font-size:10px"></i></span></div></div>
-        <div class="jrow"><span class="jlbl">XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">4/4</span></div></div>
-        <div class="jrow"><span class="jlbl">2XL</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">1/1</span></div></div>
-      </div>
-    </div>
-    <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;margin-top:4px">Jersey GK</div>
-    <div class="g3" style="margin-bottom:16px">
-      <div class="jcard"><div class="jcard-hd"><span class="jdot" style="background:var(--mu)"></span>GK · M</div><div class="jrow"><span class="jlbl">Stok</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">2/2</span></div></div></div>
-      <div class="jcard"><div class="jcard-hd"><span class="jdot" style="background:var(--mu)"></span>GK · L</div><div class="jrow"><span class="jlbl">Stok</span><div class="jstock"><div class="jbar"><div class="jbar-fill low" style="width:50%;background:var(--am)"></div></div><span class="jnum low">1/2</span></div></div></div>
-      <div class="jcard"><div class="jcard-hd"><span class="jdot" style="background:var(--mu)"></span>GK · XL</div><div class="jrow"><span class="jlbl">Stok</span><div class="jstock"><div class="jbar"><div class="jbar-fill ok" style="width:100%;background:var(--gn)"></div></div><span class="jnum ok">2/2</span></div></div></div>
-    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Jersey Field + GK — <span style="text-transform:none;font-weight:400">terpakai / total stok, match aktif saat ini</span></div>
+    <div id="jersey-stok-table-wrap" style="overflow-x:auto;margin-bottom:16px"></div>
     <table class="tbl" style="margin-top:4px">
       <thead><tr><th colspan="4" style="background:var(--su2);font-size:11px;color:var(--mu)">Jersey Pribadi (tidak dihitung stok)</th></tr>
       <tr><th>Player</th><th>Jersey</th><th>Ukuran</th><th>Keterangan</th></tr></thead>
@@ -818,52 +798,52 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       </thead>
       <tbody>
         <tr style="background:#FFF5F5">
-          <td>1</td><td class="pri">Jayadi</td>
+          <td data-no-edit="1">1</td><td class="pri">Jayadi</td>
           <td>6 Sept 2026</td><td style="color:var(--hi)">—</td>
-          <td><span class="b b-sh">Belum dipakai</span></td>
+          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
           <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
-          <td>2</td><td class="pri">Ricky</td>
+          <td data-no-edit="1">2</td><td class="pri">Ricky</td>
           <td>28 Sept 2025</td><td style="color:var(--hi)">—</td>
-          <td><span class="b b-sh">Belum dipakai</span></td>
+          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
           <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
-          <td>3</td><td class="pri">Adam Nh</td>
+          <td data-no-edit="1">3</td><td class="pri">Adam Nh</td>
           <td>3 Nov 2025</td><td style="color:var(--hi)">—</td>
-          <td><span class="b b-sh">Belum dipakai</span></td>
+          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
           <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
-          <td>4</td><td class="pri">Wage</td>
+          <td data-no-edit="1">4</td><td class="pri">Wage</td>
           <td>21 Des 2025</td><td style="color:var(--hi)">—</td>
-          <td><span class="b b-sh">Belum dipakai</span></td>
+          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
           <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr style="background:#FFF5F5">
-          <td>5</td><td class="pri">Rizal Angga</td>
+          <td data-no-edit="1">5</td><td class="pri">Rizal Angga</td>
           <td>17 Mei 2026</td><td style="color:var(--hi)">—</td>
-          <td><span class="b b-sh">Belum dipakai</span></td>
+          <td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td>
           <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr>
-          <td>6</td><td class="pri">Chessa</td>
+          <td data-no-edit="1">6</td><td class="pri">Chessa</td>
           <td>14 Sept 2025</td><td>28 Sept 2025</td>
-          <td><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td>
+          <td data-edit-type="shtm-status"><span class="b b-gn">Sudah dipakai</span></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr>
-          <td>7</td><td class="pri">Didik</td>
+          <td data-no-edit="1">7</td><td class="pri">Didik</td>
           <td>12 Juli 2026</td><td>26 Juli 2026</td>
-          <td><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td>
+          <td data-edit-type="shtm-status"><span class="b b-gn">Sudah dipakai</span></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
         <tr>
-          <td>8</td><td class="pri">Fauzan</td>
+          <td data-no-edit="1">8</td><td class="pri">Fauzan</td>
           <td>26 Des 2025</td><td>11 Jan 2026</td>
-          <td><span class="b b-gn">Sudah dipakai</span></td>
-          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td>
+          <td data-edit-type="shtm-status"><span class="b b-gn">Sudah dipakai</span></td>
+          <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>
         </tr>
       </tbody>
     </table>
@@ -889,14 +869,14 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <div id="adm-player" class="tab-p" style="background:var(--su);border:1px solid var(--bd);border-top:none;border-radius:0 0 12px 12px;padding:16px;display:none">
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <input type="text" placeholder="Cari nama player..." style="font-size:12px;padding:7px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn);width:240px">
-      <button class="btn btn-prim"><i class="ti ti-user-plus"></i> Tambah player baru</button>
+      <button class="btn btn-prim" onclick="openModal('m-tambah-player-db')"><i class="ti ti-user-plus"></i> Tambah player baru</button>
     </div>
     <table class="tbl">
       <thead><tr><th>No</th><th>Nama</th><th>Alias</th><th>Kategori</th><th>Hadir</th><th>Last match</th><th>Deposit</th><th>SHTM</th><th>Aksi</th></tr></thead>
-      <tbody>
-        <tr><td>1</td><td class="pri">Malik</td><td>—</td><td><span class="b b-gy">SMS</span></td><td>40×</td><td>6 Sept</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td></tr>
-        <tr style="background:#FFF5F5"><td>4</td><td class="pri">Ricky</td><td>—</td><td><span class="b b-gy">Umum</span></td><td>6×</td><td>6 Sept</td><td>—</td><td><span class="b b-sh">Belum dipakai</span></td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td></tr>
-        <tr style="background:var(--am2)"><td>5</td><td class="pri">Wayan</td><td>—</td><td><span class="b b-gy">Umum</span></td><td>8×</td><td>6 Sept</td><td style="color:var(--am);font-weight:500">Rp 70.000</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button></div></td></tr>
+      <tbody id="player-tbody">
+        <tr><td data-no-edit="1">1</td><td class="pri">Malik</td><td>—</td><td data-edit-type="kategori"><span class="b b-gy">SMS</span></td><td>40</td><td>6 Sept</td><td data-edit-type="deposit">—</td><td data-edit-type="shtm-status">—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr style="background:#FFF5F5"><td data-no-edit="1">2</td><td class="pri">Ricky</td><td>—</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td>6</td><td>6 Sept</td><td data-edit-type="deposit">—</td><td data-edit-type="shtm-status"><span class="b b-sh">Belum dipakai</span></td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr style="background:var(--am2)"><td data-no-edit="1">3</td><td class="pri">Wayan</td><td>—</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td>8</td><td>6 Sept</td><td data-edit-type="deposit" style="color:var(--am);font-weight:500">Rp 70.000</td><td data-edit-type="shtm-status">—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -934,10 +914,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <table class="tbl">
         <thead><tr><th>No</th><th>Nama</th><th>Kategori</th><th>Hadir</th><th>Last match</th><th>Jersey</th><th>Deposit</th><th>SHTM</th></tr></thead>
         <tbody>
-          <tr><td>1</td><td class="pri">Malik</td><td><span class="b b-gy">SMS</span></td><td>40×</td><td>6 Sept</td><td>M</td><td>—</td><td>—</td></tr>
-          <tr><td>2</td><td class="pri">Filan</td><td><span class="b b-gy">SMS</span></td><td>37×</td><td>6 Sept</td><td>L</td><td>—</td><td>—</td></tr>
-          <tr style="background:#FFF5F5"><td>3</td><td class="pri">Ricky <span class="b b-sh" style="font-size:9px">SHTM</span></td><td><span class="b b-gy">Umum</span></td><td>6×</td><td>6 Sept</td><td>M</td><td>—</td><td><span class="b b-sh">Belum dipakai</span></td></tr>
-          <tr style="background:var(--am2)"><td>4</td><td class="pri">Wayan <span class="b b-dp" style="font-size:9px">Dep 70rb</span></td><td><span class="b b-gy">Umum</span></td><td>8×</td><td>6 Sept</td><td>L</td><td style="color:var(--am);font-weight:500">Rp 70.000</td><td>—</td></tr>
+          <tr><td>1</td><td class="pri">Malik</td><td><span class="b b-gy">SMS</span></td><td>40</td><td>6 Sept</td><td>M</td><td>—</td><td>—</td></tr>
+          <tr><td>2</td><td class="pri">Filan</td><td><span class="b b-gy">SMS</span></td><td>37</td><td>6 Sept</td><td>L</td><td>—</td><td>—</td></tr>
+          <tr style="background:#FFF5F5"><td>3</td><td class="pri">Ricky <span class="b b-sh" style="font-size:9px">SHTM</span></td><td><span class="b b-gy">Umum</span></td><td>6</td><td>6 Sept</td><td>M</td><td>—</td><td><span class="b b-sh">Belum dipakai</span></td></tr>
+          <tr style="background:var(--am2)"><td>4</td><td class="pri">Wayan <span class="b b-dp" style="font-size:9px">Dep 70rb</span></td><td><span class="b b-gy">Umum</span></td><td>8</td><td>6 Sept</td><td>L</td><td style="color:var(--am);font-weight:500">Rp 70.000</td><td>—</td></tr>
         </tbody>
       </table>
     </div>
@@ -989,7 +969,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--gn2);border-radius:var(--r)"><span style="color:var(--gn)">Margin</span><span style="font-weight:700;color:var(--gn)">+Rp 249.500</span></div>
         <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--am2);border-radius:var(--r)"><span style="color:var(--am)">Status bayar</span><span style="font-weight:600;color:var(--am)">1 masih Sementara ⚠</span></div>
       </div>
-      <div class="info info-gn"><i class="ti ti-file-text"></i> PDF laporan otomatis digenerate setelah match ditutup.</div>
+      <div class="info info-gn"><i class="ti ti-file-text"></i> Laporan PDF bisa dilihat/dicetak dari tombol "Lihat / cetak laporan PDF" di tab Rekap akhir, sebelum maupun sesudah match ditutup.</div>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng" onclick="submitTutupMatch()"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
   </div>
@@ -1004,16 +984,32 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div class="fg"><div class="fl">HTM (Rp)</div><input type="number" id="tp-htm" value="95000"></div>
         <div class="fg"><div class="fl">Label harga</div><select id="tp-label"><option>Normal</option><option>SHTM</option><option>Promo</option><option>Free</option><option>Sponsor</option></select></div>
         <div class="fg"><div class="fl">Posisi</div><select id="tp-posisi"><option>Field</option><option>GK</option></select></div>
-        <div class="fg"><div class="fl">Jersey warna</div><select id="tp-jersey"><option value="">— pilih</option><option>Merah</option><option>Kuning</option><option>Biru</option><option>Hijau</option></select></div>
         <div class="fg"><div class="fl">Ukuran jersey</div><select id="tp-ukuran"><option>M</option><option>L</option><option>XL</option><option>2XL</option></select></div>
         <div class="fg"><div class="fl">Status</div><select id="tp-status"><option>Sementara</option><option>Lunas</option><option>Walk-in</option></select></div>
         <div class="fg"><div class="fl">Metode bayar</div><select id="tp-metode"><option value="">— (belum/sementara)</option><option>BCA</option><option>BSI</option><option>Mandiri</option><option>BRI</option><option>BNI</option><option>Cash</option><option>Deposit</option></select></div>
         <div class="fg"><div class="fl">Jumlah bayar (Rp)</div><input type="number" id="tp-jumlah" placeholder="0"></div>
       </div>
       <!-- Tim tidak ada di form — diisi di tabel slot setelah player masuk -->
-      <div class="info info-ac"><i class="ti ti-info-circle"></i> Tim diisi langsung di tabel slot setelah player ditambahkan. Jika player punya deposit aktif, akan otomatis tercantum.</div>
+      <div class="info info-ac"><i class="ti ti-info-circle"></i> Warna jersey dipilih belakangan langsung di tabel slot (kolom Jersey), bukan saat tambah player — sesuai alur asli. Jika player punya deposit aktif, akan otomatis tercantum.</div>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-player')">Batal</button><button class="btn btn-prim" onclick="submitTambahPlayer()"><i class="ti ti-check"></i> Tambah player</button></div>
+  </div>
+</div>
+
+<!-- Modal: Tambah player baru ke database player (Admin > Kelola player) —
+     beda dari m-tambah-player di atas yg utk memasukkan player ke slot match. -->
+<div id="m-tambah-player-db" class="modal-ov" onclick="bgClose(event,'m-tambah-player-db')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-user-plus" style="color:var(--ac)"></i> Tambah player baru ke database</div><button class="ib" onclick="closeModal('m-tambah-player-db')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="fg"><div class="fl">Nama player</div><input type="text" id="pdb-nama" placeholder="Nama lengkap"></div>
+      <div class="g2f">
+        <div class="fg"><div class="fl">Alias (opsional)</div><input type="text" id="pdb-alias" placeholder="Panggilan lain, kalau ada"></div>
+        <div class="fg"><div class="fl">Kategori</div><select id="pdb-kategori"><option>SMS</option><option>BMR</option><option>Umum</option></select></div>
+      </div>
+      <div class="info info-ac"><i class="ti ti-info-circle"></i> Player baru masuk ke database dengan Hadir 0, belum ada riwayat deposit/SHTM. Data ini terpisah dari slot player di tab Transaksi.</div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-player-db')">Batal</button><button class="btn btn-prim" onclick="submitTambahPlayerDb()"><i class="ti ti-check"></i> Tambah player</button></div>
   </div>
 </div>
 
@@ -1054,9 +1050,29 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div class="fg"><div class="fl">Sumber</div><select id="td-sumber"><option>Cancel → Deposit</option><option>Kelebihan bayar</option><option>Sponsor credit</option></select></div>
         <div class="fg"><div class="fl">Keterangan</div><input type="text" id="td-ket" placeholder="opsional"></div>
       </div>
-      <div class="info info-am"><i class="ti ti-info-circle"></i> Saldo berkurang otomatis saat player memilih metode "Deposit" di tab Slot Player.</div>
+      <div class="info info-am"><i class="ti ti-info-circle"></i> Saldo berkurang otomatis saat dipakai lewat tombol "Pakai deposit" di kolom Deposit — tab Slot Player.</div>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-deposit')">Batal</button><button class="btn btn-prim" onclick="submitTambahDeposit()"><i class="ti ti-check"></i> Simpan</button></div>
+  </div>
+</div>
+
+<div id="m-pakai-deposit" class="modal-ov" onclick="bgClose(event,'m-pakai-deposit')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-wallet" style="color:var(--am)"></i> Pakai deposit — <span id="pd-player-name"></span></div><button class="ib" onclick="closeModal('m-pakai-deposit')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--mu);margin-bottom:10px" id="pd-info-line"></div>
+      <div class="g2f">
+        <div class="fg"><div class="fl">Pakai deposit?</div>
+          <select id="pd-pakai" onchange="pdToggleJumlah()">
+            <option value="Pakai">Pakai</option>
+            <option value="Tidak">Tidak</option>
+          </select>
+        </div>
+        <div class="fg"><div class="fl">Jumlah dipakai (Rp)</div><input type="number" id="pd-jumlah"></div>
+      </div>
+      <div class="info info-am"><i class="ti ti-info-circle"></i> Kalau deposit belum menutup semua HTM, sisanya tetap perlu dipilih metode bayarnya di kolom Bank/Cash slot player.</div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-pakai-deposit')">Batal</button><button class="btn btn-prim" onclick="submitPakaiDeposit()"><i class="ti ti-check"></i> Simpan</button></div>
   </div>
 </div>
 
@@ -1083,7 +1099,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="g2f">
         <div class="fg">
           <div class="fl">Warna jersey</div>
-          <input type="text" id="ts-warna" placeholder="Merah / Kuning / Biru / Hijau / dll" list="warna-list">
+          <input type="text" id="ts-warna" placeholder="Merah / Kuning / Biru / Hijau / dll" list="warna-list" oninput="syncTsHexFromWarna(this.value)">
           <datalist id="warna-list">
             <option>Merah</option><option>Kuning</option><option>Biru</option><option>Hijau</option>
             <option>Putih</option><option>Hitam</option><option>Oranye</option><option>Abu-abu</option>
@@ -1092,9 +1108,16 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div class="fg"><div class="fl">Tipe jersey</div><select id="ts-tipe"><option>Field</option><option>GK</option></select></div>
         <div class="fg"><div class="fl">Ukuran</div><select id="ts-ukuran"><option>M</option><option>L</option><option>XL</option><option>2XL</option><option>3XL</option><option>S</option></select></div>
         <div class="fg"><div class="fl">Jumlah unit (ditambahkan)</div><input type="number" id="ts-jumlah" min="1" value="1" placeholder="Berapa unit baru?"></div>
+        <div class="fg">
+          <div class="fl">Warna identitas (utk Lihat line up)</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="color" id="ts-hex" value="#9CA3AF" style="width:44px;height:32px;padding:2px;border-radius:6px;border:1px solid var(--bd);cursor:pointer">
+            <span style="font-size:11px;color:var(--mu)">Dipakai sbg ikon ❤️ berwarna di Lihat line up</span>
+          </div>
+        </div>
         <div class="fg" style="grid-column:span 2"><div class="fl">Keterangan (opsional)</div><input type="text" id="ts-ket" placeholder="mis. beli 2 jersey Merah XL baru, atau ganti warna Ungu L"></div>
       </div>
-      <div class="info info-ac"><i class="ti ti-info-circle"></i> Jika warna belum ada → jersey baru didaftarkan ke sistem. Jika sudah ada → stok bertambah. Perubahan langsung tercermin di notifikasi ketersediaan saat input player.</div>
+      <div class="info info-ac"><i class="ti ti-info-circle"></i> Jika warna belum ada → jersey baru didaftarkan ke sistem. Jika sudah ada → stok bertambah (dan warna identitasnya ikut diperbarui). Perubahan langsung tercermin di notifikasi ketersediaan saat input player.</div>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-stok')">Batal</button><button class="btn btn-prim" onclick="submitTambahStok()"><i class="ti ti-check"></i> Simpan stok</button></div>
   </div>
@@ -1146,7 +1169,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         </div>
         <div class="fg" style="margin-bottom:0">
           <div class="fl">Jam main</div>
-          <input type="text" id="bc-jam" value="15.30 - 18.00 (GAME SORE)">
+          <input type="text" id="bc-jam" value="15.30 - 18.00 (GAME SORE)" onchange="prefillJamMulai()">
         </div>
         <div class="fg" style="margin-bottom:0">
           <div class="fl">Prakiraan cuaca</div>
@@ -1156,7 +1179,16 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
           <div class="fl">Match ke-</div>
           <input type="number" id="bc-matchno" value="39" min="1">
         </div>
+        <div class="fg" style="margin-bottom:0">
+          <div class="fl">Jam kick-off (utk hitung jam ready)</div>
+          <input type="time" id="bc-jam-mulai" value="15:30">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <div class="fl">Ready berapa menit sebelum kick-off</div>
+          <input type="number" id="bc-ready-menit" value="15" min="0" max="120">
+        </div>
       </div>
+      <div class="info info-ac" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> Jam "sudah ready" di Catatan point 2 dihitung otomatis dari Jam kick-off di atas, jadi otomatis nyesuaiin sendiri buat game pagi, sore, atau malam — nggak perlu diketik manual.</div>
 
       <!-- Preview teks -->
       <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Preview broadcast</div>
@@ -1173,6 +1205,28 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <span id="bc-copy-ok" style="font-size:11px;color:var(--gn);display:none"><i class="ti ti-check"></i> Tersalin!</span>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- M: Laporan PDF (Cost & Benefit) — dibangun dari data match aktif saat
+     dibuka, ditampilkan di sini biar admin bisa lihat bentuknya langsung,
+     dan bisa dicetak/disimpan sbg PDF lewat dialog print browser (Ctrl/Cmd+P
+     -> Save as PDF), format kolomnya diadaptasi dari contoh laporan yg sudah
+     dipakai sebelumnya (Biaya + Pembayaran Player + Margin + Split Profit),
+     ditambah status SHTM yg belum ada di contoh lama. -->
+<div id="m-laporan-pdf" class="modal-ov" onclick="bgClose(event,'m-laporan-pdf')">
+  <div class="modal modal-xwide">
+    <div class="modal-hd no-print">
+      <div class="modal-title"><i class="ti ti-file-text" style="color:var(--gn)"></i> Laporan Cost &amp; Benefit</div>
+      <button class="ib" onclick="closeModal('m-laporan-pdf')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="laporan-pdf-content"><!-- di-generate oleh generateLaporanPdf() --></div>
+    </div>
+    <div class="modal-ft no-print">
+      <button class="btn" onclick="closeModal('m-laporan-pdf')">Tutup</button>
+      <button class="btn btn-prim" onclick="window.print()"><i class="ti ti-printer"></i> Cetak / Simpan sbg PDF</button>
     </div>
   </div>
 </div>
@@ -1209,6 +1263,20 @@ const SCORERS=[
   {rank:'6',name:'Arsya',cat:'Umum',gol:4,pct:21},
   {rank:'7',name:'Eri',cat:'SMS',gol:4,pct:21},
 ];
+const SCORERS_2026=[
+  {rank:'🥇',name:'Jayadi',cat:'Umum',gol:8,pct:100},
+  {rank:'🥈',name:'Annas',cat:'BMR',gol:7,pct:88},
+  {rank:'🥉',name:'Bambang',cat:'SMS',gol:5,pct:63},
+  {rank:'4',name:'Wasis',cat:'Umum',gol:4,pct:50},
+  {rank:'5',name:'Ibnu',cat:'Umum',gol:3,pct:38},
+];
+function filterScorer(period,btn){
+  if(btn){
+    btn.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  renderScorer('d-scorer', period==='2026' ? SCORERS_2026 : SCORERS);
+}
 const MATCH_SCORERS=[{rank:1,name:'Jayadi',gol:3,pct:100},{rank:2,name:'Ricky',gol:2,pct:67},{rank:3,name:'Wayan',gol:1,pct:33}];
 
 // Lapangan data per tipe
@@ -1284,6 +1352,7 @@ function goPage(id){
   const t=document.getElementById('ntab-'+id);if(t)t.classList.add('active');
   if(id==='dashboard')setTimeout(initCharts,60);
   if(id==='reporting')setTimeout(()=>{if(cRpt)cRpt.destroy();cRpt=mkLine('chartRptMargin',MD.l24,MD.d24);},60);
+  if(id==='admin')renderJerseyStokTable();
 }
 function rptTab(id,btn){
   document.querySelectorAll('#page-reporting .tab-p').forEach(p=>p.classList.remove('active'));
@@ -1307,6 +1376,8 @@ function adminTab(id,btn){
   const el=document.getElementById('adm-'+id);
   if(el){el.style.display='block';el.classList.add('active');}
   if(btn)btn.classList.add('active');
+  if(id==='jersey') renderJerseyStokTable();
+  if(id==='player') refreshAllKelolaPlayerShtm();
 }
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -1364,16 +1435,33 @@ const LINEUP = {
   }
 };
 
-const CATATAN = `⚠️ Please Note
-1. Cek list nama dalam line up, jika ada yang beda silakan konfirmasi.
-2. Budayakan ontime, jam 15.45 sudah ready
-3. Be friendly, main dengan siapa aja dan bicarakan posisi baik-baik karena maen barengan.
-4. PURE HAPPY & HAHA HIHI, dilarang main keras dan kasar.
-5. Segala bentuk cedera merupakan tanggung jawab pribadi.
-6. Doorprize diundi di akhir game.
-7. Jangan lupa bawa botol minum.
-#SobatMinisoccer`;
-
+/* Jam "sudah ready" TIDAK di-hardcode lagi — dihitung dari Jam kick-off
+   (bc-jam-mulai) dikurangi berapa menit sebelum kick-off admin mau semua
+   sudah standby (bc-ready-menit, default 15). Perhitungan waktu penuh
+   (bukan cuma "kurangi 15"), jadi otomatis benar baik match-nya pagi,
+   sore, atau malam, termasuk kalau kepotong lewat tengah malam. */
+function computeReadyTime(jamMulai24, menitSebelum){
+  if(!jamMulai24) return null;
+  const parts = jamMulai24.split(':');
+  const h = parseInt(parts[0],10), m = parseInt(parts[1],10);
+  if(isNaN(h) || isNaN(m)) return null;
+  let total = h*60 + m - (parseInt(menitSebelum,10) || 0);
+  total = ((total % 1440) + 1440) % 1440; // wrap aman kalau lewat tengah malam
+  const rh = Math.floor(total/60);
+  const rm = total%60;
+  return String(rh).padStart(2,'0') + '.' + String(rm).padStart(2,'0');
+}
+// Coba tebak jam mulai dari isian teks "Jam main" (mis. "15.30 - 18.00 ...")
+// buat isi field waktu (bc-jam-mulai) otomatis — kalau admin mau jam ready
+// beda dari "kick-off minus sekian menit" yg standar, tinggal ubah field
+// "Ready berapa menit sebelum kick-off", bukan field jam mulai ini.
+function prefillJamMulai(){
+  const jamEl = document.getElementById('bc-jam');
+  const jamMulaiEl = document.getElementById('bc-jam-mulai');
+  if(!jamEl || !jamMulaiEl) return;
+  const m = jamEl.value.match(/(\d{1,2})[.:](\d{2})/);
+  if(m) jamMulaiEl.value = String(m[1]).padStart(2,'0') + ':' + m[2];
+}
 function genBroadcast() {
   const venue   = document.getElementById('bc-venue').value.trim();
   const maps    = document.getElementById('bc-maps').value.trim();
@@ -1381,6 +1469,9 @@ function genBroadcast() {
   const jam     = document.getElementById('bc-jam').value.trim();
   const cuaca   = document.getElementById('bc-cuaca').value.trim();
   const matchno = document.getElementById('bc-matchno').value.trim();
+  const jamMulai = document.getElementById('bc-jam-mulai').value;
+  const readyMenit = document.getElementById('bc-ready-menit').value;
+  const readyTime = computeReadyTime(jamMulai, readyMenit);
 
   let txt = `🌟 Line Up Matchday ${matchno} 🌟\n`;
   txt += `🏟️ : ${venue}\n`;
@@ -1405,7 +1496,19 @@ function genBroadcast() {
     txt += '\n';
   });
 
-  txt += CATATAN;
+  const catatan = [
+    '⚠️ Please Note',
+    '1. Cek list nama dalam line up, jika ada yang beda silakan konfirmasi.',
+    '2. Budayakan ontime, jam ' + (readyTime || '—') + ' sudah ready',
+    '3. Be friendly, main dengan siapa aja dan bicarakan posisi baik-baik karena maen barengan.',
+    '4. PURE HAPPY & HAHA HIHI, dilarang main keras dan kasar.',
+    '5. Segala bentuk cedera merupakan tanggung jawab pribadi.',
+    '6. Doorprize diundi di akhir game.',
+    '7. Jangan lupa bawa botol minum.',
+    '#SobatMinisoccer'
+  ].join('\n');
+
+  txt += catatan;
   document.getElementById('bc-preview').value = txt;
 }
 
@@ -1442,6 +1545,27 @@ const JERSEY_STOK = {
   'Biru':   { M:2, L:3, XL:3, '2XL':1 },
   'Hijau':  { M:2, L:1, XL:4, '2XL':1 },
 };
+// Stok jersey khusus tipe GK (kiper) — terpisah dari warna tim Field di
+// atas, didaftarkan lewat "Tambah stok" dgn Tipe jersey = GK.
+const JERSEY_STOK_GK = {
+  'GK': { M:2, L:2, XL:2 },
+};
+/* Warna asli (hex) per nama jersey — dipakai buat ikon love berwarna di
+   Lihat Line up. Nama jersey bebas ketik (mis. "Hitam Pink"), jadi nggak
+   bisa ditebak otomatis dari nama; admin pilih sendiri lewat color-picker
+   di form "Tambah / update stok", disimpan di sini. Warna default 4 tim
+   awal sudah diisi supaya konsisten sama dot warna yg dipakai sebelumnya. */
+const JERSEY_COLOR_HEX = {
+  'Merah': '#EF4444',
+  'Kuning': '#EAB308',
+  'Biru': '#3B82F6',
+  'Hijau': '#16A34A',
+  'GK': '#6B7280',
+};
+function jerseyHeartSvg(hex, size){
+  const s = size || 15;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${hex||'#888'}" style="flex-shrink:0;vertical-align:middle"><path d="M12 21s-7.5-4.7-10.2-9.1C.2 8.8 1.6 5 5.1 5c2 0 3.6 1.1 4.4 2.6C10.3 6.1 11.9 5 13.9 5c3.5 0 4.9 3.8 3.3 6.9C14.5 16.3 12 21 12 21z"/></svg>`;
+}
 
 // Warna jersey yang sedang dipakai field players (untuk filter GK)
 function getWarnaTerpakai() {
@@ -1491,22 +1615,19 @@ function updateGkOptions(gkSel) {
   const currentVal = gkSel.value;
   const notif = gkSel.nextElementSibling;
 
-  // Rebuild options
+  // Rebuild options — daftar warna tim (ikut stok jersey terbaru) + opsi "GK" khusus
+  // (jersey kiper terpisah dari warna tim, jadi selalu tersedia apa pun warna field yang dipakai)
+  const teamColors = typeof JERSEY_STOK !== 'undefined' ? Object.keys(JERSEY_STOK) : ['Merah','Kuning','Biru','Hijau'];
   let html = '<option value="">— pilih</option>';
-  if(warnaTerpakai.length === 0) {
-    // Kalau belum ada field yang pilih, tampilkan semua
-    ['Merah','Kuning','Biru','Hijau'].forEach(w => {
-      html += `<option value="${w}"${currentVal===w?' selected':''}>${w}</option>`;
-    });
-  } else {
-    warnaTerpakai.forEach(w => {
-      html += `<option value="${w}"${currentVal===w?' selected':''}>${w}</option>`;
-    });
-  }
+  const daftarWarna = warnaTerpakai.length === 0 ? teamColors : warnaTerpakai;
+  daftarWarna.forEach(w => {
+    html += `<option value="${w}"${currentVal===w?' selected':''}>${w}</option>`;
+  });
+  html += `<option value="GK"${currentVal==='GK'?' selected':''}>GK (jersey kiper)</option>`;
   gkSel.innerHTML = html;
 
-  // Kalau nilai lama sudah tidak tersedia di pilihan baru, clear
-  if(currentVal && !warnaTerpakai.includes(currentVal) && warnaTerpakai.length > 0) {
+  // Kalau nilai lama sudah tidak tersedia di pilihan baru, clear (kecuali "GK", selalu valid)
+  if(currentVal && currentVal!=='GK' && !warnaTerpakai.includes(currentVal) && warnaTerpakai.length > 0) {
     gkSel.value = '';
     notif.innerHTML = '';
     notif.className = 'jersey-notif';
@@ -1519,7 +1640,7 @@ function updateGkOptions(gkSel) {
     notif.innerHTML = '';
     notif.className = 'jersey-notif';
   } else {
-    const stok = JERSEY_STOK[selectedWarna];
+    const stok = selectedWarna === 'GK' ? JERSEY_STOK_GK['GK'] : JERSEY_STOK[selectedWarna];
     const total = stok ? Object.values(stok).reduce((a,b)=>a+b,0) : 0;
     if(total > 0) {
       notif.innerHTML = '<i class="ti ti-check" style="font-size:9px"></i> OK';
@@ -1565,7 +1686,7 @@ function renderLineupView() {
     if(!jerseyCell || !jerseyCell.value) return;
 
     const warna = jerseyCell.value;
-    const namaText = namaCell ? namaCell.textContent.replace(/Next|SHTM Next ✓|SHTM/g,'').trim() : '?';
+    const namaText = namaCell ? slotRowNama(row) : '?';
     const posisi = posisiCell ? posisiCell.textContent.trim() : '';
     const ukuran = ukuranCell ? ukuranCell.textContent.trim() : '';
     const formasi = formasiCell ? formasiCell.value : '';
@@ -1576,28 +1697,27 @@ function renderLineupView() {
     else byWarna[warna].field.push({nama:namaText, uk:ukuran, formasi});
   });
 
-  const WARNA_CONFIG = {
-    'Merah':  { emoji:'❤️', dot:'#EF4444' },
-    'Kuning': { emoji:'💛', dot:'#EAB308' },
-    'Biru':   { emoji:'💙', dot:'#3B82F6' },
-    'Hijau':  { emoji:'💚', dot:'#16A34A' },
-  };
-
   if(Object.keys(byWarna).length === 0) {
     body.innerHTML = '<div style="color:var(--mu);font-size:13px;padding:10px 0">Belum ada player dengan jersey terpilih.</div>';
     return;
   }
 
+  // Warna default 4 tim tampil duluan (urutan yg sudah biasa dilihat), warna
+  // lain (jersey baru yg didaftarkan lewat Tambah stok, termasuk "GK") ikut
+  // ditampilkan juga di belakangnya — sebelumnya warna di luar 4 default ini
+  // diam-diam tidak pernah muncul sama sekali di Lihat line up.
+  const urutanDefault = ['Merah','Kuning','Biru','Hijau'];
+  const urutanLain = Object.keys(byWarna).filter(w=>!urutanDefault.includes(w));
+  const urutan = [...urutanDefault, ...urutanLain];
+
   let out = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
-  const urutan = ['Merah','Kuning','Biru','Hijau'];
   urutan.forEach(warna => {
     if(!byWarna[warna]) return;
-    const cfg = WARNA_CONFIG[warna] || { emoji:'⚪', dot:'#888' };
+    const hex = JERSEY_COLOR_HEX[warna] || '#9CA3AF';
     const tim = byWarna[warna];
     out += `<div style="border:1px solid var(--bd);border-radius:10px;overflow:hidden">
       <div style="padding:9px 13px;font-size:13px;font-weight:600;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:7px;background:var(--su2)">
-        <span style="width:10px;height:10px;border-radius:50%;background:${cfg.dot};display:inline-block;flex-shrink:0"></span>
-        ${cfg.emoji} ${warna} SMS
+        ${jerseyHeartSvg(hex,15)} ${warna}${/sms$/i.test(warna.trim())?'':' SMS'}
         <span style="font-size:11px;font-weight:400;color:var(--mu);margin-left:auto">${tim.gk.length} GK · ${tim.field.length} Field</span>
       </div>
       <div style="padding:8px 13px">`;
@@ -1625,13 +1745,13 @@ function renderLineupView() {
 const _origOpenModal = openModal;
 openModal = function(id) {
   // Match yang sudah ditutup: kunci semua modal input (kecuali sekedar lihat lineup/broadcast/db player)
-  const lockedIds = ['m-tambah-player','m-tambah-biaya','m-tambah-deposit','m-tambah-gol'];
+  const lockedIds = ['m-tambah-player','m-tambah-biaya','m-tambah-deposit','m-tambah-gol','m-pakai-deposit'];
   if(lockedIds.includes(id) && msIsActiveLocked()){
     showToast('Match ini sudah ditutup dan dikunci — tidak bisa diubah lagi.');
     return;
   }
   _origOpenModal(id);
-  if(id === 'm-broadcast') setTimeout(genBroadcast, 80);
+  if(id === 'm-broadcast') setTimeout(()=>{ prefillJamMulai(); genBroadcast(); }, 80);
   if(id === 'm-lineup-view') setTimeout(renderLineupView, 60);
   if(id === 'm-tambah-gol') setTimeout(populateGolPlayerSelect, 30);
 };
@@ -1658,6 +1778,153 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function escAttr(s){
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+const BANK_METHODS = ['','BCA','BSI','Mandiri','BRI','BNI','Cash','Deposit'];
+const LABEL_OPTIONS = ['Normal','SHTM','Promo','Free','Sponsor'];
+const UKURAN_OPTIONS = ['M','L','XL','2XL'];
+const SHTM_STATUS_OPTIONS = ['Belum dipakai','Sudah dipakai'];
+const KATEGORI_OPTIONS = ['SMS','BMR','Umum'];
+/* Bank/Cash: TIDAK live-select di tabel — tampil sbg teks/badge biasa, cuma
+   berubah jadi dropdown (bukan free text) saat masuk mode edit lewat aksi
+   pensil, supaya konsisten dgn kolom lain tapi tetap dibatasi ke daftar bank. */
+function bankSelectEditHtml(selected){
+  const opts = BANK_METHODS.map(m=>`<option value="${m}"${m===selected?' selected':''}>${m||'— (belum/sementara)'}</option>`).join('');
+  return `<select class="ms-ed-input" data-edit-type="bank" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
+}
+function bankDisplayHtml(selected){
+  return selected ? `<span class="b b-ac">${escAttr(selected)}</span>` : '—';
+}
+/* Warna jersey yang tersedia — diambil dari JERSEY_STOK supaya warna baru
+   yang didaftarkan lewat "Tambah stok" langsung muncul di semua dropdown jersey. */
+function jerseySelectHtml(posisi, selected){
+  const colors = Object.keys(JERSEY_STOK);
+  let opts = '<option value="">— pilih</option>';
+  colors.forEach(c=>{ opts += `<option value="${c}"${c===selected?' selected':''}>${c}</option>`; });
+  if(posisi==='gk') opts += `<option value="GK"${selected==='GK'?' selected':''}>GK (jersey kiper)</option>`;
+  return `<select class="jersey-sel" data-posisi="${posisi}" onchange="onJerseyChange(this)">${opts}</select><div class="jersey-notif" style="font-size:10px;margin-top:3px"></div>`;
+}
+function refreshAllJerseySelects(){
+  // Field: rebuild dari daftar warna JERSEY_STOK terbaru. GK: biarkan updateGkOptions
+  // yang urus (punya logika filter tersendiri + opsi "GK" khusus).
+  document.querySelectorAll('.jersey-sel[data-posisi="field"]').forEach(sel=>{
+    const current = sel.value;
+    const colors = Object.keys(JERSEY_STOK);
+    let opts = '<option value="">— pilih</option>';
+    colors.forEach(c=>{ opts += `<option value="${c}"${c===current?' selected':''}>${c}</option>`; });
+    sel.innerHTML = opts;
+  });
+  document.querySelectorAll('.jersey-sel[data-posisi="gk"]').forEach(updateGkOptions);
+}
+
+/* ── STOK JERSEY (Admin) — tabel dinamis dari JERSEY_STOK ──
+   Sebelumnya kartu Jersey Field di-hardcode ke 4 warna (Merah/Kuning/
+   Biru/Hijau) dan angkanya statis, jadi warna baru yg ditambah lewat
+   "Tambah stok" (mis. Hitam Pink) tidak pernah muncul di sini. Sekarang
+   tabel dibangun dari JERSEY_STOK apa adanya (warna & ukuran apa pun),
+   dan "terpakai" dihitung real dari slot player match yg sedang aktif.
+   Format sel: {terpakai}/{total} — sisi kiri jumlah yg sudah dipakai
+   di match ini, sisi kanan total stok yg dimiliki. */
+const JERSEY_SIZE_ORDER = ['S','M','L','XL','2XL','3XL'];
+function computeJerseyUsage(){
+  // key "{warna}|field" atau "{warna}|gk" -> {ukuran: jumlah}. Dipisah per
+  // posisi supaya nama yg sama (mis. keduanya "GK") tidak ketuker antara
+  // stok Field & stok GK.
+  const usage = {};
+  document.querySelectorAll('#slot-tbody tr').forEach(row=>{
+    const jerseySel = row.querySelector('.jersey-sel');
+    if(!jerseySel) return;
+    const warna = jerseySel.value;
+    if(!warna) return;
+    const posisi = jerseySel.dataset.posisi === 'gk' ? 'gk' : 'field';
+    const ukuranTd = row.children[8];
+    const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+    if(!ukuran) return;
+    const key = warna + '|' + posisi;
+    if(!usage[key]) usage[key] = {};
+    usage[key][ukuran] = (usage[key][ukuran]||0) + 1;
+  });
+  return usage;
+}
+function jerseyStokRowHtml(warna, tipe, stokMap, usage){
+  const rowUsage = usage[warna + '|' + (tipe==='GK' ? 'gk' : 'field')] || {};
+  const tipeBadgeClass = tipe==='GK' ? 'b-pu' : 'b-gy';
+  const hex = JERSEY_COLOR_HEX[warna] || '#9CA3AF';
+  let html = `<tr data-warna="${escAttr(warna)}" data-tipe="${tipe}"><td class="pri">${jerseyHeartSvg(hex,13)} ${escAttr(warna)}</td><td><span class="b ${tipeBadgeClass}" style="font-size:10px">${tipe}</span></td>`;
+  JERSEY_SIZE_ORDER.forEach(sz=>{
+    const total = (stokMap && stokMap[sz]) || 0;
+    const used = rowUsage[sz] || 0;
+    if(total===0 && used===0){
+      html += `<td data-sz="${sz}" style="text-align:center;color:var(--mu)">—</td>`;
+    } else {
+      const over = used > total;
+      const full = used===total && total>0;
+      const style = over || full ? 'color:var(--rd);font-weight:600' : 'color:var(--tx)';
+      const warn = over ? ' <i class="ti ti-alert-triangle" style="font-size:10px" title="Terpakai melebihi stok!"></i>'
+        : (full ? ' <i class="ti ti-alert-circle" style="font-size:10px" title="Stok habis"></i>' : '');
+      html += `<td data-sz="${sz}" style="text-align:center;${style}">${used}/${total}${warn}</td>`;
+    }
+  });
+  html += `<td><div class="acts"><button class="ib jrs-edit" onclick="jerseyStokEditRow(this)"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
+  html += '</tr>';
+  return html;
+}
+function renderJerseyStokTable(){
+  const wrap = document.getElementById('jersey-stok-table-wrap');
+  if(!wrap) return;
+  const usage = computeJerseyUsage();
+  const fieldColors = Object.keys(JERSEY_STOK);
+  const gkColors = Object.keys(JERSEY_STOK_GK);
+  const headingEl = document.getElementById('jersey-stok-heading');
+  const totalRows = fieldColors.length + gkColors.length;
+  if(headingEl) headingEl.textContent = 'Stok jersey SMS — ' + totalRows + ' jenis · Field + GK';
+  if(totalRows === 0){
+    wrap.innerHTML = '<div style="color:var(--mu);font-size:12px;padding:8px 0">Belum ada stok jersey tercatat.</div>';
+    return;
+  }
+  let html = '<table class="tbl"><thead><tr><th>Warna / Nama Jersey</th><th style="width:64px">Tipe</th>'
+    + JERSEY_SIZE_ORDER.map(sz=>`<th style="text-align:center;width:60px">${sz}</th>`).join('')
+    + '<th style="width:70px">Aksi</th>'
+    + '</tr></thead><tbody>';
+  fieldColors.forEach(warna=>{ html += jerseyStokRowHtml(warna, 'Field', JERSEY_STOK[warna], usage); });
+  gkColors.forEach(warna=>{ html += jerseyStokRowHtml(warna, 'GK', JERSEY_STOK_GK[warna], usage); });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+/* Edit stok jersey per baris: cuma TOTAL per ukuran yg bisa diubah admin
+   (angka terpakai tetap dihitung otomatis dari match aktif, tidak bisa
+   diedit manual). Dipakai a.l. utk mengurangi stok kalau ada jersey yg
+   hilang/rusak — cukup turunkan angka total di sisi kanan "/". */
+function jerseyStokEditRow(btn){
+  const row = btn.closest('tr');
+  if(!row || row.classList.contains('jrs-editing')) return;
+  row.classList.add('jrs-editing');
+  const warna = row.dataset.warna;
+  const tipe = row.dataset.tipe;
+  const stokMap = (tipe==='GK' ? JERSEY_STOK_GK : JERSEY_STOK)[warna] || {};
+  JERSEY_SIZE_ORDER.forEach(sz=>{
+    const td = row.querySelector(`td[data-sz="${sz}"]`);
+    if(!td) return;
+    const total = stokMap[sz] || 0;
+    td.innerHTML = `<input type="number" min="0" class="jrs-ed-input" data-sz="${sz}" value="${total}" style="width:46px;font-size:11px;padding:3px 4px;border-radius:5px;border:1px solid var(--ac);font-family:var(--fn);text-align:center">`;
+  });
+  btn.innerHTML = '<i class="ti ti-check" style="color:var(--gn)"></i>';
+  btn.onclick = function(){ jerseyStokSaveRow(btn); };
+}
+function jerseyStokSaveRow(btn){
+  const row = btn.closest('tr');
+  if(!row) return;
+  const warna = row.dataset.warna;
+  const tipe = row.dataset.tipe;
+  const target = tipe==='GK' ? JERSEY_STOK_GK : JERSEY_STOK;
+  if(!target[warna]) target[warna] = {S:0,M:0,L:0,XL:0,'2XL':0,'3XL':0};
+  row.querySelectorAll('.jrs-ed-input').forEach(inp=>{
+    const sz = inp.dataset.sz;
+    const n = Math.max(0, parseInt(inp.value,10) || 0);
+    target[warna][sz] = n;
+  });
+  showToast('Stok jersey ' + warna + ' (' + tipe + ') diperbarui.');
+  refreshAllJerseySelects();
+  renderJerseyStokTable();
 }
 function parseRupiah(s){
   if(s==null) return 0;
@@ -1688,6 +1955,7 @@ function showToast(msg){
 function rowCells(row){
   return [...row.children].filter(el=>{
     if(el.classList && el.classList.contains('acts')) return false;
+    if(el.dataset && el.dataset.noEdit) return false; // mis. kolom No — tidak boleh diedit
     if(el.querySelector && el.querySelector('select')) return false;
     return true;
   });
@@ -1700,9 +1968,53 @@ function numAttrs(val){
   return '';
 }
 function enterEditCell(el){
+  if(el.dataset && el.dataset.editType==='bank'){
+    const cur = el.dataset.bankVal || '';
+    const noteEl = el.querySelector(':scope > div');
+    el.innerHTML = bankSelectEditHtml(cur) + (noteEl ? noteEl.outerHTML : '');
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='posisi'){
+    const cur = el.textContent.trim()==='GK' ? 'GK' : 'Field';
+    el.innerHTML = `<select class="ms-ed-input" data-edit-type="posisi" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)"><option value="Field"${cur==='Field'?' selected':''}>Field</option><option value="GK"${cur==='GK'?' selected':''}>GK</option></select>`;
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='label'){
+    const cur = el.textContent.trim();
+    const opts = LABEL_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    el.innerHTML = `<select class="ms-ed-input" data-edit-type="label" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='ukuran'){
+    const cur = el.textContent.trim();
+    const opts = UKURAN_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    el.innerHTML = `<select class="ms-ed-input" data-edit-type="ukuran" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='shtm-status'){
+    const cur = el.textContent.trim();
+    const opts = SHTM_STATUS_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    el.innerHTML = `<select class="ms-ed-input" data-edit-type="shtm-status" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='kategori'){
+    const cur = el.textContent.trim();
+    const opts = KATEGORI_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    el.innerHTML = `<select class="ms-ed-input" data-edit-type="kategori" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='deposit'){
+    // Deposit selalu diedit sbg angka murni (Rupiah), termasuk saat isinya
+    // masih "—" (belum punya deposit) — supaya nilainya konsisten numerik
+    // dan bisa dihitung/dijumlah, bukan sekedar teks bebas.
+    const n = parseRupiah(el.textContent.trim());
+    el.innerHTML = `<input class="ms-ed-input" type="number" min="0" step="1000" data-edit-type="deposit" value="${n}" style="width:96px">`;
+    return;
+  }
   if(el.children.length===0){
     const val = el.textContent.trim();
-    el.innerHTML = `<input class="ms-ed-input" value="${escAttr(val)}"${numAttrs(val)}>`;
+    const w = Math.min(92,Math.max(30,val.length*7));
+    el.innerHTML = `<input class="ms-ed-input" style="width:${w}px" value="${escAttr(val)}"${numAttrs(val)}>`;
     return;
   }
   const first = el.childNodes[0];
@@ -1711,7 +2023,7 @@ function enterEditCell(el){
     const inp = document.createElement('input');
     inp.className='ms-ed-input';
     inp.value=val;
-    inp.style.width = Math.max(46,val.length*7)+'px';
+    inp.style.width = Math.min(84,Math.max(40,val.length*6.5))+'px';
     el.replaceChild(inp, first);
     el.insertBefore(document.createTextNode(' '), inp.nextSibling);
     return;
@@ -1719,11 +2031,57 @@ function enterEditCell(el){
   if(el.children.length===1 && el.children[0].tagName==='SPAN' && el.children[0].classList.contains('b') && el.children[0].children.length===0){
     const span = el.children[0];
     const val = span.textContent.trim();
-    span.innerHTML = `<input class="ms-ed-input" value="${escAttr(val)}">`;
+    const w = Math.min(80,Math.max(38,val.length*7));
+    span.innerHTML = `<input class="ms-ed-input" style="width:${w}px" value="${escAttr(val)}">`;
     return;
   }
 }
 function commitInput(input){
+  if(input.dataset.editType==='bank'){
+    const td = input.parentNode;
+    const val = input.value;
+    const noteEl = td.querySelector(':scope > div');
+    const noteHtml = noteEl ? noteEl.outerHTML : '';
+    td.dataset.bankVal = val;
+    td.innerHTML = bankDisplayHtml(val) + noteHtml;
+    td.style.color = val ? '' : 'var(--mu)';
+    return;
+  }
+  if(input.dataset.editType==='posisi'){
+    const td = input.parentNode;
+    td.innerHTML = `<span class="b b-gy">${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='label'){
+    const td = input.parentNode;
+    const cls = input.value==='SHTM' ? 'b-sh' : 'b-gy';
+    td.innerHTML = `<span class="b ${cls}">${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='ukuran'){
+    const td = input.parentNode;
+    td.innerHTML = `<span class="b b-gy">${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='shtm-status'){
+    const td = input.parentNode;
+    const cls = input.value==='Sudah dipakai' ? 'b-gn' : 'b-sh';
+    td.innerHTML = `<span class="b ${cls}">${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='kategori'){
+    const td = input.parentNode;
+    td.innerHTML = `<span class="b b-gy">${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='deposit'){
+    const td = input.parentNode;
+    const n = Math.max(0, parseInt(input.value,10) || 0);
+    td.textContent = n>0 ? ('Rp ' + fmtRupiah(n)) : '—';
+    td.style.color = n>0 ? 'var(--am)' : '';
+    td.style.fontWeight = n>0 ? '500' : '';
+    return;
+  }
   let val = input.value.trim();
   if(input.dataset.numeric){
     const n = parseRupiah(val);
@@ -1758,13 +2116,13 @@ function doStartEdit(btn){
   btn.dataset.origHtml = btn.innerHTML;
   btn.innerHTML = '<i class="ti ti-check" style="color:var(--gn)"></i>';
   btn.classList.add('ms-saving');
-  const inp = row.querySelector('input.ms-ed-input');
-  if(inp){ inp.focus(); inp.select(); }
+  const inp = row.querySelector('input.ms-ed-input, select.ms-ed-input');
+  if(inp){ inp.focus(); if(inp.select) inp.select(); }
 }
 function doSaveEdit(btn){
   const row = btn.closest('tr') || btn.closest('.dep-row');
   if(!row) return;
-  row.querySelectorAll('input.ms-ed-input').forEach(commitInput);
+  row.querySelectorAll('input.ms-ed-input, select.ms-ed-input').forEach(commitInput);
   row.classList.remove('ms-editing');
   btn.innerHTML = btn.dataset.origHtml || '<i class="ti ti-edit"></i>';
   btn.classList.remove('ms-saving');
@@ -1772,23 +2130,67 @@ function doSaveEdit(btn){
 }
 function afterRowChange(row){
   if(row.closest && row.closest('#adm-shtm')){
+    // Status SHTM sekarang dropdown langsung (Belum/Sudah dipakai), bukan
+    // diturunkan otomatis dari kolom Tgl Dipakai — admin yang menentukan.
     const tds = row.querySelectorAll(':scope > td');
-    const dipakaiTd = tds[3];
     const statusTd = tds[4];
-    const dipakai = dipakaiTd ? dipakaiTd.textContent.trim() : '';
-    const used = dipakai && dipakai !== '—' && dipakai !== '-';
-    if(statusTd){
-      statusTd.innerHTML = used ? '<span class="b b-gn">Sudah dipakai</span>' : '<span class="b b-sh">Belum dipakai</span>';
-    }
+    const used = statusTd && statusTd.textContent.trim() === 'Sudah dipakai';
     row.style.background = used ? '' : '#FFF5F5';
-    const actsDiv = row.querySelector('.acts');
-    if(actsDiv){
-      const editBtn = actsDiv.querySelector('.ib-edit');
-      const editHtml = editBtn ? editBtn.outerHTML : '<button class="ib ib-edit"><i class="ti ti-edit"></i></button>';
-      actsDiv.innerHTML = used ? editHtml : editHtml + '<button class="ib del"><i class="ti ti-trash"></i></button>';
+    refreshKelolaPlayerShtmCell(shtmRowNama(row));
+  }
+  if(row.closest && row.closest('#player-tbody')){
+    // Dropdown status SHTM di Kelola Player sama kayak di Daftar SHTM, dan
+    // dua-duanya harus tetap sinkron — jadi tiap kali diedit dari sisi
+    // Kelola Player, dorong nilainya ke Daftar SHTM juga (update baris yg
+    // sudah ada, atau bikin baris baru kalau player ini belum pernah punya
+    // catatan SHTM sama sekali).
+    const tds = row.querySelectorAll(':scope > td');
+    const statusTd = tds[7];
+    const status = statusTd ? statusTd.textContent.trim() : '';
+    if(status === 'Belum dipakai' || status === 'Sudah dipakai'){
+      pushShtmStatusFromKelolaPlayer(playerDbRowNama(row), status);
     }
   }
+  if(row.closest && row.closest('#slot-tbody')){
+    syncPosisiToJersey(row);
+  }
+  if(row.classList && row.classList.contains('dep-row')){
+    refreshSlotDepositTriggers();
+  }
   recalcAll();
+}
+/* Posisi (Field/GK) sekarang bisa diedit terpisah dari kolom No. Kalau posisi
+   berubah, dropdown Jersey di row yang sama disesuaikan: GK dapat opsi
+   "GK (jersey kiper)" khusus, Field cuma daftar warna tim biasa — supaya
+   stok jersey & tampilan Lihat line up tetap konsisten. */
+function syncPosisiToJersey(row){
+  const posisiTd = row.cells[6];
+  const jerseySel = row.querySelector('.jersey-sel');
+  if(!posisiTd || !jerseySel) return;
+  const isGk = posisiTd.textContent.trim() === 'GK';
+  const wantPos = isGk ? 'gk' : 'field';
+  if(jerseySel.dataset.posisi === wantPos) return;
+  jerseySel.dataset.posisi = wantPos;
+  const currentVal = jerseySel.value;
+  if(isGk){
+    updateGkOptions(jerseySel);
+  } else {
+    const colors = Object.keys(JERSEY_STOK);
+    let opts = '<option value="">— pilih</option>';
+    colors.forEach(c=>{ opts += `<option value="${c}"${c===currentVal?' selected':''}>${c}</option>`; });
+    jerseySel.innerHTML = opts;
+    if(currentVal==='GK') jerseySel.value = '';
+    const notif = jerseySel.nextElementSibling;
+    if(notif){ notif.innerHTML=''; notif.className='jersey-notif'; }
+  }
+  showToast('Posisi diubah ke ' + (isGk?'GK':'Field') + ' — cek ulang pilihan jersey-nya.');
+}
+function renumberSlot(){
+  const rows = document.querySelectorAll('#slot-tbody tr');
+  rows.forEach((tr,i)=>{
+    const noTd = tr.querySelector(':scope > td[data-no-edit]');
+    if(noTd) noTd.textContent = i+1;
+  });
 }
 function onDeleteBtnClick(btn){
   if(msIsActiveLocked() && btn.closest('#trx-slot,#trx-biaya,#trx-deposit')){
@@ -1819,7 +2221,27 @@ document.addEventListener('click', function(e){
     e.preventDefault();
     const actsDiv = yesBtn.closest('.acts');
     const row = actsDiv ? (actsDiv.closest('tr') || actsDiv.closest('.dep-row')) : null;
+    const wasInShtm = row && row.closest && row.closest('#adm-shtm');
+    const wasInSlot = row && row.closest && row.closest('#slot-tbody');
+    const wasDepRow = row && row.classList && row.classList.contains('dep-row');
+    const wasJerseyStokRow = row && row.closest && row.closest('#jersey-stok-table-wrap');
+    const wasInPlayerDb = row && row.closest && row.closest('#player-tbody');
+    if(wasJerseyStokRow){
+      const warna = row.dataset.warna;
+      const tipe = row.dataset.tipe;
+      const target = tipe==='GK' ? JERSEY_STOK_GK : JERSEY_STOK;
+      if(warna && target[warna]) delete target[warna];
+      showToast('Stok jersey ' + warna + ' (' + tipe + ') dihapus.');
+      refreshAllJerseySelects();
+      renderJerseyStokTable();
+      return;
+    }
+    const shtmNamaBeforeDelete = wasInShtm ? shtmRowNama(row) : null;
     if(row) row.remove();
+    if(wasInShtm) { renumberShtm(); refreshKelolaPlayerShtmCell(shtmNamaBeforeDelete); }
+    if(wasInSlot) renumberSlot();
+    if(wasDepRow) refreshSlotDepositTriggers();
+    if(wasInPlayerDb) renumberPlayerDb();
     recalcAll();
     return;
   }
@@ -1890,7 +2312,197 @@ function recalcMargin(){
   }
   if(lblEl) lblEl.style.color = margin>=0 ? 'var(--gn)' : 'var(--rd)';
 }
-function recalcAll(){ recalcSlot(); recalcBiaya(); }
+function recalcRekap(){
+  const m = msMatches[msActiveId];
+  const titleEl = document.getElementById('rkg-title');
+  if(titleEl) titleEl.textContent = 'Rekap akhir match — ' + (m ? m.titleLine.split('—')[0].trim() : '');
+  const pasti = parseRupiah(document.getElementById('mb-pasti') && document.getElementById('mb-pasti').textContent);
+  const sementara = parseRupiah(document.getElementById('mb-sementara') && document.getElementById('mb-sementara').textContent);
+  const cost = parseRupiah(document.getElementById('mb-cost') && document.getElementById('mb-cost').textContent);
+  const sales = pasti + sementara;
+  const margin = sales - cost;
+  const malik = Math.round(margin*0.6);
+  const filan = margin - malik;
+  const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+  set('rkg-sales', 'Rp ' + fmtRupiah(sales));
+  set('rkg-biaya', 'Rp ' + fmtRupiah(cost));
+  set('rkg-margin', (margin>=0?'+':'-') + 'Rp ' + fmtRupiah(Math.abs(margin)));
+  set('rkg-malik', (malik>=0?'+':'-') + 'Rp ' + fmtRupiah(Math.abs(malik)));
+  set('rkg-filan', (filan>=0?'+':'-') + 'Rp ' + fmtRupiah(Math.abs(filan)));
+  const topgolEl = document.getElementById('rkg-topgol');
+  if(topgolEl){
+    if(m && m.matchScorers && m.matchScorers.length){
+      const top = m.matchScorers[0];
+      topgolEl.innerHTML = escAttr(top.name) + ' <span class="gol-chip">⚽ ' + top.gol + ' gol</span>';
+    } else {
+      topgolEl.innerHTML = '<span style="color:var(--mu)">Belum ada gol tercatat</span>';
+    }
+  }
+}
+function recalcAll(){ recalcSlot(); recalcBiaya(); recalcRekap(); }
+
+/* ── LAPORAN PDF (Cost & Benefit) ──
+   Format diadaptasi dari contoh laporan yg sudah dipakai (Biaya | Pembayaran
+   Player, lalu Sales/Margin/Split di bawah kolom Biaya), disesuaikan ke field
+   yg beneran ada di app ini: status bayar & metode per player, tipe bayar
+   (Normal/SHTM/Promo/dll), dan status SHTM match ini. */
+function computeFinancialsFromLiveDom(){
+  let pasti=0, sementara=0;
+  document.querySelectorAll('#slot-tbody tr').forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    const htm = parseRupiah(tds[2] ? tds[2].textContent : '');
+    const statusTxt = tds[9] ? tds[9].textContent : '';
+    if(/Lunas/i.test(statusTxt)) pasti += htm;
+    else if(/Sementara/i.test(statusTxt)) sementara += htm;
+  });
+  let realisasi = 0;
+  document.querySelectorAll('#biaya-tbody tr').forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    realisasi += parseRupiah(tds[3] ? tds[3].textContent : '');
+  });
+  const sales = pasti + sementara;
+  const margin = sales - realisasi;
+  const malik = Math.round(margin*0.6);
+  const filan = margin - malik;
+  return { sales, cost: realisasi, margin, malik, filan };
+}
+// Sama seperti di atas, tapi dari snapshot HTML tersimpan (match yg BUKAN
+// sedang aktif — datanya cuma ada di msMatches[id].slotHtml/biayaHtml, bukan
+// di DOM, karena DOM cuma nampilin satu match aktif di satu waktu).
+function computeMatchFinancials(m){
+  const slotTmp = document.createElement('tbody');
+  slotTmp.innerHTML = m.slotHtml || '';
+  let pasti=0, sementara=0;
+  slotTmp.querySelectorAll('tr').forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    const htm = parseRupiah(tds[2] ? tds[2].textContent : '');
+    const statusTxt = tds[9] ? tds[9].textContent : '';
+    if(/Lunas/i.test(statusTxt)) pasti += htm;
+    else if(/Sementara/i.test(statusTxt)) sementara += htm;
+  });
+  const biayaTmp = document.createElement('tbody');
+  biayaTmp.innerHTML = m.biayaHtml || '';
+  let realisasi = 0;
+  biayaTmp.querySelectorAll('tr').forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    realisasi += parseRupiah(tds[3] ? tds[3].textContent : '');
+  });
+  const sales = pasti + sementara;
+  const margin = sales - realisasi;
+  const malik = Math.round(margin*0.6);
+  const filan = margin - malik;
+  return { sales, cost: realisasi, margin, malik, filan };
+}
+// Kumulatif dari semua match berstatus "tutup" yg diketahui di sesi browser
+// ini (belum tersambung database, jadi bukan kumulatif sepanjang masa).
+function computeCumulativeProfit(){
+  let malik=0, filan=0, count=0;
+  msOrder.forEach(id=>{
+    const m = msMatches[id];
+    if(!m || m.status !== 'tutup') return;
+    const f = (id === msActiveId) ? computeFinancialsFromLiveDom() : computeMatchFinancials(m);
+    malik += f.malik; filan += f.filan; count++;
+  });
+  return { malik, filan, count };
+}
+function generateLaporanPdf(){
+  const m = msMatches[msActiveId];
+  if(!m) return;
+  const f = computeFinancialsFromLiveDom();
+  const cum = computeCumulativeProfit();
+
+  const biayaRows = [...document.querySelectorAll('#biaya-tbody tr')].map(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    return {
+      item: tds[0] ? tds[0].textContent.trim() : '',
+      kategori: tds[1] ? tds[1].textContent.trim() : '',
+      realisasi: tds[3] ? tds[3].textContent.trim() : 'Rp 0'
+    };
+  });
+  const slotRows = [...document.querySelectorAll('#slot-tbody tr')].map(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    return {
+      no: tds[0] ? tds[0].textContent.trim() : '',
+      nama: slotRowNama(tr),
+      posisi: tds[6] ? tds[6].textContent.trim() : '',
+      label: tds[3] ? tds[3].textContent.trim() : '',
+      bank: tds[5] ? (tds[5].dataset.bankVal || '') : '',
+      htm: tds[2] ? tds[2].textContent.trim() : '',
+      status: tds[9] ? tds[9].textContent.trim() : ''
+    };
+  });
+  const shtmDipakai = slotRows.filter(r=>r.label==='SHTM').map(r=>r.nama);
+
+  const biayaHtml = biayaRows.map(b=>`<tr><td>${escAttr(b.item)}</td><td>${escAttr(b.kategori)}</td><td style="text-align:right">${escAttr(b.realisasi)}</td></tr>`).join('')
+    || '<tr><td colspan="3" style="color:var(--mu)">Belum ada biaya tercatat</td></tr>';
+  const playerHtml = slotRows.map(p=>`<tr><td>${escAttr(p.no)}</td><td>${escAttr(p.nama)}</td><td>${escAttr(p.posisi)}</td><td>${escAttr(p.label)}</td><td>${escAttr(p.bank||'—')}</td><td>${escAttr(p.status)}</td><td style="text-align:right">${escAttr(p.htm)}</td></tr>`).join('')
+    || '<tr><td colspan="7" style="color:var(--mu)">Belum ada player tercatat</td></tr>';
+
+  const generatedAt = new Date().toLocaleString('id-ID', {dateStyle:'long', timeStyle:'short'});
+
+  document.getElementById('laporan-pdf-content').innerHTML = `
+    <div class="lap-hd">
+      <div>
+        <div class="lap-h1">Laporan Cost &amp; Benefit — Sobat Minisoccer</div>
+        <div class="lap-h2">${escAttr(m.titleLine)}</div>
+        <div class="lap-h3">${escAttr(m.subLine)}</div>
+      </div>
+      <div class="lap-gen">Digenerate ${escAttr(generatedAt)}</div>
+    </div>
+    <div class="lap-grid">
+      <div class="lap-col">
+        <div class="lap-sec-title">Biaya operasional</div>
+        <table class="lap-tbl">
+          <thead><tr><th>Item</th><th>Kategori</th><th style="text-align:right">Realisasi</th></tr></thead>
+          <tbody>${biayaHtml}</tbody>
+          <tfoot><tr><td colspan="2"><strong>Grand Total</strong></td><td style="text-align:right"><strong>Rp ${fmtRupiah(f.cost)}</strong></td></tr></tfoot>
+        </table>
+        <table class="lap-tbl" style="margin-top:16px">
+          <tbody>
+            <tr><td>Sales</td><td style="text-align:right">Rp ${fmtRupiah(f.sales)}</td></tr>
+            <tr><td>Total Cost</td><td style="text-align:right">Rp ${fmtRupiah(f.cost)}</td></tr>
+            <tr class="lap-hl${f.margin<0?' lap-neg':''}"><td>Margin</td><td style="text-align:right">${f.margin>=0?'+':'-'}Rp ${fmtRupiah(Math.abs(f.margin))}</td></tr>
+            <tr><td>Split Malik (60%)</td><td style="text-align:right">Rp ${fmtRupiah(f.malik)}</td></tr>
+            <tr><td>Split Filan (40%)</td><td style="text-align:right">Rp ${fmtRupiah(f.filan)}</td></tr>
+          </tbody>
+        </table>
+        <div class="lap-sec-title" style="margin-top:16px">Profit kumulatif <span style="font-weight:400;text-transform:none;letter-spacing:0">(match "tutup" di sesi ini — ${cum.count} match, belum tersambung database)</span></div>
+        <table class="lap-tbl">
+          <tbody>
+            <tr><td>Malik</td><td style="text-align:right">Rp ${fmtRupiah(cum.malik)}</td></tr>
+            <tr><td>Filan</td><td style="text-align:right">Rp ${fmtRupiah(cum.filan)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="lap-col">
+        <div class="lap-sec-title">Pembayaran player (${slotRows.length})</div>
+        <table class="lap-tbl">
+          <thead><tr><th>No</th><th>Pemain</th><th>Posisi</th><th>Tipe bayar</th><th>Metode</th><th>Status</th><th style="text-align:right">Jumlah</th></tr></thead>
+          <tbody>${playerHtml}</tbody>
+        </table>
+        <div class="lap-note">Status SHTM match ini — dipakai (harga dipotong): ${shtmDipakai.length ? escAttr(shtmDipakai.join(', ')) : '—'}. Riwayat lengkap siapa dapat/pakai SHTM ada di Admin → Daftar SHTM.</div>
+      </div>
+    </div>
+  `;
+}
+
+function renumberShtm(){
+  const rows = document.querySelectorAll('#adm-shtm tbody tr');
+  rows.forEach((tr,i)=>{
+    const firstTd = tr.querySelector(':scope > td');
+    if(firstTd) firstTd.textContent = i+1;
+  });
+}
+// No di Kelola Player = nomor urut baris (sama persis modelnya spt Daftar
+// SHTM) — dihitung ulang tiap ada baris dihapus, BUKAN id permanen yg
+// dijatah sekali lalu tidak pernah dipakai lagi.
+function renumberPlayerDb(){
+  const rows = document.querySelectorAll('#player-tbody tr');
+  rows.forEach((tr,i)=>{
+    const firstTd = tr.querySelector(':scope > td');
+    if(firstTd) firstTd.textContent = i+1;
+  });
+}
 
 /* ══════════════════════════════════════════════════════════════
    MULTI-MATCH — bisa buka & pindah antar beberapa match "aktif" sekaligus.
@@ -1943,15 +2555,37 @@ function msCaptureCurrent(){
 
 function msRenderSwitcher(){
   const box = document.getElementById('match-switcher');
-  if(!box) return;
-  box.innerHTML = msOrder.map(id=>{
+  if(box){
+    box.innerHTML = msOrder.map(id=>{
+      const m = msMatches[id];
+      const active = id===msActiveId;
+      const locked = m.status==='tutup';
+      return `<div onclick="msSwitchTo('${id}')" style="cursor:pointer;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:500;border:1px solid ${active?'var(--ac)':'var(--bd)'};background:${active?'var(--ac2)':'var(--su)'};color:${active?'var(--ac)':'var(--tx)'};display:flex;align-items:center;gap:6px;white-space:nowrap">`
+        + (locked?'<i class="ti ti-lock" style="font-size:11px"></i>':'<span class="sd sdg"></span>')
+        + m.titleLine + '</div>';
+    }).join('');
+  }
+  refreshReportingMatchOptions();
+}
+/* Reporting hanya boleh menampilkan match yang SUDAH ditutup (final/diposting).
+   Match yang masih draft/aktif tidak muncul di sini. M1 (match bawaan "6 Sept
+   2026") sudah terwakili oleh opsi statis historis, jadi tidak diduplikasi. */
+function refreshReportingMatchOptions(){
+  const sel = document.getElementById('rpt-match-sel');
+  if(!sel) return;
+  const prevVal = sel.value;
+  Array.from(sel.querySelectorAll('option[data-ms]')).forEach(o=>o.remove());
+  msOrder.forEach(id=>{
+    if(id==='M1') return;
     const m = msMatches[id];
-    const active = id===msActiveId;
-    const locked = m.status==='tutup';
-    return `<div onclick="msSwitchTo('${id}')" style="cursor:pointer;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:500;border:1px solid ${active?'var(--ac)':'var(--bd)'};background:${active?'var(--ac2)':'var(--su)'};color:${active?'var(--ac)':'var(--tx)'};display:flex;align-items:center;gap:6px;white-space:nowrap">`
-      + (locked?'<i class="ti ti-lock" style="font-size:11px"></i>':'<span class="sd sdg"></span>')
-      + m.titleLine + '</div>';
-  }).join('');
+    if(!m || m.status!=='tutup') return;
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.dataset.ms = '1';
+    opt.textContent = m.titleLine;
+    sel.appendChild(opt);
+  });
+  if(Array.from(sel.options).some(o=>o.value===prevVal)) sel.value = prevVal;
 }
 
 function msRestore(id){
@@ -1965,18 +2599,24 @@ function msRestore(id){
   document.getElementById('dep-log-tbody').innerHTML = m.depLogHtml;
   const statusBadge = document.getElementById('mhd-status');
   const tutupBtn = document.getElementById('mhd-tutup-btn');
+  const simpanBtn = document.getElementById('mhd-simpan-btn');
+  const hapusBtn = document.getElementById('mhd-hapus-btn');
   if(m.status==='tutup'){
     statusBadge.className='b b-gy';
     statusBadge.innerHTML = '<i class="ti ti-lock" style="font-size:11px"></i> Match ditutup';
     tutupBtn.style.display='none';
+    if(simpanBtn) simpanBtn.style.display='none';
+    if(hapusBtn) hapusBtn.style.display='none';
   } else {
     statusBadge.className='b b-gn';
     statusBadge.innerHTML = '<span class="sd sdg"></span>Match aktif';
     tutupBtn.style.display='';
+    if(simpanBtn) simpanBtn.style.display='';
+    if(hapusBtn) hapusBtn.style.display='';
   }
   setGameMode(m.jenisGame==='football' ? 'football' : 'mini');
+  refreshAllJerseySelects();
   document.querySelectorAll('.jersey-sel[data-posisi="field"]').forEach(sel=>onJerseyChange(sel));
-  document.querySelectorAll('.jersey-sel[data-posisi="gk"]').forEach(sel=>updateGkOptions(sel));
   renderScorer('t-match-scorer', m.matchScorers.map((s,i)=>({rank:i+1,name:s.name,gol:s.gol,pct:m.matchScorers[0]?Math.round(s.gol/m.matchScorers[0].gol*100):0,cat:''})));
   msActiveId = id;
   recalcAll();
@@ -2013,12 +2653,83 @@ function msCreateMatch(meta){
   return id;
 }
 
-/* ── Submit handler tiap modal "Tambah ..." ── */
-function nextSlotNo(){
-  const rows = document.querySelectorAll('#slot-tbody tr');
-  return rows.length; // No GK tidak dihitung nomor urut; field mulai dari jumlah baris field yg ada
+/* ── Simpan draft (localStorage) & Hapus match ──
+   "Simpan" = simpan draft SEMUA match (bukan cuma yang aktif) ke localStorage
+   browser ini, supaya kalau halaman ke-refresh draft tidak hilang. Ini
+   BEDA dari "Tutup match": tutup = match selesai & final, diposting ke
+   Reporting. Simpan = sekadar checkpoint draft, match masih bisa diedit.
+   "Hapus match" = batalkan RENCANA match yang masih draft (bukan tutup). */
+const MS_STORAGE_KEY = 'sms_portal_draft_v1';
+function msPersist(){
+  msCaptureCurrent();
+  try{
+    localStorage.setItem(MS_STORAGE_KEY, JSON.stringify({msMatches, msOrder, msActiveId, msSeq}));
+    return true;
+  }catch(e){
+    return false; // localStorage tidak tersedia (mis. private mode) — abaikan diam-diam
+  }
+}
+function msSimpanDraft(){
+  const ok = msPersist();
+  showToast(ok ? 'Draft match tersimpan di browser ini.' : 'Gagal simpan draft (penyimpanan browser tidak tersedia).');
+}
+function msLoadFromStorage(){
+  try{
+    const raw = localStorage.getItem(MS_STORAGE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(!data || !data.msMatches || !data.msOrder || !data.msOrder.length) return false;
+    Object.keys(msMatches).forEach(k=>delete msMatches[k]);
+    Object.assign(msMatches, data.msMatches);
+    msOrder = data.msOrder;
+    msActiveId = data.msActiveId && msMatches[data.msActiveId] ? data.msActiveId : msOrder[0];
+    msSeq = data.msSeq || msOrder.length;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+function msHapusMatchClick(btn){
+  const m = msMatches[msActiveId];
+  if(!m) return;
+  if(m.status==='tutup'){ showToast('Match yang sudah ditutup tidak bisa dihapus — datanya sudah final di Reporting.'); return; }
+  if(msOrder.length<=1){ showToast('Tidak bisa menghapus satu-satunya match yang tersisa.'); return; }
+  if(document.getElementById('mhd-hapus-confirm')) return; // sudah dalam mode konfirmasi
+  const wrap = document.createElement('span');
+  wrap.id = 'mhd-hapus-confirm';
+  wrap.style.cssText = 'font-size:12px;color:var(--rd);display:flex;align-items:center;gap:6px;white-space:nowrap';
+  wrap.innerHTML = 'Batalkan rencana match ini? '
+    + '<a href="#" onclick="msConfirmHapus(event)" style="color:var(--rd);font-weight:700;text-decoration:underline">Ya, hapus</a>'
+    + '<a href="#" onclick="msCancelHapus(event)" style="color:var(--mu);text-decoration:underline">Batal</a>';
+  btn.replaceWith(wrap);
+}
+function msHapusBtnHtml(){
+  return '<button class="btn" id="mhd-hapus-btn" onclick="msHapusMatchClick(this)"><i class="ti ti-trash"></i> Hapus match</button>';
+}
+function msCancelHapus(e){
+  e.preventDefault();
+  const wrap = document.getElementById('mhd-hapus-confirm');
+  if(wrap) wrap.outerHTML = msHapusBtnHtml();
+}
+function msConfirmHapus(e){
+  e.preventDefault();
+  const wrap = document.getElementById('mhd-hapus-confirm');
+  if(wrap) wrap.outerHTML = msHapusBtnHtml();
+  msDeleteMatch(msActiveId);
+}
+function msDeleteMatch(id){
+  const idx = msOrder.indexOf(id);
+  if(idx===-1) return;
+  const deletedTitle = msMatches[id] ? msMatches[id].titleLine : '';
+  msOrder.splice(idx,1);
+  delete msMatches[id];
+  const nextId = msOrder[Math.max(0,idx-1)] || msOrder[0];
+  msRestore(nextId); // langsung restore match lain — tidak capture ke match yg baru dihapus
+  msPersist();
+  showToast('Draft match "' + deletedTitle + '" dihapus.');
 }
 
+/* ── Submit handler tiap modal "Tambah ..." ── */
 function submitMatchBaru(){
   const tglRaw = document.getElementById('nm-tanggal').value;
   const jenisSel = document.getElementById('nm-jenis').value;
@@ -2053,37 +2764,26 @@ function submitTambahPlayer(){
   const htm = parseRupiah(document.getElementById('tp-htm').value);
   const label = document.getElementById('tp-label').value;
   const posisi = document.getElementById('tp-posisi').value;
-  const jerseyWarna = document.getElementById('tp-jersey').value;
   const ukuran = document.getElementById('tp-ukuran').value;
   const status = document.getElementById('tp-status').value;
   const metode = document.getElementById('tp-metode').value;
   const isGk = posisi==='GK';
   const tbody = document.getElementById('slot-tbody');
-  const no = isGk ? 'GK' : ([...tbody.querySelectorAll('tr')].filter(r=>r.children[0].textContent!=='GK').length+1);
+  const no = tbody.querySelectorAll('tr').length + 1;
   const labelBadgeClass = label==='SHTM' ? 'b-sh' : 'b-gy';
   const statusBadgeClass = status==='Lunas' ? 'b-gn' : (status==='Sementara' ? 'b-am' : 'b-gy');
   const statusDot = status==='Lunas' ? '<span class="sd sdg"></span>' : (status==='Sementara' ? '<span class="sd sda"></span>' : '');
-  const bankHtml = metode ? `<span class="b b-ac">${metode}</span>` : '<span style="color:var(--mu)">—</span>';
   const titleLine = document.getElementById('mhd-title').textContent;
   const tglLabel = titleLine.split('—')[0].trim();
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td style="color:var(--hi)">${no}</td>
+    <td style="color:var(--hi)" data-no-edit="1">${no}</td>
     <td style="font-weight:500">${nama} <button class="sf sf-off" onclick="toggleSf(this,'${nama.replace(/'/g,"\\'")}','${tglLabel}')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
-    <td>${fmtRupiah(htm)}</td><td><span class="b ${labelBadgeClass}">${label}</span></td>
-    <td style="color:var(--mu)">—</td><td>${bankHtml}</td>
-    <td><span class="b b-gy">${isGk?'GK':'Field'}</span></td>
-    <td>
-      <select class="jersey-sel" data-posisi="${isGk?'gk':'field'}" onchange="onJerseyChange(this)">
-        <option value="">— pilih</option>
-        <option value="Merah"${jerseyWarna==='Merah'?' selected':''}>Merah</option>
-        <option value="Kuning"${jerseyWarna==='Kuning'?' selected':''}>Kuning</option>
-        <option value="Biru"${jerseyWarna==='Biru'?' selected':''}>Biru</option>
-        <option value="Hijau"${jerseyWarna==='Hijau'?' selected':''}>Hijau</option>
-      </select>
-      <div class="jersey-notif" style="font-size:10px;margin-top:3px"></div>
-    </td>
-    <td><span class="b b-gy">${ukuran}</span></td>
+    <td>${fmtRupiah(htm)}</td><td data-edit-type="label"><span class="b ${labelBadgeClass}">${label}</span></td>
+    <td style="color:var(--mu)" data-no-edit="1">${depositCellHtml(nama, 0)}</td><td data-edit-type="bank" data-bank-val="${escAttr(metode)}"${metode?'':' style="color:var(--mu)"'}>${bankDisplayHtml(metode)}</td>
+    <td data-edit-type="posisi"><span class="b b-gy">${isGk?'GK':'Field'}</span></td>
+    <td>${jerseySelectHtml(isGk?'gk':'field','')}</td>
+    <td data-edit-type="ukuran"><span class="b b-gy">${ukuran}</span></td>
     <td><span class="b ${statusBadgeClass}">${statusDot}${status}</span></td>
     <td class="td-formasi">
       <span class="formasi-dash" style="color:var(--mu)">—</span>
@@ -2135,7 +2835,229 @@ function submitTambahDeposit(){
   logTr.innerHTML = `<td>Baru</td><td class="pri">${player}</td><td><span class="b b-am">${sumber}</span></td><td style="color:var(--gn)">+${fmtRupiah(jumlah)}</td><td>—</td><td style="color:var(--am);font-weight:500">${fmtRupiah(jumlah)}</td><td>—</td>`;
   logTbody.prepend(logTr);
   closeModal('m-tambah-deposit');
+  refreshSlotDepositTriggers();
   showToast('Deposit ' + player + ' Rp ' + fmtRupiah(jumlah) + ' tersimpan.');
+}
+
+/* ── PAKAI DEPOSIT (dari kolom Deposit di Slot Player) ──
+   Saldo deposit berlaku per-match (bukan lintas match — kalau perlu
+   ditambah lagi, admin tinggal "Tambah deposit" manual di tab Deposit).
+   Kolom Deposit slot player jadi trigger: tampil "Pakai deposit" kalau
+   player itu punya saldo aktif, atau "-{jumlah}" kalau sudah dipakai
+   (keduanya bisa diklik utk buka popup ubah/batalkan). Begitu dipakai,
+   sisa HTM yg belum tertutup ditampilkan sbg catatan kecil di bawah
+   kolom Bank/Cash (karena metode bayar utk sisanya tetap harus dipilih
+   manual di sana). */
+let pdActiveRow = null;
+let _slotIdSeq = 0;
+/* ── SYNC status SHTM: Daftar SHTM (Admin) adalah sumber data utama, kolom
+   SHTM di Kelola Player cuma nampilin cerminannya — supaya nggak ada 2 salinan
+   status yang bisa beda sendiri-sendiri. Dipanggil tiap kali Daftar SHTM
+   berubah (edit status, tambah, hapus baris) atau tiap kali tab Kelola player
+   dibuka. */
+function shtmRowNama(tr){
+  const cell = tr.children[1];
+  return cell ? cell.textContent.trim() : '';
+}
+function playerDbRowNama(tr){
+  const cell = tr.children[1];
+  return cell ? cell.textContent.trim() : '';
+}
+function getLatestShtmStatusForPlayer(nama){
+  const rows = [...document.querySelectorAll('#adm-shtm tbody tr')];
+  const matches = rows.filter(tr => shtmRowNama(tr) === nama);
+  if(matches.length === 0) return null;
+  const last = matches[matches.length-1];
+  const statusTd = last.children[4];
+  return statusTd ? statusTd.textContent.trim() : null;
+}
+function refreshKelolaPlayerShtmCell(nama){
+  const rows = [...document.querySelectorAll('#player-tbody tr')];
+  const row = rows.find(tr => playerDbRowNama(tr) === nama);
+  if(!row) return;
+  const td = row.children[7];
+  if(!td) return;
+  const status = getLatestShtmStatusForPlayer(nama);
+  if(!status){
+    td.innerHTML = '—';
+  } else {
+    const cls = status === 'Sudah dipakai' ? 'b-gn' : 'b-sh';
+    td.innerHTML = `<span class="b ${cls}">${status}</span>`;
+  }
+}
+function refreshAllKelolaPlayerShtm(){
+  document.querySelectorAll('#player-tbody tr').forEach(tr=>{
+    refreshKelolaPlayerShtmCell(playerDbRowNama(tr));
+  });
+}
+// Dorong status SHTM yg baru diedit dari Kelola Player ke Daftar SHTM —
+// arah sebaliknya dari refreshKelolaPlayerShtmCell (yg narik dari Daftar
+// SHTM ke Kelola Player). Dua-duanya dipakai bareng supaya data SHTM di
+// kedua tabel selalu nyambung, nggak ada yg beda sendiri-sendiri.
+const BULAN_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agust','Sept','Okt','Nov','Des'];
+function pushShtmStatusFromKelolaPlayer(nama, status){
+  if(!nama) return;
+  const rows = [...document.querySelectorAll('#adm-shtm tbody tr')];
+  const matches = rows.filter(tr => shtmRowNama(tr) === nama);
+  const cls = status === 'Sudah dipakai' ? 'b-gn' : 'b-sh';
+  if(matches.length > 0){
+    const last = matches[matches.length-1];
+    const statusTd = last.children[4];
+    if(statusTd) statusTd.innerHTML = `<span class="b ${cls}">${status}</span>`;
+    last.style.background = status === 'Sudah dipakai' ? '' : '#FFF5F5';
+    return;
+  }
+  // Player ini belum pernah punya catatan SHTM — buat baris baru di Daftar
+  // SHTM supaya riwayatnya kebentuk, bukan cuma keliatan di Kelola Player.
+  const tbody = document.querySelector('#adm-shtm tbody');
+  if(!tbody) return;
+  const today = new Date();
+  const tglLabel = today.getDate() + ' ' + BULAN_ID[today.getMonth()] + ' ' + today.getFullYear();
+  const tr = document.createElement('tr');
+  if(status !== 'Sudah dipakai') tr.style.background = '#FFF5F5';
+  tr.innerHTML = `<td data-no-edit="1">${tbody.querySelectorAll('tr').length+1}</td><td class="pri">${escAttr(nama)}</td>`
+    + `<td>${tglLabel}</td><td style="color:var(--hi)">—</td>`
+    + `<td data-edit-type="shtm-status"><span class="b ${cls}">${status}</span></td>`
+    + `<td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
+  tbody.appendChild(tr);
+}
+function ensureSlotId(row){
+  if(!row.dataset.slotId) row.dataset.slotId = 'slot-' + (++_slotIdSeq) + '-' + Date.now();
+  return row.dataset.slotId;
+}
+function findDepositRow(nama){
+  const rows = document.querySelectorAll('#dep-saldo-list .dep-row');
+  for(const r of rows){
+    const rn = r.children[0] ? r.children[0].textContent.trim() : '';
+    if(rn === nama) return r;
+  }
+  return null;
+}
+function slotRowNama(row){
+  // Ambil dari text node PERTAMA di kolom Nama saja (sebelum badge/tombol
+  // apa pun spt SHTM, "Dep 70rb", Next) — lebih tahan banting drpd nebak2
+  // daftar kata yg harus dibuang dari textContent gabungan.
+  const cell = row.children[1];
+  const first = cell.childNodes[0];
+  return first ? first.textContent.trim() : cell.textContent.trim();
+}
+function refreshSlotDepositTriggers(){
+  document.querySelectorAll('#slot-tbody tr').forEach(row=>{
+    const depositTd = row.children[4];
+    if(!depositTd) return;
+    const nama = slotRowNama(row);
+    const usedAbs = Math.abs(parseRupiah(depositTd.textContent));
+    depositTd.innerHTML = depositCellHtml(nama, usedAbs);
+  });
+}
+function depositCellHtml(nama, usedAmount){
+  if(usedAmount > 0){
+    return `<span onclick="openPakaiDeposit(this)" style="cursor:pointer;color:var(--am);font-weight:500;text-decoration:underline dotted" title="Klik untuk ubah/batalkan pemakaian deposit">-${fmtRupiah(usedAmount)}</span>`;
+  }
+  const depRow = findDepositRow(nama);
+  if(depRow && parseRupiah(depRow.children[1].textContent) > 0){
+    return `<span onclick="openPakaiDeposit(this)" style="cursor:pointer;color:var(--ac);text-decoration:underline dotted;font-size:11px">Pakai deposit</span>`;
+  }
+  return '—';
+}
+function updateBankSisaNote(bankTd, sisa){
+  // Bank/Cash cuma pernah punya paling banyak 1 div catatan tambahan (baik
+  // punya sistem lama spt "25rb" atau punya kita "Sisa Rp X") — buang yg lama
+  // dulu apa pun bentuknya, baru pasang yang baru kalau masih ada sisa.
+  const oldNote = bankTd.querySelector(':scope > div');
+  if(oldNote) oldNote.remove();
+  if(sisa > 0){
+    const note = document.createElement('div');
+    note.dataset.depSisa = '1';
+    note.style.cssText = 'font-size:9px;color:var(--rd);margin-top:2px';
+    note.textContent = 'Sisa Rp ' + fmtRupiah(sisa);
+    bankTd.appendChild(note);
+  }
+}
+function upsertDepositLogRow(slotId, nama, jumlahDipakai, saldoSetelah){
+  const tbody = document.getElementById('dep-log-tbody');
+  if(!tbody) return;
+  const titleLine = document.getElementById('mhd-title').textContent;
+  const tglLabel = titleLine.split('—')[0].trim();
+  let tr = tbody.querySelector(`tr[data-slot-id="${slotId}"]`);
+  const rowHtml = `<td>${escAttr(tglLabel)}</td><td class="pri">${escAttr(nama)}</td><td><span class="b b-am">Dipakai match ini</span></td><td>—</td><td style="color:var(--rd)">-${fmtRupiah(jumlahDipakai)}</td><td style="color:var(--am);font-weight:500">${fmtRupiah(saldoSetelah)}</td><td>${escAttr(tglLabel)}</td>`;
+  if(tr){ tr.innerHTML = rowHtml; }
+  else { tr = document.createElement('tr'); tr.dataset.slotId = slotId; tr.innerHTML = rowHtml; tbody.appendChild(tr); }
+}
+function removeDepositLogRow(slotId){
+  const tbody = document.getElementById('dep-log-tbody');
+  const tr = tbody && tbody.querySelector(`tr[data-slot-id="${slotId}"]`);
+  if(tr) tr.remove();
+}
+function pdToggleJumlah(){
+  const pakai = document.getElementById('pd-pakai').value === 'Pakai';
+  const inp = document.getElementById('pd-jumlah');
+  inp.disabled = !pakai;
+  inp.closest('.fg').style.opacity = pakai ? '1' : '.45';
+}
+function openPakaiDeposit(triggerEl){
+  if(msIsActiveLocked()){ showToast('Match ini sudah ditutup.'); return; }
+  const row = triggerEl.closest('tr');
+  if(!row) return;
+  const nama = slotRowNama(row);
+  const depositTd = row.children[4];
+  const usedAbs = Math.abs(parseRupiah(depositTd.textContent));
+  const depRow = findDepositRow(nama);
+  const saldoSaatIni = depRow ? parseRupiah(depRow.children[1].textContent) : 0;
+  const saldoAsal = saldoSaatIni + usedAbs; // saldo sblm dipakai di row ini (kalau ada pemakaian sblmnya)
+  if(saldoAsal <= 0){ showToast(nama + ' belum punya saldo deposit aktif.'); return; }
+  ensureSlotId(row);
+  pdActiveRow = row;
+  const htm = parseRupiah(row.children[2].textContent);
+  document.getElementById('pd-player-name').textContent = nama;
+  document.getElementById('pd-info-line').textContent = 'Saldo deposit tersedia: Rp ' + fmtRupiah(saldoAsal) + ' · HTM match ini: Rp ' + fmtRupiah(htm);
+  document.getElementById('pd-pakai').value = usedAbs > 0 ? 'Pakai' : 'Pakai';
+  document.getElementById('pd-jumlah').value = usedAbs > 0 ? usedAbs : saldoAsal;
+  pdToggleJumlah();
+  openModal('m-pakai-deposit');
+}
+function submitPakaiDeposit(){
+  const row = pdActiveRow;
+  if(!row) return;
+  const nama = slotRowNama(row);
+  const htm = parseRupiah(row.children[2].textContent);
+  const depositTd = row.children[4];
+  const bankTd = row.children[5];
+  const slotId = ensureSlotId(row);
+  const prevUsed = Math.abs(parseRupiah(depositTd.textContent));
+  const depRow = findDepositRow(nama);
+  const saldoAsal = (depRow ? parseRupiah(depRow.children[1].textContent) : 0) + prevUsed;
+  const pakai = document.getElementById('pd-pakai').value === 'Pakai';
+
+  if(!pakai){
+    if(prevUsed > 0 && depRow){
+      depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoAsal);
+    }
+    depositTd.innerHTML = depositCellHtml(nama, 0);
+    updateBankSisaNote(bankTd, 0);
+    removeDepositLogRow(slotId);
+    closeModal('m-pakai-deposit');
+    recalcAll();
+    showToast('Pemakaian deposit ' + nama + ' dibatalkan.');
+    return;
+  }
+
+  let jumlah = parseRupiah(document.getElementById('pd-jumlah').value);
+  if(!depRow || saldoAsal <= 0){ showToast(nama + ' tidak punya saldo deposit.'); return; }
+  if(jumlah > saldoAsal){ jumlah = saldoAsal; showToast('Jumlah disesuaikan ke saldo tersedia (Rp ' + fmtRupiah(saldoAsal) + ').'); }
+  if(jumlah <= 0){ showToast('Jumlah harus lebih dari 0.'); return; }
+
+  const saldoBaru = saldoAsal - jumlah;
+  depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoBaru);
+  upsertDepositLogRow(slotId, nama, jumlah, saldoBaru);
+
+  depositTd.innerHTML = depositCellHtml(nama, jumlah);
+  const sisa = htm - jumlah;
+  updateBankSisaNote(bankTd, sisa);
+
+  closeModal('m-pakai-deposit');
+  recalcAll();
+  showToast('Deposit ' + nama + ' dipakai Rp ' + fmtRupiah(jumlah) + (sisa > 0 ? ' — sisa Rp ' + fmtRupiah(sisa) + ' perlu dibayar via metode lain.' : ' — HTM lunas dari deposit.'));
 }
 
 function populateGolPlayerSelect(){
@@ -2169,23 +3091,61 @@ function submitTambahGol(){
   showToast('Gol ' + nama + ' (+' + jumlah + ') dicatat untuk match ini.');
 }
 
+// Kalau warna yg diketik sudah punya warna identitas tersimpan, ikutin itu
+// di color-picker (biar update stok warna lama nggak diam-diam ganti warna
+// ikonnya ke abu-abu default). Warna baru tetap dimulai dari abu-abu netral.
+function syncTsHexFromWarna(warna){
+  const hexEl = document.getElementById('ts-hex');
+  if(!hexEl) return;
+  const existing = JERSEY_COLOR_HEX[warna.trim()];
+  hexEl.value = existing || '#9CA3AF';
+}
 function submitTambahStok(){
   const warna = document.getElementById('ts-warna').value.trim();
   if(!warna){ showToast('Warna jersey belum diisi.'); return; }
+  const tipe = document.getElementById('ts-tipe').value; // 'Field' atau 'GK'
   const ukuran = document.getElementById('ts-ukuran').value;
   const jumlah = parseInt(document.getElementById('ts-jumlah').value,10) || 0;
-  if(!JERSEY_STOK[warna]) JERSEY_STOK[warna] = {M:0,L:0,XL:0,'2XL':0};
-  JERSEY_STOK[warna][ukuran] = (JERSEY_STOK[warna][ukuran]||0) + jumlah;
+  const hex = document.getElementById('ts-hex').value || '#9CA3AF';
+  const target = tipe === 'GK' ? JERSEY_STOK_GK : JERSEY_STOK;
+  const isNewColor = !target[warna];
+  if(isNewColor) target[warna] = {S:0,M:0,L:0,XL:0,'2XL':0,'3XL':0};
+  target[warna][ukuran] = (target[warna][ukuran]||0) + jumlah;
+  JERSEY_COLOR_HEX[warna] = hex;
+  refreshAllJerseySelects();
+  renderJerseyStokTable();
   closeModal('m-tambah-stok');
-  showToast('Stok jersey ' + warna + ' (' + ukuran + ') +' + jumlah + ' unit. Refresh tab Admin utk lihat kartu terbaru.');
+  showToast('Stok jersey ' + warna + ' (' + tipe + ' · ' + ukuran + ') +' + jumlah + ' unit.' + (isNewColor ? ' Jenis baru langsung muncul di tabel status jersey.' : ''));
 }
 
+function submitTambahPlayerDb(){
+  const nama = document.getElementById('pdb-nama').value.trim();
+  if(!nama){ showToast('Nama player belum diisi.'); return; }
+  const alias = document.getElementById('pdb-alias').value.trim();
+  const kategori = document.getElementById('pdb-kategori').value;
+  const tbody = document.getElementById('player-tbody');
+  if(!tbody) return;
+  const no = tbody.querySelectorAll('tr').length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td data-no-edit="1">${no}</td><td class="pri">${escAttr(nama)}</td><td>${alias?escAttr(alias):'—'}</td>`
+    + `<td data-edit-type="kategori"><span class="b b-gy">${kategori}</span></td>`
+    + `<td>0</td><td>—</td><td data-edit-type="deposit">—</td><td data-edit-type="shtm-status">—</td>`
+    + `<td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('pdb-nama').value = '';
+  document.getElementById('pdb-alias').value = '';
+  document.getElementById('pdb-kategori').value = 'SMS';
+  closeModal('m-tambah-player-db');
+  showToast('Player ' + nama + ' ditambahkan ke database (No ' + no + ').');
+  refreshKelolaPlayerShtmCell(nama);
+}
 function submitTutupMatch(){
   const m = msMatches[msActiveId];
   if(!m) return;
   m.status = 'tutup';
   closeModal('m-tutup-match');
   msRestore(msActiveId);
+  msPersist();
   showToast('Match "' + m.titleLine + '" ditutup dan dikunci.');
 }
 
@@ -2195,8 +3155,17 @@ function submitTutupMatch(){
    belum ada perubahan data. Begitu ada tambah/edit/hapus player atau biaya,
    angka otomatis dihitung ulang dari isi tabel yang sebenarnya. */
 document.addEventListener('DOMContentLoaded', function(){
-  msSeedFromDom();
-  msRenderSwitcher();
+  const loadedFromDraft = msLoadFromStorage();
+  if(!loadedFromDraft){
+    refreshSlotDepositTriggers(); // sinkronkan kolom Deposit dgn saldo aktif sblm di-snapshot ke M1
+    msSeedFromDom();
+    msRenderSwitcher();
+  } else {
+    msRestore(msActiveId); // tulis ulang DOM sesuai draft tersimpan
+  }
+  refreshAllJerseySelects();
+  renderJerseyStokTable();
+  refreshAllKelolaPlayerShtm();
 });
 </script>
 <script>
