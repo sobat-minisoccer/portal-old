@@ -3,7 +3,7 @@
 // Deploy sebagai: Web App | Execute as: Me | Access: Anyone
 // ============================================================
 
-const SS_ID   = '1z6nbrxSHzDnW3WNVBWX4mP_f5rqJSh3Z27GJWftuq84'; // ← ISI dengan Spreadsheet ID dari Google Sheets
+const SS_ID   = '1z6nbrxSHzDnW3WNVBWX4mP_f5rqJSh3Z27GJWftuq84'; // Sheet "Minisoccer_DB" ASLI (akun sbt.minisoccer) — udah di-share view ke intanktrav, strukturnya udah dicek cocok sama kode di bawah
 const SS      = () => SpreadsheetApp.openById(SS_ID);
 
 const SHEET = {
@@ -13,6 +13,8 @@ const SHEET = {
   REKAP    : 'Rekap_Keuangan',
   DEPOSIT  : 'Deposit_Log',
   INVENTARIS: 'Inventaris',
+  SCORER   : 'Rekap_Skorer', // tab baru — BELUM ada di sheet data riil kamu juga,
+                              // dibikin otomatis sama setupSheets()
 };
 
 // ── CORS & Router ──────────────────────────────────────────
@@ -29,6 +31,7 @@ function doGet(e) {
       case 'getDeposit':       result = getDeposit(); break;
       case 'getDashboard':     result = getDashboard(); break;
       case 'getConfig':        result = getConfig(); break;
+      case 'getScorer':        result = getScorer(); break;
       default: result = { error: 'Unknown action: ' + action };
     }
   } catch(err) {
@@ -58,8 +61,11 @@ function doPost(e) {
       case 'useDeposit':        result = useDeposit(payload); break;
       case 'closeMatch':        result = closeMatch(payload); break;
       case 'updateStokJersey':  result = updateStokJersey(payload); break;
-      case 'addPlayer':         result = addNewPlayer(payload); break;
+      case 'addPlayerDb':       result = addNewPlayer(payload); break;
       case 'updateConfig':      result = updateConfig(payload); break;
+      case 'addScorer':         result = addScorer(payload); break;
+      case 'updateScorer':      result = updateScorer(payload); break;
+      case 'deleteScorer':      result = deleteScorer(payload); break;
       default: result = { error: 'Unknown action: ' + action };
     }
   } catch(err) {
@@ -112,8 +118,12 @@ function getDashboard() {
   const shtm    = getShtm();
   const jersey  = getStokJersey();
 
-  // Kumulatif dari baris BASELINE / baris terakhir
-  const closed = matches.filter(m => m['Status Match'] === 'Ditutup');
+  // Setiap baris di Rekap_Keuangan MEMANG match yang udah ditutup — cuma
+  // closeMatch() yang nulis ke sheet ini, dan sheet ini nggak punya kolom
+  // "Status Match" (itu cuma ada di TEMPLATE_Match/per-match sheet). Kode
+  // lama nge-filter pakai m['Status Match'], yang selalu undefined utk
+  // baris dari sini — jadi `closed` selalu kosong dan totalMatch selalu 0.
+  const closed = matches;
   const last   = closed[closed.length - 1] || {};
 
   // Top scorer all-time
@@ -185,14 +195,16 @@ function parseMatchSheet(data, matchId) {
                        'Tipe Lapangan','HTM Player','HTM GK','Kuota Kiper','Kuota Field','Status Match'];
   INFO_LABELS.forEach((lbl, i) => { info[lbl] = data[2+i] ? data[2+i][2] : null; });
 
-  // Estimasi margin: row setelah info
+  // Estimasi margin: row 16-21 di TEMPLATE_Match asli (row 15 = judul section
+  // "ESTIMASI MARGIN", row 16-21 = 6 field-nya) — sebelumnya kode ini baca
+  // row 17-22 (kegeser 1 baris), dibenerin biar cocok sama sheet aslinya.
   const margin = {
-    salesPasti    : data[16] ? data[16][2] : 0,
-    salesEstimasi : data[17] ? data[17][2] : 0,
-    totalCost     : data[18] ? data[18][2] : 0,
-    marginProyeksi: data[19] ? data[19][2] : 0,
-    splitMalik    : data[20] ? data[20][2] : 0,
-    splitFilan    : data[21] ? data[21][2] : 0,
+    salesPasti    : data[15] ? data[15][2] : 0,
+    salesEstimasi : data[16] ? data[16][2] : 0,
+    totalCost     : data[17] ? data[17][2] : 0,
+    marginProyeksi: data[18] ? data[18][2] : 0,
+    splitMalik    : data[19] ? data[19][2] : 0,
+    splitFilan    : data[20] ? data[20][2] : 0,
   };
 
   // Daftar player: cari header row "No | Nama Player | ..."
@@ -576,6 +588,277 @@ function updateConfig(p) {
   if (p.htmGk)      props.setProperty('HTM_GK',      String(p.htmGk));
   if (p.htmShtm)    props.setProperty('HTM_SHTM',    String(p.htmShtm));
   if (p.splitMalik) props.setProperty('SPLIT_MALIK', String(p.splitMalik));
+  return { ok: true };
+}
+
+// ============================================================
+// ── SETUP: jalankan SEKALI aja dari editor Apps Script ──────
+// Cara pakai: buka Extensions > Apps Script di Sheet "Minisoccer_DB",
+// pilih function "setupSheets" di dropdown atas, klik Run (▶),
+// izinkan akses saat diminta. Ini otomatis bikin semua tab + header
+// yang dibutuhin backend ini (DB_Player, Stok_Jersey, SHTM_Log,
+// Rekap_Keuangan, Deposit_Log, Inventaris, TEMPLATE_Match).
+// Aman dijalankan berkali-kali — kalau tab udah ada, dilewatin
+// (isinya TIDAK ditimpa), cuma tab yang belum ada yang dibikin.
+// ============================================================
+function setupSheets() {
+  const ss = SS();
+  const made = [];
+  const skipped = [];
+
+  function ensureSheet(name, rows, cols) {
+    let ws = ss.getSheetByName(name);
+    if (ws) { skipped.push(name); return ws; }
+    ws = ss.insertSheet(name);
+    if (rows || cols) ws.getRange(1,1, rows||1, cols||1); // no-op touch, avoids edge cases on some accounts
+    made.push(name);
+    return ws;
+  }
+
+  function writeHeader(ws, title, headers) {
+    ws.getRange(1,1).setValue(title);
+    ws.getRange(2,1,1,headers.length).setValues([headers]);
+    ws.getRange(2,1,1,headers.length).setFontWeight('bold');
+    ws.setFrozenRows(2);
+  }
+
+  // ── DB_Player ──
+  let ws = ensureSheet(SHEET.PLAYER);
+  if (ws.getLastRow() < 2) writeHeader(ws, 'DB_Player — master data player', [
+    'No','Nama Player','Kategori','Total Hadir','Total Gol','Total SHTM',
+    'Ukuran Jersey','Warna Favorit','Deposit Saldo (Rp)','Metode Favorit',
+    'Bank','Kontak','Jersey Pribadi','Alias','Status','Catatan','Tgl Daftar'
+  ]);
+
+  // ── Stok_Jersey ── (diisi angka stok yang sekarang dipakai di index.html
+  // supaya begitu tersambung, angkanya nyambung — bukan mulai dari 0)
+  ws = ensureSheet(SHEET.JERSEY);
+  if (ws.getLastRow() < 2) {
+    writeHeader(ws, 'Stok_Jersey — stok jersey Field & GK', [
+      'Warna','Tipe','Ukuran','Stok Total','Dipakai','Sisa','Status','Keterangan'
+    ]);
+    const stokField = {
+      'Merah': {M:2,L:2,XL:0,'2XL':1}, 'Kuning': {M:1,L:3,XL:1,'2XL':1},
+      'Biru': {M:2,L:3,XL:3,'2XL':1}, 'Hijau': {M:2,L:1,XL:4,'2XL':1}
+    };
+    const stokGk = { 'GK': {M:2,L:2,XL:2} };
+    const rows = [];
+    function pushRows(map, tipe) {
+      Object.keys(map).forEach(warna => {
+        Object.keys(map[warna]).forEach(uk => {
+          const stok = map[warna][uk];
+          const status = stok===0 ? 'HABIS' : stok<=1 ? 'LOW' : 'OK';
+          rows.push([warna, tipe, uk, stok, 0, stok, status, '']);
+        });
+      });
+    }
+    pushRows(stokField, 'Field');
+    pushRows(stokGk, 'GK');
+    ws.getRange(3,1,rows.length,8).setValues(rows);
+  }
+
+  // ── SHTM_Log ──
+  ws = ensureSheet(SHEET.SHTM);
+  if (ws.getLastRow() < 2) writeHeader(ws, 'SHTM_Log — riwayat Sistem Half-price Top Match', [
+    'No','Nama Player','Tgl Mendapat SHTM','Tgl SHTM Dipakai','Status','Match','Catatan'
+  ]);
+
+  // ── Rekap_Keuangan ──
+  ws = ensureSheet(SHEET.REKAP);
+  if (ws.getLastRow() < 2) {
+    writeHeader(ws, 'Rekap_Keuangan — 1 baris per match yang ditutup', [
+      'No','Match / Tanggal','Jenis Game','Tipe Event','Venue','Tipe Lapangan',
+      'Sales (Rp)','Cost (Rp)','Margin (Rp)','Split Malik (Rp)','Split Filan (Rp)',
+      'Inventaris (Rp)','Net Malik (Rp)','Net Filan (Rp)','Kumul Malik (Rp)','Kumul Filan (Rp)',
+      'BCA (Rp)','BSI (Rp)','Mandiri (Rp)','BRI (Rp)','Cash (Rp)','Lap.'
+    ]);
+    // Baris BASELINE — titik awal hitungan kumulatif sebelum match pertama
+    // ditutup lewat sistem ini. Ganti angka O/P di baris ini (Kumul Malik /
+    // Kumul Filan) ke saldo riil kamu sebelum mulai pakai backend ini.
+    const baseline = new Array(22).fill('');
+    baseline[0] = 'BASELINE';
+    baseline[14] = 8147730; // Kumul Malik (Rp) — sesuaikan ke saldo riil
+    baseline[15] = 5372762; // Kumul Filan (Rp) — sesuaikan ke saldo riil
+    ws.getRange(3,1,1,22).setValues([baseline]);
+  }
+
+  // ── Deposit_Log ──
+  ws = ensureSheet(SHEET.DEPOSIT);
+  if (ws.getLastRow() < 2) writeHeader(ws, 'Deposit_Log — riwayat deposit player', [
+    'Tanggal','Nama Player','Match ID','Sumber','Keterangan',
+    'Jumlah Masuk (Rp)','Jumlah Keluar (Rp)','Saldo (Rp)'
+  ]);
+
+  // ── Inventaris ──
+  ws = ensureSheet(SHEET.INVENTARIS);
+  if (ws.getLastRow() < 2) writeHeader(ws, 'Inventaris — belanja alat, potong kumulatif Malik/Filan', [
+    'Tanggal','Item','Jumlah (Rp)','Keterangan','Split Malik (Rp)','Split Filan (Rp)'
+  ]);
+
+  // ── TEMPLATE_Match — sheet ini DI-COPY tiap kali "Buat match baru" ──
+  // Kalau tab ini BELUM ada sama sekali: bikin dari nol, layout persis
+  // sama kayak TEMPLATE_Match yang udah ada di sheet data riil kamu (info
+  // row 3-13, judul "ESTIMASI MARGIN" row 15, 6 field margin row 16-21,
+  // "DAFTAR PLAYER" row 23, header tabel player row 24) — supaya
+  // parseMatchSheet() di kode ini baca row yang bener baik di sheet baru
+  // maupun yang lama.
+  ws = ss.getSheetByName('TEMPLATE_Match');
+  if (!ws) {
+    ws = ss.insertSheet('TEMPLATE_Match');
+    made.push('TEMPLATE_Match');
+
+    ws.getRange(1,1).setValue('TEMPLATE MATCH — jangan diisi manual, disalin otomatis tiap "Buat match baru"');
+    ws.getRange(1,1).setFontWeight('bold');
+    ws.getRange(2,1).setValue('INFO EVENT');
+    ws.getRange(2,1).setFontWeight('bold');
+
+    const infoLabels = ['Match ID','Tanggal','Venue','Jenis Game','Tipe Event',
+      'Tipe Lapangan','HTM Player','HTM GK','Kuota Kiper','Kuota Field','Status Match'];
+    infoLabels.forEach((lbl,i) => ws.getRange(3+i,1).setValue(lbl));
+
+    ws.getRange(15,1).setValue('ESTIMASI MARGIN');
+    ws.getRange(15,1).setFontWeight('bold');
+    const marginLabels = ['Sales Pasti (Rp)','Sales Estimasi (Rp)','Total Cost (Rp)',
+      'Margin Proyeksi (Rp)','Split Malik (Rp)','Split Filan (Rp)'];
+    marginLabels.forEach((lbl,i) => ws.getRange(16+i,1).setValue(lbl));
+
+    ws.getRange(23,1).setValue('DAFTAR PLAYER');
+    ws.getRange(23,1).setFontWeight('bold');
+    ws.getRange(24,1,1,16).setValues([[
+      'No','Nama Player','Status Bayar','HTM','Label Harga','Deposit Dipakai',
+      'Metode Bayar','Jumlah Bayar','Tgl Bayar','Posisi','Jersey Warna','Ukuran',
+      'Tim','Formasi','Status SHTM','Catatan'
+    ]]);
+    ws.getRange(24,1,1,16).setFontWeight('bold');
+
+    ws.getRange(60,1).setValue('BIAYA OPERASIONAL');
+    ws.getRange(60,1).setFontWeight('bold');
+    ws.getRange(61,1,1,8).setValues([[
+      'Item Biaya','Kategori','Tipe','Rencana (Rp)','Realisasi (Rp)','Skema Split','Jml Cicilan','Catatan'
+    ]]);
+    ws.getRange(61,1,1,8).setFontWeight('bold');
+
+    ws.getRange(85,1).setValue('PENCETAK GOL');
+    ws.getRange(85,1).setFontWeight('bold');
+    ws.getRange(86,1,1,3).setValues([['Nama','Gol','Keterangan']]);
+    ws.getRange(86,1,1,3).setFontWeight('bold');
+  } else {
+    // Tab ini udah ada (kasus sheet data riil kamu) — JANGAN disentuh isi
+    // row 1-24-nya sama sekali. Cuma cek: apa udah ada section "Biaya"
+    // dan "Pencetak Gol"? Kalau belum (dan memang belum, di sheet riil
+    // kamu TEMPLATE_Match cuma sampai row 24 = header Daftar Player),
+    // ditambahin di BAWAH baris terakhir yang udah kepake — addBiaya()/
+    // addGol() di kode ini butuh baris berlabel itu buat tau mau nulis
+    // baris baru di mana.
+    skipped.push('TEMPLATE_Match (isi lama tidak diubah)');
+    const data = ws.getDataRange().getValues();
+    const hasBiaya = data.some(row => {
+      const c0 = String(row[0] || '').toLowerCase();
+      return c0.includes('item biaya') || c0.includes('biaya operasional');
+    });
+    const hasGol = data.some(row => {
+      const c0 = String(row[0] || '').toLowerCase();
+      return c0.includes('pencetak') || c0.includes('goal scorer');
+    });
+    if (!hasBiaya || !hasGol) {
+      // JANGAN taruh section baru cuma "3 baris di bawah baris terakhir
+      // yang kepake" — baris terakhir yang kepake itu justru HEADER tabel
+      // player (row 24), dan addPlayerToMatch() nyari baris kosong per
+      // KOLOM B buat nyisipin player baru; kalau section baru ditaruh
+      // kepepet deket situ, player ke-3/4 bisa numpuk nimpa label section.
+      // Jadi kasih jarak cukup dari baris HEADER PLAYER (bukan dari baris
+      // terakhir), muat sampai puluhan player per match.
+      let playerHeaderRow = -1;
+      for (let r = 0; r < data.length; r++) {
+        if (data[r][0] === 'No' && data[r][1] === 'Nama Player') { playerHeaderRow = r + 1; break; }
+      }
+      let nextRow = playerHeaderRow > 0 ? playerHeaderRow + 40 : ws.getLastRow() + 3;
+      if (!hasBiaya) {
+        ws.getRange(nextRow,1).setValue('BIAYA OPERASIONAL');
+        ws.getRange(nextRow,1).setFontWeight('bold');
+        nextRow += 1;
+        ws.getRange(nextRow,1,1,8).setValues([[
+          'Item Biaya','Kategori','Tipe','Rencana (Rp)','Realisasi (Rp)','Skema Split','Jml Cicilan','Catatan'
+        ]]);
+        ws.getRange(nextRow,1,1,8).setFontWeight('bold');
+        made.push('TEMPLATE_Match: section Biaya Operasional (ditambah di row ' + (nextRow-1) + ')');
+        nextRow += 24; // headroom baris biaya
+      }
+      if (!hasGol) {
+        nextRow += 2;
+        ws.getRange(nextRow,1).setValue('PENCETAK GOL');
+        ws.getRange(nextRow,1).setFontWeight('bold');
+        nextRow += 1;
+        ws.getRange(nextRow,1,1,3).setValues([['Nama','Gol','Keterangan']]);
+        ws.getRange(nextRow,1,1,3).setFontWeight('bold');
+        made.push('TEMPLATE_Match: section Pencetak Gol (ditambah di row ' + (nextRow-1) + ')');
+      }
+    }
+  }
+
+  // ── Rekap_Skorer ── (top skor all time, manual — field-nya sama persis
+  // dgn tabel "Kelola Rekap Skorer" di Admin: Nama/Kategori/Tahun/Gol/
+  // Uraian. BELUM ada di sheet data riil kamu juga, jadi ini tab baru,
+  // aman dibikin kapan aja — nggak nyentuh 6 tab lain yang udah ada.
+  // Diisi otomatis dari 7 data yang udah kamu masukin manual di Admin.
+  ws = ensureSheet(SHEET.SCORER);
+  if (ws.getLastRow() < 2) {
+    writeHeader(ws, 'Rekap_Skorer — top skor all time (tampil di Dashboard & Goal scorer)', [
+      'No','Nama','Kategori','Tahun','Total Gol','Uraian'
+    ]);
+    const seedScorer = [
+      [1,'Annas','BMR','2026',19,''],
+      [2,'Bambang','SMS','2026',13,''],
+      [3,'Jayadi','Umum','2026',10,''],
+      [4,'Ibnu','Umum','2026',7,''],
+      [5,'Wasis','Umum','2026',7,''],
+      [6,'Arsya','Umum','2026',4,''],
+      [7,'Eri','SMS','2026',4,'']
+    ];
+    ws.getRange(3,1,seedScorer.length,6).setValues(seedScorer);
+  }
+
+  // Hapus "Sheet1" bawaan Google kalau masih ada dan kosong
+  const def = ss.getSheetByName('Sheet1');
+  if (def && ss.getSheets().length > 1 && def.getLastRow() === 0) {
+    ss.deleteSheet(def);
+  }
+
+  const msg = 'Selesai. Tab dibuat: ' + (made.join(', ') || '(tidak ada, semua udah ada)') +
+    ' | Tab dilewatin (udah ada sebelumnya): ' + (skipped.join(', ') || '(tidak ada)');
+  Logger.log(msg);
+  return msg;
+}
+
+// ── GET: Rekap Skorer (top skor all time, manual) ───────────
+function getScorer() {
+  return sheetToObjects(SHEET.SCORER, 2);
+}
+
+// ── POST: Rekap Skorer ───────────────────────────────────────
+function addScorer(p) {
+  const ws      = getSheet(SHEET.SCORER);
+  const lastRow = ws.getLastRow() + 1;
+  const no      = lastRow - 2;
+  ws.getRange(lastRow, 1, 1, 6).setValues([[
+    no, p.nama, p.kategori || '—', p.tahun || '', p.gol || 0, p.uraian || ''
+  ]]);
+  return { ok: true, row: lastRow };
+}
+
+function updateScorer(p) {
+  const ws = getSheet(SHEET.SCORER);
+  if (!ws) return { error: 'Sheet not found' };
+  ws.getRange(p.rowIdx, 1, 1, 6).setValues([[
+    p.no, p.nama, p.kategori || '—', p.tahun || '', p.gol || 0, p.uraian || ''
+  ]]);
+  return { ok: true };
+}
+
+function deleteScorer(p) {
+  const ws = getSheet(SHEET.SCORER);
+  if (!ws) return { error: 'Sheet not found' };
+  ws.deleteRow(p.rowIdx);
   return { ok: true };
 }
 
