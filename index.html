@@ -381,9 +381,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <div style="padding:11px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <span class="flbl">Match</span>
     <select id="rpt-match-sel" style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)">
-      <option>6 Sept 2026</option><option>15 Agust BOSS</option><option>26 Juli BIG</option><option>12 Juli BOSS</option>
+      <option value="">— Pilih match yang sudah ditutup —</option>
     </select>
-    <button class="btn btn-dl"><i class="ti ti-download" style="font-size:13px"></i> Download laporan PDF</button>
+    <button class="btn btn-dl" onclick="openReportingLaporanPdf()"><i class="ti ti-download" style="font-size:13px"></i> Download laporan PDF</button>
     <span style="font-size:11px;color:var(--hi)">Player · biaya · margin · split · inventaris</span>
   </div>
   <div class="in-tabs">
@@ -461,6 +461,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <button class="btn btn-prim" onclick="openModal('m-match-baru')"><i class="ti ti-plus"></i> Match baru</button>
   </div>
   <div id="match-switcher" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+  <div class="card" id="match-empty" style="display:none;padding:48px 20px;text-align:center">
+    <div style="font-size:28px;margin-bottom:10px"><i class="ti ti-ball-football" style="color:var(--mu)"></i></div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Belum ada match aktif</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:16px">Match sebelumnya sudah dihapus. Buat match baru untuk mulai input slot player, biaya, dan data lainnya.</div>
+    <button class="btn btn-prim" onclick="openModal('m-match-baru')"><i class="ti ti-plus"></i> Buat match baru</button>
+  </div>
   <div class="card" id="match-card">
     <div class="mhd">
       <div>
@@ -756,6 +762,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div class="in-tab" onclick="adminTab('shtm',this)"><i class="ti ti-ticket" style="font-size:13px"></i> Daftar SHTM</div>
     <div class="in-tab" onclick="adminTab('config',this)"><i class="ti ti-settings" style="font-size:13px"></i> Konfigurasi</div>
     <div class="in-tab" onclick="adminTab('player',this)"><i class="ti ti-users" style="font-size:13px"></i> Kelola player</div>
+    <div class="in-tab" onclick="adminTab('scorer',this)"><i class="ti ti-trophy" style="font-size:13px"></i> Rekap skorer</div>
   </div>
 
   <!-- JERSEY STOK -->
@@ -879,6 +886,33 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <tr style="background:var(--am2)"><td data-no-edit="1">3</td><td class="pri">Wayan</td><td>—</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td>8</td><td>6 Sept</td><td data-edit-type="deposit" style="color:var(--am);font-weight:500">Rp 70.000</td><td data-edit-type="shtm-status">—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- KELOLA REKAP SKORER -->
+  <div id="adm-scorer" class="tab-p" style="background:var(--su);border:1px solid var(--bd);border-top:none;border-radius:0 0 12px 12px;padding:16px;display:none">
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">Kelola rekap skorer — Top skor all time</div>
+      <div style="font-size:12px;color:var(--mu)">Data di tabel ini yang otomatis muncul sebagai "Top skor all time" di Dashboard dan di tab Goal scorer (Transaksi) — diurutkan sendiri dari gol terbanyak. Tambah/ubah/hapus manual di sini kalau ada data terbaru.</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-prim" onclick="openModal('m-tambah-scorer')"><i class="ti ti-user-plus"></i> Tambah pencetak gol</button>
+    </div>
+    <table class="tbl">
+      <thead><tr><th style="width:40px">No</th><th>Nama</th><th style="width:90px">Kategori</th><th style="width:70px">Tahun</th><th style="width:80px">Total gol</th><th>Uraian</th><th style="width:80px">Aksi</th></tr></thead>
+      <tbody id="scorer-tbody">
+        <tr><td data-no-edit="1">1</td><td class="pri">Annas</td><td data-edit-type="kategori"><span class="b b-gy">BMR</span></td><td data-edit-type="tahun"><span class="b b-gy">2026</span></td><td data-edit-type="gol">19</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr><td data-no-edit="1">2</td><td class="pri">Bambang</td><td data-edit-type="kategori"><span class="b b-gy">SMS</span></td><td data-edit-type="tahun"><span class="b b-gy">2026</span></td><td data-edit-type="gol">13</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr><td data-no-edit="1">3</td><td class="pri">Jayadi</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td data-edit-type="tahun"><span class="b b-gy">2026</span></td><td data-edit-type="gol">10</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr><td data-no-edit="1">4</td><td class="pri">Ibnu</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td data-edit-type="tahun"><span class="b b-gy">2026</span></td><td data-edit-type="gol">7</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr><td data-no-edit="1">5</td><td class="pri">Wasis</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td data-edit-type="tahun"><span class="b b-gy">2026</span></td><td data-edit-type="gol">7</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr><td data-no-edit="1">6</td><td class="pri">Arsya</td><td data-edit-type="kategori"><span class="b b-gy">Umum</span></td><td data-edit-type="tahun"><span class="b b-gy">2026</span></td><td data-edit-type="gol">4</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+        <tr><td data-no-edit="1">7</td><td class="pri">Eri</td><td data-edit-type="kategori"><span class="b b-gy">SMS</span></td><td data-edit-type="tahun"><span class="b b-gy">2026</span></td><td data-edit-type="gol">4</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>
+      </tbody>
+    </table>
+    <div class="info info-ac" style="margin-top:12px">
+      <i class="ti ti-info-circle"></i>
+      <span>Tabel ini otomatis terurut dari gol terbanyak ke paling sedikit setiap kali ada tambah/ubah gol — No di sini = ranking. Medali 🥇🥈🥉 untuk 3 besar dan catatan di kolom Uraian muncul otomatis di Dashboard dan tab Goal scorer. Kolom Tahun dipakai chip filter "All time / 2026" di Dashboard.</span>
+    </div>
   </div>
 
 </div>
@@ -1010,6 +1044,25 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="info info-ac"><i class="ti ti-info-circle"></i> Player baru masuk ke database dengan Hadir 0, belum ada riwayat deposit/SHTM. Data ini terpisah dari slot player di tab Transaksi.</div>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-player-db')">Batal</button><button class="btn btn-prim" onclick="submitTambahPlayerDb()"><i class="ti ti-check"></i> Tambah player</button></div>
+  </div>
+</div>
+
+<div id="m-tambah-scorer" class="modal-ov" onclick="bgClose(event,'m-tambah-scorer')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-trophy" style="color:var(--ac)"></i> Tambah pencetak gol</div><button class="ib" onclick="closeModal('m-tambah-scorer')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="fg"><div class="fl">Nama player</div><input type="text" id="sc-nama" placeholder="Nama lengkap"></div>
+      <div class="g2f">
+        <div class="fg"><div class="fl">Kategori</div><select id="sc-kategori"><option>SMS</option><option>BMR</option><option>Umum</option></select></div>
+        <div class="fg"><div class="fl">Tahun</div><select id="sc-tahun"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option></select></div>
+      </div>
+      <div class="g2f">
+        <div class="fg"><div class="fl">Total gol</div><input type="number" id="sc-gol" min="0" step="1" value="0"></div>
+        <div class="fg"><div class="fl">Uraian (opsional)</div><input type="text" id="sc-uraian" placeholder="mis. Top skor kategori Umum"></div>
+      </div>
+      <div class="info info-ac"><i class="ti ti-info-circle"></i> Kalau nama sudah ada di daftar, tambahkan pencetak gol baru dengan nama berbeda — untuk update gol pemain yang sudah ada, edit langsung dari tabel (ikon pensil).</div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-tambah-scorer')">Batal</button><button class="btn btn-prim" onclick="submitTambahScorer()"><i class="ti ti-check"></i> Tambah</button></div>
   </div>
 </div>
 
@@ -1254,28 +1307,15 @@ const MD={
   l44:Array.from({length:44},(_,i)=>'M'+(i+1)),
   d44:[120,80,150,-60,200,180,90,110,75,-80,160,130,100,200,85,95,110,140,87,-45,112,287,144,229,102,243,135,-98,201,163,187,489,243,489,201,249,145,87,60,243,201,87,163,249]
 };
-const SCORERS=[
-  {rank:'🥇',name:'Annas',cat:'BMR',gol:19,pct:100},
-  {rank:'🥈',name:'Bambang',cat:'SMS',gol:13,pct:68},
-  {rank:'🥉',name:'Jayadi',cat:'Umum',gol:10,pct:53},
-  {rank:'4',name:'Ibnu',cat:'Umum',gol:7,pct:37},
-  {rank:'5',name:'Wasis',cat:'Umum',gol:7,pct:37},
-  {rank:'6',name:'Arsya',cat:'Umum',gol:4,pct:21},
-  {rank:'7',name:'Eri',cat:'SMS',gol:4,pct:21},
-];
-const SCORERS_2026=[
-  {rank:'🥇',name:'Jayadi',cat:'Umum',gol:8,pct:100},
-  {rank:'🥈',name:'Annas',cat:'BMR',gol:7,pct:88},
-  {rank:'🥉',name:'Bambang',cat:'SMS',gol:5,pct:63},
-  {rank:'4',name:'Wasis',cat:'Umum',gol:4,pct:50},
-  {rank:'5',name:'Ibnu',cat:'Umum',gol:3,pct:38},
-];
+// SCORERS/SCORERS_2026 array statis lama sudah tidak dipakai — datanya
+// sekarang datang langsung dari tabel admin Kelola Rekap Skorer
+// (#scorer-tbody), lihat computeScorerData().
 function filterScorer(period,btn){
   if(btn){
     btn.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
     btn.classList.add('active');
   }
-  renderScorer('d-scorer', period==='2026' ? SCORERS_2026 : SCORERS);
+  renderScorer('d-scorer', computeScorerData(period==='2026' ? '2026' : null));
 }
 const MATCH_SCORERS=[{rank:1,name:'Jayadi',gol:3,pct:100},{rank:2,name:'Ricky',gol:2,pct:67},{rank:3,name:'Wayan',gol:1,pct:33}];
 
@@ -1340,9 +1380,52 @@ function switchChart(n,btn){
   ci=mkLine('chartMargin',MD['l'+k],MD['d'+k]);
 }
 
+// Duplikat kecil dari escAttr() (didefinisikan lebih bawah, di blok <script>
+// kedua) — dibutuhkan di sini karena renderScorer() sudah dipanggil dari
+// INIT di blok pertama, sebelum blok kedua sempat jalan. Isinya identik;
+// begitu blok kedua jalan, definisi escAttr milik blok itu menimpa ini
+// (nama fungsi beda, jadi tidak ada konflik).
+function escAttrEarly(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
 function renderScorer(id,data){
   const el=document.getElementById(id);if(!el)return;
-  el.innerHTML=data.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid var(--bd)"><div style="font-size:12px;font-weight:700;min-width:24px;text-align:center">${s.rank}</div><div style="font-size:12px;font-weight:500;flex:0 0 82px">${s.name}</div>${s.cat?`<div style="font-size:10px;color:var(--mu);flex:0 0 36px">${s.cat}</div>`:'<div style="flex:0 0 36px"></div>'}<div style="flex:1;height:6px;background:var(--su2);border-radius:3px;overflow:hidden"><div style="width:${s.pct}%;height:100%;background:var(--nv);border-radius:3px"></div></div><div style="font-size:12px;font-weight:700;color:var(--nv);min-width:50px;text-align:right">${s.gol} gol</div></div>`).join('');
+  el.innerHTML=data.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid var(--bd)"><div style="font-size:12px;font-weight:700;min-width:24px;text-align:center">${s.rank}</div><div style="flex:0 0 82px"><div style="font-size:12px;font-weight:500">${escAttrEarly(s.name)}</div>${s.note?`<div style="font-size:9px;color:var(--mu);line-height:1.3;margin-top:1px">${escAttrEarly(s.note)}</div>`:''}</div>${s.cat?`<div style="font-size:10px;color:var(--mu);flex:0 0 36px">${escAttrEarly(s.cat)}</div>`:'<div style="flex:0 0 36px"></div>'}<div style="flex:1;height:6px;background:var(--su2);border-radius:3px;overflow:hidden"><div style="width:${s.pct}%;height:100%;background:var(--nv);border-radius:3px"></div></div><div style="font-size:12px;font-weight:700;color:var(--nv);min-width:50px;text-align:right">${s.gol} gol</div></div>`).join('');
+}
+/* Sumber data "Top skor all time" (Dashboard + tab Goal scorer) sekarang
+   dari tabel admin Kelola Rekap Skorer (#scorer-tbody), bukan array statis
+   lagi — supaya admin bisa tambah/ubah/hapus sendiri tanpa perlu edit kode.
+   year=null/undefined -> semua baris (all time). year='2026' dsb -> cuma
+   baris yg kolom Tahun-nya cocok, dipakai chip filter "2026" di Dashboard. */
+function computeScorerData(year){
+  const rows = [...document.querySelectorAll('#scorer-tbody tr')];
+  const list = rows.map(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    return {
+      name: tds[1] ? tds[1].textContent.trim() : '',
+      cat: tds[2] ? tds[2].textContent.trim() : '',
+      tahun: tds[3] ? tds[3].textContent.trim() : '',
+      gol: tds[4] ? (parseInt(tds[4].textContent.trim(),10) || 0) : 0,
+      note: tds[5] ? tds[5].textContent.trim() : ''
+    };
+  }).filter(s=>!year || s.tahun===String(year))
+    .sort((a,b)=>b.gol-a.gol);
+  const max = list.length ? list[0].gol : 0;
+  const medals = ['🥇','🥈','🥉'];
+  return list.map((s,i)=>({
+    rank: medals[i] || String(i+1),
+    name: s.name, cat: s.cat, gol: s.gol,
+    note: s.note && s.note!=='—' ? s.note : '',
+    pct: max ? Math.round(s.gol/max*100) : 0
+  }));
+}
+function renderTopSkorFromDb(){
+  // Tab Goal scorer (Transaksi) selalu all-time, tidak ikut chip filter Dashboard.
+  renderScorer('t-alltime-scorer', computeScorerData(null));
+  const dEl = document.getElementById('d-scorer');
+  const activeChip = dEl && dEl.closest('.card') ? dEl.closest('.card').querySelector('.chip.active') : null;
+  const period = activeChip && activeChip.textContent.trim()==='2026' ? '2026' : null;
+  renderScorer('d-scorer', computeScorerData(period));
 }
 
 function goPage(id){
@@ -1368,7 +1451,7 @@ function trxTab(id,btn){
   if(btn)btn.classList.add('active');
 }
 function adminTab(id,btn){
-  ['adm-jersey','adm-shtm','adm-config','adm-player'].forEach(i=>{
+  ['adm-jersey','adm-shtm','adm-config','adm-player','adm-scorer'].forEach(i=>{
     const el=document.getElementById(i);if(el)el.style.display='none';
     el&&el.classList.remove('active');
   });
@@ -1401,9 +1484,8 @@ function toggleSf(btn,nama,matchDate){
 }
 
 // INIT
-renderScorer('d-scorer',SCORERS);
+renderTopSkorFromDb();
 renderScorer('t-match-scorer',MATCH_SCORERS.map(s=>({...s,cat:''})));
-renderScorer('t-alltime-scorer',SCORERS);
 setTimeout(initCharts,150);
 
 // ── BROADCAST GENERATOR ──
@@ -1784,6 +1866,7 @@ const LABEL_OPTIONS = ['Normal','SHTM','Promo','Free','Sponsor'];
 const UKURAN_OPTIONS = ['M','L','XL','2XL'];
 const SHTM_STATUS_OPTIONS = ['Belum dipakai','Sudah dipakai'];
 const KATEGORI_OPTIONS = ['SMS','BMR','Umum'];
+const TAHUN_OPTIONS = ['2024','2025','2026','2027'];
 /* Bank/Cash: TIDAK live-select di tabel — tampil sbg teks/badge biasa, cuma
    berubah jadi dropdown (bukan free text) saat masuk mode edit lewat aksi
    pensil, supaya konsisten dgn kolom lain tapi tetap dibatasi ke daftar bank. */
@@ -2011,6 +2094,17 @@ function enterEditCell(el){
     el.innerHTML = `<input class="ms-ed-input" type="number" min="0" step="1000" data-edit-type="deposit" value="${n}" style="width:96px">`;
     return;
   }
+  if(el.dataset && el.dataset.editType==='gol'){
+    const n = parseInt(el.textContent.trim(),10) || 0;
+    el.innerHTML = `<input class="ms-ed-input" type="number" min="0" step="1" data-edit-type="gol" value="${n}" style="width:64px">`;
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='tahun'){
+    const cur = el.textContent.trim();
+    const opts = TAHUN_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    el.innerHTML = `<select class="ms-ed-input" data-edit-type="tahun" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
+    return;
+  }
   if(el.children.length===0){
     const val = el.textContent.trim();
     const w = Math.min(92,Math.max(30,val.length*7));
@@ -2080,6 +2174,16 @@ function commitInput(input){
     td.textContent = n>0 ? ('Rp ' + fmtRupiah(n)) : '—';
     td.style.color = n>0 ? 'var(--am)' : '';
     td.style.fontWeight = n>0 ? '500' : '';
+    return;
+  }
+  if(input.dataset.editType==='gol'){
+    const td = input.parentNode;
+    td.textContent = Math.max(0, parseInt(input.value,10) || 0);
+    return;
+  }
+  if(input.dataset.editType==='tahun'){
+    const td = input.parentNode;
+    td.innerHTML = `<span class="b b-gy">${input.value}</span>`;
     return;
   }
   let val = input.value.trim();
@@ -2157,6 +2261,10 @@ function afterRowChange(row){
   if(row.classList && row.classList.contains('dep-row')){
     refreshSlotDepositTriggers();
   }
+  if(row.closest && row.closest('#scorer-tbody')){
+    resortScorerDb();
+    renderTopSkorFromDb();
+  }
   recalcAll();
 }
 /* Posisi (Field/GK) sekarang bisa diedit terpisah dari kolom No. Kalau posisi
@@ -2226,6 +2334,7 @@ document.addEventListener('click', function(e){
     const wasDepRow = row && row.classList && row.classList.contains('dep-row');
     const wasJerseyStokRow = row && row.closest && row.closest('#jersey-stok-table-wrap');
     const wasInPlayerDb = row && row.closest && row.closest('#player-tbody');
+    const wasInScorerDb = row && row.closest && row.closest('#scorer-tbody');
     if(wasJerseyStokRow){
       const warna = row.dataset.warna;
       const tipe = row.dataset.tipe;
@@ -2242,6 +2351,7 @@ document.addEventListener('click', function(e){
     if(wasInSlot) renumberSlot();
     if(wasDepRow) refreshSlotDepositTriggers();
     if(wasInPlayerDb) renumberPlayerDb();
+    if(wasInScorerDb){ resortScorerDb(); renderTopSkorFromDb(); }
     recalcAll();
     return;
   }
@@ -2405,13 +2515,33 @@ function computeCumulativeProfit(){
   });
   return { malik, filan, count };
 }
-function generateLaporanPdf(){
-  const m = msMatches[msActiveId];
+// id opsional: match mana yg mau dilaporkan. Kosong/tidak diisi = match
+// yang lagi aktif di Transaksi (perilaku asli, dipakai tab Rekap akhir).
+// Diisi id match lain (harus berstatus 'tutup') = dipakai oleh halaman
+// Reporting, yang membaca dari snapshot HTML tersimpan (bukan DOM live,
+// karena DOM cuma nampilin satu match aktif dalam satu waktu).
+function generateLaporanPdf(id){
+  const targetId = id || msActiveId;
+  const m = msMatches[targetId];
   if(!m) return;
-  const f = computeFinancialsFromLiveDom();
+  const isLive = targetId === msActiveId;
+  const f = isLive ? computeFinancialsFromLiveDom() : computeMatchFinancials(m);
   const cum = computeCumulativeProfit();
 
-  const biayaRows = [...document.querySelectorAll('#biaya-tbody tr')].map(tr=>{
+  let biayaSource, slotSource;
+  if(isLive){
+    biayaSource = [...document.querySelectorAll('#biaya-tbody tr')];
+    slotSource = [...document.querySelectorAll('#slot-tbody tr')];
+  } else {
+    const biayaTmp = document.createElement('tbody');
+    biayaTmp.innerHTML = m.biayaHtml || '';
+    biayaSource = [...biayaTmp.querySelectorAll('tr')];
+    const slotTmp = document.createElement('tbody');
+    slotTmp.innerHTML = m.slotHtml || '';
+    slotSource = [...slotTmp.querySelectorAll('tr')];
+  }
+
+  const biayaRows = biayaSource.map(tr=>{
     const tds = tr.querySelectorAll(':scope > td');
     return {
       item: tds[0] ? tds[0].textContent.trim() : '',
@@ -2419,7 +2549,7 @@ function generateLaporanPdf(){
       realisasi: tds[3] ? tds[3].textContent.trim() : 'Rp 0'
     };
   });
-  const slotRows = [...document.querySelectorAll('#slot-tbody tr')].map(tr=>{
+  const slotRows = slotSource.map(tr=>{
     const tds = tr.querySelectorAll(':scope > td');
     return {
       no: tds[0] ? tds[0].textContent.trim() : '',
@@ -2503,6 +2633,31 @@ function renumberPlayerDb(){
     if(firstTd) firstTd.textContent = i+1;
   });
 }
+// Beda dari Kelola Player/Daftar SHTM: di Kelola Rekap Skorer, No = urutan
+// RANKING (gol terbanyak paling atas), bukan urutan input — jadi baris
+// harus diurutkan ulang tiap kali ada tambah/edit gol, tidak cukup cuma
+// dinomori ulang di tempat.
+function renumberScorerDb(){
+  const rows = document.querySelectorAll('#scorer-tbody tr');
+  rows.forEach((tr,i)=>{
+    const firstTd = tr.querySelector(':scope > td');
+    if(firstTd) firstTd.textContent = i+1;
+  });
+}
+function resortScorerDb(){
+  const tbody = document.getElementById('scorer-tbody');
+  if(!tbody) return;
+  const rows = [...tbody.querySelectorAll('tr')];
+  rows.sort((a,b)=>{
+    const tdsA = a.querySelectorAll(':scope > td');
+    const tdsB = b.querySelectorAll(':scope > td');
+    const golA = tdsA[4] ? (parseInt(tdsA[4].textContent.trim(),10) || 0) : 0;
+    const golB = tdsB[4] ? (parseInt(tdsB[4].textContent.trim(),10) || 0) : 0;
+    return golB - golA;
+  });
+  rows.forEach(tr=>tbody.appendChild(tr)); // appendChild pada node yg sudah ada = pindahkan posisinya
+  renumberScorerDb();
+}
 
 /* ══════════════════════════════════════════════════════════════
    MULTI-MATCH — bisa buka & pindah antar beberapa match "aktif" sekaligus.
@@ -2567,16 +2722,15 @@ function msRenderSwitcher(){
   }
   refreshReportingMatchOptions();
 }
-/* Reporting hanya boleh menampilkan match yang SUDAH ditutup (final/diposting).
-   Match yang masih draft/aktif tidak muncul di sini. M1 (match bawaan "6 Sept
-   2026") sudah terwakili oleh opsi statis historis, jadi tidak diduplikasi. */
+/* Reporting hanya boleh menampilkan match yang SUDAH ditutup (final/diposting)
+   — match yang masih draft/aktif tidak muncul di sini. Dropdown-nya
+   sekarang murni data asli (tidak ada lagi opsi contoh statis). */
 function refreshReportingMatchOptions(){
   const sel = document.getElementById('rpt-match-sel');
   if(!sel) return;
   const prevVal = sel.value;
   Array.from(sel.querySelectorAll('option[data-ms]')).forEach(o=>o.remove());
   msOrder.forEach(id=>{
-    if(id==='M1') return;
     const m = msMatches[id];
     if(!m || m.status!=='tutup') return;
     const opt = document.createElement('option');
@@ -2587,10 +2741,39 @@ function refreshReportingMatchOptions(){
   });
   if(Array.from(sel.options).some(o=>o.value===prevVal)) sel.value = prevVal;
 }
+// Tombol "Download laporan PDF" di halaman Reporting — pakai match yang
+// SEDANG DIPILIH/DIFILTER di dropdown Reporting (bukan match aktif di
+// Transaksi), sesuai dropdown-nya sendiri (isinya cuma match yg sudah tutup).
+function openReportingLaporanPdf(){
+  const sel = document.getElementById('rpt-match-sel');
+  const id = sel ? sel.value : '';
+  if(!id){ showToast('Pilih match yang sudah ditutup dulu.'); return; }
+  if(!msMatches[id]){ showToast('Data match ini tidak ditemukan.'); return; }
+  generateLaporanPdf(id);
+  openModal('m-laporan-pdf');
+}
 
+function msShowEmptyState(){
+  msActiveId = null;
+  const switcher = document.getElementById('match-switcher');
+  const card = document.getElementById('match-card');
+  const empty = document.getElementById('match-empty');
+  if(switcher) switcher.style.display = 'none';
+  if(card) card.style.display = 'none';
+  if(empty) empty.style.display = '';
+}
+function msHideEmptyState(){
+  const switcher = document.getElementById('match-switcher');
+  const card = document.getElementById('match-card');
+  const empty = document.getElementById('match-empty');
+  if(switcher) switcher.style.display = '';
+  if(card) card.style.display = '';
+  if(empty) empty.style.display = 'none';
+}
 function msRestore(id){
   const m = msMatches[id];
   if(!m) return;
+  msHideEmptyState();
   document.getElementById('mhd-title').textContent = m.titleLine;
   document.getElementById('mhd-sub').textContent = m.subLine;
   document.getElementById('slot-tbody').innerHTML = m.slotHtml;
@@ -2678,11 +2861,14 @@ function msLoadFromStorage(){
     const raw = localStorage.getItem(MS_STORAGE_KEY);
     if(!raw) return false;
     const data = JSON.parse(raw);
-    if(!data || !data.msMatches || !data.msOrder || !data.msOrder.length) return false;
+    // Array kosong (data.msOrder = []) itu valid — artinya draft terakhir
+    // memang sengaja dikosongkan (semua match dihapus). Cuma tolak kalau
+    // bentuk datanya rusak/tidak ada sama sekali.
+    if(!data || !data.msMatches || !Array.isArray(data.msOrder)) return false;
     Object.keys(msMatches).forEach(k=>delete msMatches[k]);
     Object.assign(msMatches, data.msMatches);
     msOrder = data.msOrder;
-    msActiveId = data.msActiveId && msMatches[data.msActiveId] ? data.msActiveId : msOrder[0];
+    msActiveId = data.msActiveId && msMatches[data.msActiveId] ? data.msActiveId : (msOrder[0] || null);
     msSeq = data.msSeq || msOrder.length;
     return true;
   }catch(e){
@@ -2693,12 +2879,12 @@ function msHapusMatchClick(btn){
   const m = msMatches[msActiveId];
   if(!m) return;
   if(m.status==='tutup'){ showToast('Match yang sudah ditutup tidak bisa dihapus — datanya sudah final di Reporting.'); return; }
-  if(msOrder.length<=1){ showToast('Tidak bisa menghapus satu-satunya match yang tersisa.'); return; }
   if(document.getElementById('mhd-hapus-confirm')) return; // sudah dalam mode konfirmasi
+  const isLast = msOrder.length<=1;
   const wrap = document.createElement('span');
   wrap.id = 'mhd-hapus-confirm';
   wrap.style.cssText = 'font-size:12px;color:var(--rd);display:flex;align-items:center;gap:6px;white-space:nowrap';
-  wrap.innerHTML = 'Batalkan rencana match ini? '
+  wrap.innerHTML = (isLast ? 'Ini match terakhir — semua datanya (slot player, biaya, deposit) ikut terhapus. Yakin? ' : 'Batalkan rencana match ini? ')
     + '<a href="#" onclick="msConfirmHapus(event)" style="color:var(--rd);font-weight:700;text-decoration:underline">Ya, hapus</a>'
     + '<a href="#" onclick="msCancelHapus(event)" style="color:var(--mu);text-decoration:underline">Batal</a>';
   btn.replaceWith(wrap);
@@ -2723,10 +2909,15 @@ function msDeleteMatch(id){
   const deletedTitle = msMatches[id] ? msMatches[id].titleLine : '';
   msOrder.splice(idx,1);
   delete msMatches[id];
-  const nextId = msOrder[Math.max(0,idx-1)] || msOrder[0];
-  msRestore(nextId); // langsung restore match lain — tidak capture ke match yg baru dihapus
+  if(msOrder.length===0){
+    msShowEmptyState();
+    msRenderSwitcher();
+  } else {
+    const nextId = msOrder[Math.max(0,idx-1)] || msOrder[0];
+    msRestore(nextId); // langsung restore match lain — tidak capture ke match yg baru dihapus
+  }
   msPersist();
-  showToast('Draft match "' + deletedTitle + '" dihapus.');
+  showToast('Draft match "' + deletedTitle + '" dihapus.' + (msOrder.length===0 ? ' Tidak ada match tersisa — buat match baru untuk mulai lagi.' : ''));
 }
 
 /* ── Submit handler tiap modal "Tambah ..." ── */
@@ -3139,9 +3330,42 @@ function submitTambahPlayerDb(){
   showToast('Player ' + nama + ' ditambahkan ke database (No ' + no + ').');
   refreshKelolaPlayerShtmCell(nama);
 }
+function submitTambahScorer(){
+  const nama = document.getElementById('sc-nama').value.trim();
+  if(!nama){ showToast('Nama player belum diisi.'); return; }
+  const kategori = document.getElementById('sc-kategori').value;
+  const tahun = document.getElementById('sc-tahun').value;
+  const gol = Math.max(0, parseInt(document.getElementById('sc-gol').value,10) || 0);
+  const uraian = document.getElementById('sc-uraian').value.trim();
+  const tbody = document.getElementById('scorer-tbody');
+  if(!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td data-no-edit="1">0</td><td class="pri">${escAttr(nama)}</td>`
+    + `<td data-edit-type="kategori"><span class="b b-gy">${kategori}</span></td>`
+    + `<td data-edit-type="tahun"><span class="b b-gy">${tahun}</span></td>`
+    + `<td data-edit-type="gol">${gol}</td>`
+    + `<td>${uraian ? escAttr(uraian) : '—'}</td>`
+    + `<td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
+  tbody.appendChild(tr);
+  resortScorerDb(); // langsung urut dari gol terbanyak, No jadi ranking-nya
+  document.getElementById('sc-nama').value = '';
+  document.getElementById('sc-kategori').value = 'SMS';
+  document.getElementById('sc-tahun').value = '2026';
+  document.getElementById('sc-gol').value = '0';
+  document.getElementById('sc-uraian').value = '';
+  closeModal('m-tambah-scorer');
+  showToast('Pencetak gol ' + nama + ' ditambahkan ke rekap skorer.');
+  renderTopSkorFromDb();
+}
 function submitTutupMatch(){
   const m = msMatches[msActiveId];
   if(!m) return;
+  // PENTING: simpan dulu isi live DOM (player/biaya terbaru) ke snapshot
+  // SEBELUM ganti status. Tanpa ini, msRestore() di bawah akan menulis
+  // ulang tabel dari snapshot LAMA (yg belum tentu punya perubahan terbaru,
+  // krn snapshot cuma ke-update lewat "Simpan" atau pindah match) — jadi
+  // diam-diam membuang data yg baru ditambahkan tapi belum sempat disimpan.
+  msCaptureCurrent();
   m.status = 'tutup';
   closeModal('m-tutup-match');
   msRestore(msActiveId);
@@ -3159,6 +3383,11 @@ document.addEventListener('DOMContentLoaded', function(){
   if(!loadedFromDraft){
     refreshSlotDepositTriggers(); // sinkronkan kolom Deposit dgn saldo aktif sblm di-snapshot ke M1
     msSeedFromDom();
+    msRenderSwitcher();
+  } else if(msOrder.length===0){
+    // Draft tersimpan terakhir kali memang kosong (semua match sempat
+    // dihapus) — tampilkan state kosong, JANGAN reseed data mockup lagi.
+    msShowEmptyState();
     msRenderSwitcher();
   } else {
     msRestore(msActiveId); // tulis ulang DOM sesuai draft tersimpan
