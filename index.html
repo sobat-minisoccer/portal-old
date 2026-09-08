@@ -278,9 +278,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 
   <!-- 3 metric cards: hapus shared profit dobel, cukup 1 -->
   <div class="g3" style="margin-bottom:14px">
-    <div class="met"><div class="met-lbl"><i class="ti ti-calendar" style="font-size:12px"></i>Total match</div><div class="met-val">44</div><div class="met-sub">Terakhir: 6 Sept 2026</div></div>
+    <div class="met"><div class="met-lbl"><i class="ti ti-calendar" style="font-size:12px"></i>Total match</div><div class="met-val" id="dash-total-match">44</div><div class="met-sub">Terakhir: 6 Sept 2026</div></div>
     <div class="met"><div class="met-lbl"><i class="ti ti-users" style="font-size:12px"></i>Player terdaftar</div>
-      <div class="met-val" style="cursor:pointer;color:var(--ac);text-decoration:underline dotted" onclick="openModal('m-db-player')">143</div>
+      <div class="met-val" id="dash-total-player" style="cursor:pointer;color:var(--ac);text-decoration:underline dotted" onclick="openModal('m-db-player')">143</div>
       <div class="met-sub"><span style="color:var(--ac);cursor:pointer;font-size:11px" onclick="openModal('m-db-player')">Lihat semua →</span></div>
     </div>
     <div class="met"><div class="met-lbl"><i class="ti ti-trophy" style="font-size:12px"></i>Match terbaik</div><div class="met-val" style="color:var(--gn)">+489rb</div><div class="met-sub">26 Juli BIG — Internal BIG</div></div>
@@ -3417,7 +3417,28 @@ window.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('sms-login').style.display='none';
   }
 });
-const GAS_URL='https://script.google.com/macros/s/AKfycbwyhpWM7QmS3cz6MgY1MhwOMswMtgO4ZWMYYX_QzWt8B8Yvy8aW0L8qAgS7-7a75j6-Ag/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbwzdoV-oEO4Wh_NRBUxqHP2nuvV3-_PaE45XIHiMk-V8dauHgSK1NffSG90JYBLkFwwag/exec';
+
+// ── DASHBOARD: langkah pertama nyambung ke database asli — baru "Total
+// match" & "Player terdaftar" yang ditarik dari backend (via getDashboard,
+// yg baca Rekap_Keuangan & DB_Player asli). Sisa Dashboard (grafik, top
+// skorer, dll) masih data contoh, menyusul di tahap berikutnya. Kalau
+// fetch gagal (misal lagi offline / CORS / URL berubah), angka contoh yg
+// lama dibiarin apa adanya — nggak ngerusak tampilan.
+function loadDashboardRealStats(){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL + '?action=getDashboard')
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.error){ console.error('getDashboard error:', d.error); return; }
+      const totalMatchEl = document.getElementById('dash-total-match');
+      const totalPlayerEl = document.getElementById('dash-total-player');
+      if(totalMatchEl && typeof d.totalMatch==='number') totalMatchEl.textContent = d.totalMatch;
+      if(totalPlayerEl && typeof d.totalPlayer==='number') totalPlayerEl.textContent = d.totalPlayer;
+    })
+    .catch(err=>{ console.error('Gagal ambil data Dashboard dari database:', err); });
+}
+window.addEventListener('DOMContentLoaded', loadDashboardRealStats);
 </script>
 </body>
 </html>
