@@ -2860,12 +2860,76 @@ function msCreateMatch(meta){
 const MS_STORAGE_KEY = 'sms_portal_draft_v1';
 function msPersist(){
   msCaptureCurrent();
+  let ok = true;
   try{
     localStorage.setItem(MS_STORAGE_KEY, JSON.stringify({msMatches, msOrder, msActiveId, msSeq}));
-    return true;
   }catch(e){
-    return false; // localStorage tidak tersedia (mis. private mode) — abaikan diam-diam
+    ok = false; // localStorage tidak tersedia (mis. private mode) — abaikan diam-diam
   }
+  // Selain ke localStorage (yang cuma kebaca di browser ini), tiap match
+  // yang lagi berjalan juga dikirim ke database (Match_Drafts) — inilah
+  // yang bikin "Simpan" nyambung ke browser/device lain, bukan cuma
+  // localStorage doang. Dikirim diam-diam di belakang (nggak nunggu/nggak
+  // ngeblock UI); kalau gagal (offline, dll) localStorage tetap kepakai
+  // seperti biasa, cuma nggak ikut ke-sync ke device lain.
+  msSyncDraftsToBackend();
+  return ok;
+}
+function msPostToBackend(payload){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'}, // hindari CORS preflight ke Apps Script
+    body: JSON.stringify(payload)
+  }).catch(err=>{ console.error('Gagal kirim ke database (' + payload.action + '):', err); });
+}
+function msSyncDraftsToBackend(){
+  msOrder.forEach(id=>{
+    const m = msMatches[id];
+    if(!m) return;
+    msPostToBackend({ action:'saveMatchDraft', matchId:id, data:m });
+  });
+}
+// Ditarik sekali di awal load (lihat DOMContentLoaded di bawah) — kalau
+// database sudah punya draft (artinya pernah di-"Simpan" dari browser/
+// device mana pun), itu dipakai sebagai versi terbaru, menimpa apa pun
+// yang ada di localStorage browser ini. Kalau database masih kosong (mis.
+// belum pernah "Simpan" sama sekali, atau baru pertama kali dipakai fitur
+// ini), tampilan yang sudah dimuat dari localStorage dibiarkan apa adanya
+// — nggak ada yang ditimpa/dihapus.
+function msSyncFromBackend(){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL + '?action=getMatchDrafts')
+    .then(r=>r.json())
+    .then(rows=>{
+      if(!Array.isArray(rows) || rows.length===0) return;
+      const remoteMatches = {};
+      const remoteOrder = [];
+      rows.forEach(row=>{
+        const id = row['MatchId'];
+        if(!id) return;
+        let parsed;
+        try{ parsed = JSON.parse(row['Data']); }catch(e){ return; }
+        remoteMatches[id] = parsed;
+        remoteOrder.push(id);
+      });
+      if(remoteOrder.length===0) return;
+      Object.keys(msMatches).forEach(k=>delete msMatches[k]);
+      Object.assign(msMatches, remoteMatches);
+      msOrder = remoteOrder;
+      msActiveId = (msActiveId && msMatches[msActiveId]) ? msActiveId : msOrder[0];
+      // Samain msSeq supaya "Match baru" berikutnya nggak bentrok ID sama
+      // match yang barusan ditarik dari device lain.
+      let maxSeq = msSeq;
+      remoteOrder.forEach(id=>{
+        const mm = String(id).match(/^M(\d+)$/);
+        if(mm) maxSeq = Math.max(maxSeq, parseInt(mm[1],10));
+      });
+      msSeq = maxSeq;
+      try{ localStorage.setItem(MS_STORAGE_KEY, JSON.stringify({msMatches, msOrder, msActiveId, msSeq})); }catch(e){}
+      msRestore(msActiveId);
+    })
+    .catch(err=>{ console.error('Gagal sinkron draft match dari database:', err); });
 }
 function msSimpanDraft(){
   const ok = msPersist();
@@ -2924,6 +2988,7 @@ function msDeleteMatch(id){
   const deletedTitle = msMatches[id] ? msMatches[id].titleLine : '';
   msOrder.splice(idx,1);
   delete msMatches[id];
+  msPostToBackend({ action:'deleteMatchDraft', matchId:id }); // biar nggak nyangkut di device lain
   if(msOrder.length===0){
     msShowEmptyState();
     msRenderSwitcher();
@@ -3399,8 +3464,16 @@ function submitTutupMatch(){
 document.addEventListener('DOMContentLoaded', function(){
   const loadedFromDraft = msLoadFromStorage();
   if(!loadedFromDraft){
-    refreshSlotDepositTriggers(); // sinkronkan kolom Deposit dgn saldo aktif sblm di-snapshot ke M1
-    msSeedFromDom();
+    // Dulu browser yang belum pernah punya draft (mis. pertama kali dibuka
+    // di device/browser baru) di-"seed" dari konten mockup yang masih
+    // nempel di HTML mentah (msSeedFromDom, match contoh "6 September 2026
+    // — Internal SMS" dgn player Malik/Ricky/Wayan/Jayadi/Heru) — dianggap
+    // match sungguhan padahal cuma sisa contoh lama. Ini yang bikin match
+    // buatan Sam di satu browser nggak kelihatan di browser lain (localStorage
+    // memang per-browser, itu wajar), TAPI yang muncul malah data contoh
+    // lama, bukan tampilan kosong yang jujur. Sekarang browser/device baru
+    // langsung tampil kosong — user tinggal klik "Match baru" beneran.
+    msShowEmptyState();
     msRenderSwitcher();
   } else if(msOrder.length===0){
     // Draft tersimpan terakhir kali memang kosong (semua match sempat
@@ -3413,6 +3486,11 @@ document.addEventListener('DOMContentLoaded', function(){
   refreshAllJerseySelects();
   renderJerseyStokTable();
   refreshAllKelolaPlayerShtm();
+  // Setelah tampilan awal dari localStorage selesai (di atas, biar nggak ada
+  // jeda/kedip), coba tarik draft dari database — kalau ada isinya (pernah
+  // "Simpan" dari browser/device mana pun), itu dipakai buat nimpa tampilan
+  // di atas, supaya match yang sama kelihatan di mana pun portal dibuka.
+  msSyncFromBackend();
 });
 </script>
 <script>
