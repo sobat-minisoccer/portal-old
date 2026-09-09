@@ -413,8 +413,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   </div>
   <div id="rpt-margin" class="tab-p">
     <div class="fbar">
-      <span class="flbl">Periode</span><select><option>Semua match</option><option>2026</option><option>2025</option></select>
-      <span class="flbl">Tipe</span><select><option>Semua tipe</option><option>Internal</option><option>Join Game</option><option>Sparing Eksternal</option></select>
+      <span class="flbl">Periode</span><select id="rpt-margin-periode" onchange="applyRptMarginFilter()"><option>Semua match</option><option>2026</option><option>2025</option><option>2024</option><option>2023</option></select>
+      <span class="flbl">Tipe</span><select id="rpt-margin-tipe" onchange="applyRptMarginFilter()"><option>Semua tipe</option><option>Internal</option><option>Join Game</option><option>Sparing Eksternal</option></select>
     </div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--bd)"><div style="position:relative;height:140px"><canvas id="chartRptMargin"></canvas></div></div>
     <table class="tbl">
@@ -1400,7 +1400,7 @@ function goPage(id){
   document.getElementById('page-'+id).classList.add('active');
   const t=document.getElementById('ntab-'+id);if(t)t.classList.add('active');
   if(id==='dashboard')setTimeout(initCharts,60);
-  if(id==='reporting')setTimeout(()=>{if(cRpt)cRpt.destroy();cRpt=mkLine('chartRptMargin',MD.l24,MD.d24);},60);
+  if(id==='reporting')setTimeout(()=>{if(typeof applyRptMarginFilter==='function')applyRptMarginFilter();},60);
   if(id==='admin')renderJerseyStokTable();
 }
 function rptTab(id,btn){
@@ -1408,7 +1408,7 @@ function rptTab(id,btn){
   document.querySelectorAll('#page-reporting .in-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('rpt-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
-  if(id==='margin')setTimeout(()=>{if(cRpt)cRpt.destroy();cRpt=mkLine('chartRptMargin',MD.l24,MD.d24);},60);
+  if(id==='margin')setTimeout(()=>{if(typeof applyRptMarginFilter==='function')applyRptMarginFilter();},60);
 }
 function trxTab(id,btn){
   document.querySelectorAll('.trx-p').forEach(p=>p.classList.remove('active'));
@@ -3708,7 +3708,7 @@ function loadJerseyStokFromBackend(){
         const warna = row['Warna'];
         const tipe = row['Tipe'];
         const ukuran = row['Ukuran'];
-        const total = parseRupiah(row['Stok Total']);
+        const total = parseRupiah(pickField(row, ['Stok Total\n(unit)','Stok Total']));
         if(!warna || !ukuran) return;
         const target = (String(tipe).trim().toUpperCase()==='GK') ? gk : field;
         if(!target[warna]) target[warna] = {};
@@ -3984,16 +3984,55 @@ window.addEventListener('DOMContentLoaded', onRptMatchChange);
 // diekspos getDashboard). Ditarik sekali di awal, dipakai buat kedua tabel
 // + kartu ringkasan Shared profit (angka kumulatif & delta dihitung di
 // sini juga, jadi nggak perlu fetch getDashboard lagi).
+let _rptMarginAllMatches = [];
 function loadReportingMatches(){
   if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
   fetch(GAS_URL + '?action=getMatches')
     .then(r=>r.json())
     .then(data=>{
       if(data.error){ console.error('getMatches error:', data.error); return; }
-      renderRptMarginTable(data);
+      _rptMarginAllMatches = data;
       renderRptSplitTable(data);
+      applyRptMarginFilter();
     })
     .catch(err=>{ console.error('Gagal ambil histori match dari database:', err); });
+}
+// Filter "Periode"/"Tipe" di atas tab Margin per match sebelumnya cuma
+// dekorasi — nggak ada onchange sama sekali, dan grafiknya (#chartRptMargin)
+// selalu digambar pakai data dummy dashboard (MD.l24/d24), sama sekali
+// nggak nyambung ke histori match yang sebenarnya. Sekarang keduanya
+// (grafik DAN tabel di bawahnya) sama-sama difilter dari histori asli
+// (_rptMarginAllMatches, hasil getMatches()) tiap kali salah satu filter
+// diganti.
+function applyRptMarginFilter(){
+  const periodeSel = document.getElementById('rpt-margin-periode');
+  const tipeSel = document.getElementById('rpt-margin-tipe');
+  const periode = periodeSel ? periodeSel.value : 'Semua match';
+  const tipe = tipeSel ? tipeSel.value : 'Semua tipe';
+  let filtered = _rptMarginAllMatches;
+  if(periode && periode!=='Semua match'){
+    filtered = filtered.filter(m => String(m['Tahun']||'').trim() === periode);
+  }
+  if(tipe && tipe!=='Semua tipe'){
+    const key = tipe.toLowerCase();
+    filtered = filtered.filter(m=>{
+      const te = String(m['Tipe Event']||'').toLowerCase();
+      if(key==='internal') return te.indexOf('internal')>=0;
+      if(key==='join game') return te.indexOf('join')>=0;
+      if(key==='sparing eksternal') return te.indexOf('sparing')>=0;
+      return true;
+    });
+  }
+  renderRptMarginTable(filtered);
+  renderRptMarginChart(filtered);
+}
+function renderRptMarginChart(matches){
+  const el = document.getElementById('chartRptMargin');
+  if(!el) return;
+  if(cRpt){ cRpt.destroy(); cRpt=null; }
+  const labels = matches.map(m => m['Match / Tanggal'] || '—');
+  const data = matches.map(m => (parseFloat(m['Margin\n(Rp)'])||0) / 1000);
+  cRpt = mkLine('chartRptMargin', labels, data);
 }
 function fmtSignedRp(n){
   return (n>=0?'+':'-') + fmtRupiah(Math.abs(n));
