@@ -283,7 +283,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="met-val" id="dash-total-player" style="cursor:pointer;color:var(--ac);text-decoration:underline dotted" onclick="openModal('m-db-player')">143</div>
       <div class="met-sub"><span style="color:var(--ac);cursor:pointer;font-size:11px" onclick="openModal('m-db-player')">Lihat semua →</span></div>
     </div>
-    <div class="met"><div class="met-lbl"><i class="ti ti-trophy" style="font-size:12px"></i>Match terbaik</div><div class="met-val" style="color:var(--gn)">+489rb</div><div class="met-sub">26 Juli BIG — Internal BIG</div></div>
+    <div class="met"><div class="met-lbl"><i class="ti ti-trophy" style="font-size:12px"></i>Match terbaik</div><div class="met-val" style="color:var(--gn)" id="dash-best-margin">+489rb</div><div class="met-sub" id="dash-best-match">26 Juli BIG — Internal BIG</div></div>
   </div>
 
   <!-- ROW 1: Margin + Shared profit (1 card, digabung) -->
@@ -313,19 +313,19 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
         <div>
           <div style="font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Malik · 60%</div>
-          <div style="font-size:26px;font-weight:700;color:var(--nv)">Rp 8.297.430</div>
-          <div style="font-size:11px;color:var(--mu);margin-top:2px">+Rp 709.800 dari 4 match terakhir</div>
+          <div style="font-size:26px;font-weight:700;color:var(--nv)" id="dash-kumul-malik">Rp 8.297.430</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:2px" id="dash-delta-malik">+Rp 709.800 dari 4 match terakhir</div>
           <div style="height:5px;border-radius:3px;background:var(--su2);margin-top:8px;overflow:hidden"><div style="width:60%;height:100%;background:var(--nv);border-radius:3px"></div></div>
         </div>
         <div style="border-top:1px solid var(--bd);padding-top:14px">
           <div style="font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Filan · 40%</div>
-          <div style="font-size:26px;font-weight:700;color:var(--gn)">Rp 5.472.562</div>
-          <div style="font-size:11px;color:var(--mu);margin-top:2px">+Rp 473.200 dari 4 match terakhir</div>
+          <div style="font-size:26px;font-weight:700;color:var(--gn)" id="dash-kumul-filan">Rp 5.472.562</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:2px" id="dash-delta-filan">+Rp 473.200 dari 4 match terakhir</div>
           <div style="height:5px;border-radius:3px;background:var(--su2);margin-top:8px;overflow:hidden"><div style="width:40%;height:100%;background:var(--gn);border-radius:3px"></div></div>
         </div>
         <div style="border-top:1px solid var(--bd);padding-top:10px;display:flex;justify-content:space-between;font-size:12px">
           <span style="color:var(--mu)">Total bersama</span>
-          <span style="font-weight:600">Rp 13.769.992</span>
+          <span style="font-weight:600" id="dash-total-bersama">Rp 13.769.992</span>
         </div>
       </div>
     </div>
@@ -1248,7 +1248,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 
 <!-- ══════════════ SCRIPT ══════════════ -->
 <script>
-const MD={
+let MD={
   l12:['12J','26J','30M','17M','1M','15F','12A','16J','11J','6D','21D','26D'],
   d12:[243,489,187,163,201,135,-98,243,102,287,144,229],
   l24:['28S','3N','23N','6D','21D','26D','11J','16J','12A','15F','1M','17M','30M','27J','12J','26J','15A','6S'],
@@ -3416,12 +3416,45 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 const GAS_URL='https://script.google.com/macros/s/AKfycbw3UoBnC9YyPWZQPcsxsvRzCTTxRBTo1k1Nz3DSg6RmCuWpUMA_59UDWQpe1mIwgMy3XQ/exec';
 
-// ── DASHBOARD: langkah pertama nyambung ke database asli — baru "Total
-// match" & "Player terdaftar" yang ditarik dari backend (via getDashboard,
-// yg baca Rekap_Keuangan & DB_Player asli). Sisa Dashboard (grafik, top
-// skorer, dll) masih data contoh, menyusul di tahap berikutnya. Kalau
-// fetch gagal (misal lagi offline / CORS / URL berubah), angka contoh yg
-// lama dibiarin apa adanya — nggak ngerusak tampilan.
+// ── DASHBOARD: nyambung ke database asli (getDashboard, yg baca
+// Rekap_Keuangan & DB_Player asli). Sekarang termasuk: Total match, Player
+// terdaftar, Terakhir, Match terbaik, chart Margin per match (12/24/Semua),
+// dan widget Shared profit kumulatif. Kalau fetch gagal (misal lagi
+// offline / CORS / URL berubah), angka contoh yg lama dibiarin apa
+// adanya — nggak ngerusak tampilan.
+function fmtMarginSingkat(v){
+  const sign = v>=0 ? '+' : '-';
+  const abs = Math.abs(v);
+  let txt;
+  if(abs>=1000000){ txt = (abs/1000000).toFixed(1).replace('.',',') + 'jt'; }
+  else { txt = Math.round(abs/1000) + 'rb'; }
+  return sign + txt;
+}
+function fmtDeltaRp(v){
+  return (v>=0?'+':'-') + 'Rp ' + Math.abs(Math.round(v)).toLocaleString('id-ID');
+}
+// Bangun ulang MD (dipakai chart "Margin per match") dari riwayat match
+// ASLI (urut kronologis dari backend), lalu redraw chart sesuai chip
+// 12/24/Semua yang lagi aktif.
+function applyRealMarginData(matches){
+  const l44 = matches.map(m=>m.tgl || '');
+  const d44 = matches.map(m=>Math.round((m.margin||0)/1000));
+  MD = { l12: l44.slice(-12), d12: d44.slice(-12), l24: l44.slice(-24), d24: d44.slice(-24), l44, d44 };
+  const chipsBox = document.querySelector('#page-dashboard .card .chips');
+  let n = 12;
+  if(chipsBox){
+    const activeChip = chipsBox.querySelector('.chip.active');
+    if(activeChip){
+      const m = (activeChip.getAttribute('onclick')||'').match(/switchChart\((\d+)/);
+      if(m) n = parseInt(m[1],10);
+    }
+  }
+  const k = n<=12?'12':n<=24?'24':'44';
+  if(typeof mkLine==='function'){
+    if(typeof ci!=='undefined' && ci){ ci.destroy(); }
+    ci = mkLine('chartMargin', MD['l'+k], MD['d'+k]);
+  }
+}
 function loadDashboardRealStats(){
   if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
   fetch(GAS_URL + '?action=getDashboard')
@@ -3434,6 +3467,35 @@ function loadDashboardRealStats(){
       if(totalMatchEl && typeof d.totalMatch==='number') totalMatchEl.textContent = d.totalMatch;
       if(totalPlayerEl && typeof d.totalPlayer==='number') totalPlayerEl.textContent = d.totalPlayer;
       if(lastMatchEl) lastMatchEl.textContent = d.lastMatchTgl ? ('Terakhir: ' + d.lastMatchTgl) : 'Belum ada match';
+
+      // Match terbaik
+      const bestMarginEl = document.getElementById('dash-best-margin');
+      const bestMatchEl = document.getElementById('dash-best-match');
+      if(d.bestMatch){
+        if(bestMarginEl){
+          bestMarginEl.textContent = fmtMarginSingkat(d.bestMatch.margin);
+          bestMarginEl.style.color = d.bestMatch.margin>=0 ? 'var(--gn)' : 'var(--rd)';
+        }
+        if(bestMatchEl) bestMatchEl.textContent = (d.bestMatch.tgl||'—') + (d.bestMatch.tipe ? (' — ' + d.bestMatch.tipe) : '');
+      }
+
+      // Shared profit kumulatif
+      if(typeof d.kumulatifMalik==='number' && typeof d.kumulatifFilan==='number'){
+        const kumulMalikEl = document.getElementById('dash-kumul-malik');
+        const kumulFilanEl = document.getElementById('dash-kumul-filan');
+        const deltaMalikEl = document.getElementById('dash-delta-malik');
+        const deltaFilanEl = document.getElementById('dash-delta-filan');
+        const totalBersamaEl = document.getElementById('dash-total-bersama');
+        if(kumulMalikEl) kumulMalikEl.textContent = 'Rp ' + Math.round(d.kumulatifMalik).toLocaleString('id-ID');
+        if(kumulFilanEl) kumulFilanEl.textContent = 'Rp ' + Math.round(d.kumulatifFilan).toLocaleString('id-ID');
+        if(totalBersamaEl) totalBersamaEl.textContent = 'Rp ' + Math.round(d.kumulatifMalik+d.kumulatifFilan).toLocaleString('id-ID');
+        const n = d.deltaN || 0;
+        if(deltaMalikEl) deltaMalikEl.textContent = n>0 ? (fmtDeltaRp(d.deltaMalik) + ' dari ' + n + ' match terakhir') : 'Belum ada match sebelumnya';
+        if(deltaFilanEl) deltaFilanEl.textContent = n>0 ? (fmtDeltaRp(d.deltaFilan) + ' dari ' + n + ' match terakhir') : 'Belum ada match sebelumnya';
+      }
+
+      // Chart "Margin per match" (12/24/Semua)
+      if(Array.isArray(d.matches)) applyRealMarginData(d.matches);
     })
     .catch(err=>{ console.error('Gagal ambil data Dashboard dari database:', err); });
 }
@@ -3486,6 +3548,47 @@ function renderDbPlayerModal(players){
   }).join('');
 }
 window.addEventListener('DOMContentLoaded', loadDbPlayersModal);
+
+// ── Rekap Skorer (tabel admin #scorer-tbody + turunannya di Dashboard/tab
+// Goal scorer) — tarik dari getScorer() (tab Rekap_Skorer di database),
+// gantikan 7 baris contoh yang sebelumnya ditulis manual di HTML supaya
+// kalau datanya diubah langsung di Google Sheet, portal ikut berubah.
+// CATATAN: ini baca-saja — edit/tambah/hapus di tabel ini di portal BELUM
+// nyimpen balik ke database (itu tahap berikutnya).
+function loadScorerFromBackend(){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL + '?action=getScorer')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.error){ console.error('getScorer error:', data.error); return; }
+      renderScorerTbodyFromDb(data);
+    })
+    .catch(err=>{ console.error('Gagal ambil Rekap Skorer dari database:', err); });
+}
+function renderScorerTbodyFromDb(rows){
+  const tbody = document.getElementById('scorer-tbody');
+  if(!tbody) return;
+  if(!rows.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--mu)">Belum ada data skorer.</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map((r,i)=>{
+      const no = r['No']!=null ? r['No'] : (i+1);
+      const nama = r['Nama'] || '';
+      const kategori = (r['Kategori'] && r['Kategori']!=='—') ? r['Kategori'] : '—';
+      const tahun = r['Tahun']!=null ? r['Tahun'] : '';
+      const gol = r['Total Gol']!=null ? r['Total Gol'] : 0;
+      const uraian = (r['Uraian'] && r['Uraian']!=='—') ? r['Uraian'] : '—';
+      return '<tr><td data-no-edit="1">' + escAttr(String(no)) + '</td><td class="pri">' + escAttr(nama) + '</td>'
+        + '<td data-edit-type="kategori"><span class="b b-gy">' + escAttr(kategori) + '</span></td>'
+        + '<td data-edit-type="tahun"><span class="b b-gy">' + escAttr(String(tahun)) + '</span></td>'
+        + '<td data-edit-type="gol">' + escAttr(String(gol)) + '</td>'
+        + '<td>' + escAttr(uraian) + '</td>'
+        + '<td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>';
+    }).join('');
+  }
+  if(typeof renderTopSkorFromDb==='function') renderTopSkorFromDb();
+}
+window.addEventListener('DOMContentLoaded', loadScorerFromBackend);
 </script>
 </body>
 </html>

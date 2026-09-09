@@ -101,6 +101,12 @@ function sheetToObjects(sheetName, headerRow) {
   return rows;
 }
 
+function toNum(v) {
+  if (typeof v === 'number') return v;
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
+}
+
 function generateId(prefix) {
   const d  = new Date();
   const ts = Utilities.formatDate(d, 'Asia/Jakarta', 'yyyyMMdd');
@@ -150,20 +156,43 @@ function getDashboard() {
     .slice(0,9)
     .map(([nama,cnt]) => ({nama,cnt}));
 
+  // Match terbaik (margin tertinggi, all-time — bukan cuma 12 terakhir)
+  let bestMatch = null;
+  closed.forEach(m => {
+    const margin = toNum(m['Margin\n(Rp)'] || m['Margin']);
+    if (!bestMatch || margin > bestMatch.margin) {
+      bestMatch = { tgl: m['Match / Tanggal'] || '', tipe: m['Tipe Event'] || '', margin };
+    }
+  });
+
+  // Delta kumulatif Malik/Filan dari N match terakhir (N=4, atau kurang
+  // kalau match yang tercatat belum sampai 5) — buat subtext "Shared profit".
+  const deltaN = Math.min(4, closed.length > 0 ? closed.length - 1 : 0);
+  const refMatch = deltaN > 0 ? closed[closed.length - 1 - deltaN] : null;
+  const kumulMalikNow  = toNum(last['Kumul Malik\n(Rp)'] || last['Kumul Malik']);
+  const kumulFilanNow  = toNum(last['Kumul Filan\n(Rp)'] || last['Kumul Filan']);
+  const deltaMalik = refMatch ? (kumulMalikNow - toNum(refMatch['Kumul Malik\n(Rp)'] || refMatch['Kumul Malik'])) : kumulMalikNow;
+  const deltaFilan = refMatch ? (kumulFilanNow - toNum(refMatch['Kumul Filan\n(Rp)'] || refMatch['Kumul Filan'])) : kumulFilanNow;
+
   return {
     totalMatch  : closed.length,
     totalPlayer : players.length,
     lastMatchTgl: last['Match / Tanggal'] || '',
-    kumulatifMalik: last['Kumul Malik\n(Rp)'] || last['Kumul Malik'] || 0,
-    kumulatifFilan: last['Kumul Filan\n(Rp)'] || last['Kumul Filan'] || 0,
+    kumulatifMalik: kumulMalikNow,
+    kumulatifFilan: kumulFilanNow,
+    deltaMalik, deltaFilan, deltaN,
+    bestMatch,
     topScorer,
     frequent,
-    matches: closed.slice(-12).map(m => ({
+    // Riwayat SEMUA match (bukan cuma 12 terakhir) — biar chart "Margin per
+    // match" bisa switch 12/24/Semua tanpa perlu fetch ulang.
+    matches: closed.map(m => ({
       tgl   : m['Match / Tanggal'],
       jenis : m['Jenis\nGame'] || m['Jenis Game'],
       tipe  : m['Tipe Event'],
-      margin: m['Margin\n(Rp)'] || m['Margin'],
+      margin: toNum(m['Margin\n(Rp)'] || m['Margin']),
       lap   : m['Lap.'],
+      tahun : m['Tahun'] || '',
     }))
   };
 }
@@ -566,6 +595,11 @@ function closeMatch(p) {
     p.bca||0, p.bsi||0, p.mandiri||0, p.bri||0, p.cash||0,
     ''
   ]]);
+  // Kolom 23 "Tahun" — dipakai grafik "Profit per match" biar bisa
+  // dikelompokin per kuartal/tahun. Match lama (sebelum kolom ini ada)
+  // diisi manual sama Sam; match baru yang ditutup lewat sistem ini
+  // otomatis kepakai tahun berjalan saat ditutup.
+  rekap.getRange(insertRow, 23).setValue(new Date().getFullYear());
 
   // 4. Kembalikan semua stok jersey dari match ini
   // (data player sudah dikurangi saat addPlayer, dikembalikan jika deletePlayer)
@@ -681,6 +715,18 @@ function setupSheets() {
     baseline[14] = 8147730; // Kumul Malik (Rp) — sesuaikan ke saldo riil
     baseline[15] = 5372762; // Kumul Filan (Rp) — sesuaikan ke saldo riil
     ws.getRange(3,1,1,22).setValues([baseline]);
+  } else {
+    // Tab udah ada isinya (kasus real kamu) — kolom "Match / Tanggal" cuma
+    // simpan tanggal singkat tanpa tahun ("21 Des", "12 April"), jadi grafik
+    // yg butuh dikelompokin per kuartal/tahun (Profit per match) nggak bisa
+    // dihitung akurat. Tambahin kolom "Tahun" di ujung (kolom 23) — ADDITIF,
+    // nggak nimpa apa pun yang udah ada. Header row = row 2, sama kayak
+    // header lainnya di sheet ini.
+    const rHdr = ws.getRange(2,1,1,ws.getLastColumn()).getValues()[0];
+    const hasTahun = rHdr.some(h => String(h).trim() === 'Tahun');
+    if (!hasTahun) {
+      ws.getRange(2, 23).setValue('Tahun');
+    }
   }
 
   // ── Deposit_Log ──
