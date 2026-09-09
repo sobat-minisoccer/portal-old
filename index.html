@@ -841,6 +841,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <tbody id="player-tbody">
       </tbody>
     </table>
+    <div id="player-db-pager" style="display:none;padding:10px 16px;border-top:1px solid var(--bd);align-items:center;justify-content:space-between;font-size:12px">
+      <span id="player-db-pager-info" style="color:var(--mu)"></span>
+      <span style="display:flex;gap:6px">
+        <button class="btn btn-sm" id="player-db-prev" onclick="playerDbGoPage(-1)"><i class="ti ti-chevron-left"></i> Sebelumnya</button>
+        <button class="btn btn-sm" id="player-db-next" onclick="playerDbGoPage(1)">Berikutnya <i class="ti ti-chevron-right"></i></button>
+      </span>
+    </div>
   </div>
 
   <!-- KELOLA REKAP SKORER -->
@@ -906,6 +913,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
           <tr><td colspan="8" style="color:var(--mu)">Memuat data dari database…</td></tr>
         </tbody>
       </table>
+      <div id="db-player-pager" style="display:none;padding:10px 16px;border-top:1px solid var(--bd);align-items:center;justify-content:space-between;font-size:12px">
+        <span id="db-player-pager-info" style="color:var(--mu)"></span>
+        <span style="display:flex;gap:6px">
+          <button class="btn btn-sm" id="db-player-prev" onclick="dbPlayerGoPage(-1)"><i class="ti ti-chevron-left"></i> Sebelumnya</button>
+          <button class="btn btn-sm" id="db-player-next" onclick="dbPlayerGoPage(1)">Berikutnya <i class="ti ti-chevron-right"></i></button>
+        </span>
+      </div>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeModal('m-db-player')">Tutup</button></div>
   </div>
@@ -2751,6 +2765,21 @@ function msShowEmptyState(){
   if(switcher) switcher.style.display = 'none';
   if(card) card.style.display = 'none';
   if(empty) empty.style.display = '';
+  // #match-card cuma disembunyikan (display:none), bukan dikosongin — jadi
+  // tabel di dalamnya (slot-tbody dkk) masih nyimpen baris match yg baru
+  // dihapus. Beberapa fungsi lain (mis. computeJerseyUsage() di Admin >
+  // Stok jersey) baca tabel2 ini LANGSUNG dari DOM, bukan dari msMatches,
+  // jadi kalau nggak dikosongin di sini, stok jersey masih ke-hitung
+  // "terpakai" dari match yg udah dihapus. Kosongin semuanya di sini.
+  const slotTbody = document.getElementById('slot-tbody');
+  const biayaTbody = document.getElementById('biaya-tbody');
+  const depSaldoList = document.getElementById('dep-saldo-list');
+  const depLogTbody = document.getElementById('dep-log-tbody');
+  if(slotTbody) slotTbody.innerHTML = '';
+  if(biayaTbody) biayaTbody.innerHTML = '';
+  if(depSaldoList) depSaldoList.innerHTML = '';
+  if(depLogTbody) depLogTbody.innerHTML = '';
+  if(typeof renderJerseyStokTable==='function') renderJerseyStokTable();
 }
 function msHideEmptyState(){
   const switcher = document.getElementById('match-switcher');
@@ -3572,12 +3601,14 @@ function loadDashboardRealStats(){
 }
 window.addEventListener('DOMContentLoaded', loadDashboardRealStats);
 
-// ── Modal "Database Player" (dibuka dari card Player terdaftar) — sama
-// kayak di atas, tarik data ASLI (semua 112 baris DB_Player) sekali pas
-// halaman dibuka, disimpen di cache, dirender begitu datang. Field yg
+// ── Modal "Database Player" (dibuka dari card Player terdaftar) DAN tabel
+// admin "Kelola player" (#player-tbody) — dua-duanya sumbernya SAMA
+// (getPlayers(), semua ~112 baris DB_Player asli), jadi ditarik SEKALI di
+// sini dan dipakai buat render keduanya — hemat 1 fetch. Field yg
 // dipetakan ke kolom real: No, Nama Player, Kategori, "Total\nHadir",
-// Last Match, "Ukuran\nDominan" (dipakai sbg kolom "Jersey" krn di DB
-// itu yg paling mendekati), "Saldo Deposit\n(Rp)", Status SHTM.
+// Last Match, "Ukuran\nDominan" (dipakai sbg kolom "Jersey" di modal),
+// "Saldo Deposit\n(Rp)", Status SHTM. Field yg nggak ada di DB asli (mis.
+// "Alias" di Kelola Player) otomatis tampil "—".
 let _dbPlayersCache = null;
 function loadDbPlayersModal(){
   if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
@@ -3587,8 +3618,40 @@ function loadDbPlayersModal(){
       if(data.error){ console.error('getPlayers error:', data.error); return; }
       _dbPlayersCache = data;
       renderDbPlayerModal(data);
+      renderPlayerDbTable(data);
     })
     .catch(err=>{ console.error('Gagal ambil Database Player dari database:', err); });
+}
+
+// Pagination generik 10 baris/halaman — dipakai bareng buat modal Database
+// Player & tabel admin Kelola player (dua state independen).
+const DBP_PAGE_SIZE = 10;
+let _dbModalRows = [], _dbModalPage = 1;
+let _playerDbRows = [], _playerDbPage = 1;
+function renderDbPager(prefix, rows, page){
+  const pager = document.getElementById(prefix+'-pager');
+  const info = document.getElementById(prefix+'-pager-info');
+  const prevBtn = document.getElementById(prefix+'-prev');
+  const nextBtn = document.getElementById(prefix+'-next');
+  if(!pager) return;
+  if(rows.length <= DBP_PAGE_SIZE){ pager.style.display = 'none'; return; }
+  const totalPages = Math.max(1, Math.ceil(rows.length / DBP_PAGE_SIZE));
+  pager.style.display = 'flex';
+  const start = rows.length ? (page-1)*DBP_PAGE_SIZE + 1 : 0;
+  const end = Math.min(page*DBP_PAGE_SIZE, rows.length);
+  if(info) info.textContent = 'Menampilkan ' + start + '–' + end + ' dari ' + rows.length + ' player (halaman ' + page + '/' + totalPages + ')';
+  if(prevBtn) prevBtn.disabled = page<=1;
+  if(nextBtn) nextBtn.disabled = page>=totalPages;
+}
+function dbPlayerGoPage(delta){
+  const totalPages = Math.max(1, Math.ceil(_dbModalRows.length / DBP_PAGE_SIZE));
+  _dbModalPage = Math.min(totalPages, Math.max(1, _dbModalPage + delta));
+  renderDbPlayerModalPage();
+}
+function playerDbGoPage(delta){
+  const totalPages = Math.max(1, Math.ceil(_playerDbRows.length / DBP_PAGE_SIZE));
+  _playerDbPage = Math.min(totalPages, Math.max(1, _playerDbPage + delta));
+  renderPlayerDbTablePage();
 }
 function renderDbPlayerModal(players){
   const titleEl = document.getElementById('db-player-modal-title-text');
@@ -3597,9 +3660,19 @@ function renderDbPlayerModal(players){
   if(!tbody) return;
   if(!players.length){
     tbody.innerHTML = '<tr><td colspan="8" style="color:var(--mu)">Belum ada data.</td></tr>';
+    const pager = document.getElementById('db-player-pager'); if(pager) pager.style.display='none';
     return;
   }
-  tbody.innerHTML = players.map(p=>{
+  _dbModalRows = players;
+  _dbModalPage = 1;
+  renderDbPlayerModalPage();
+}
+function renderDbPlayerModalPage(){
+  const tbody = document.getElementById('db-player-modal-tbody');
+  if(!tbody) return;
+  const start = (_dbModalPage-1)*DBP_PAGE_SIZE;
+  const pageRows = _dbModalRows.slice(start, start+DBP_PAGE_SIZE);
+  tbody.innerHTML = pageRows.map(p=>{
     const no = p['No']!=null ? p['No'] : '';
     const nama = p['Nama Player'] || '';
     const kategori = (p['Kategori'] && p['Kategori']!=='—') ? p['Kategori'] : '—';
@@ -3617,8 +3690,56 @@ function renderDbPlayerModal(players){
       + '<td' + (hasDeposit?' style="color:var(--am);font-weight:500"':'') + '>' + escAttr(deposit) + '</td>'
       + '<td>' + escAttr(shtm) + '</td></tr>';
   }).join('');
+  renderDbPager('db-player', _dbModalRows, _dbModalPage);
 }
 window.addEventListener('DOMContentLoaded', loadDbPlayersModal);
+
+// ── Admin "Kelola player" (#player-tbody) — sama sumber data kayak modal
+// Database Player di atas (getPlayers()). Baris dirender pakai template
+// yg sama kayak submitTambahPlayerDb() (data-edit-type kategori/deposit/
+// shtm-status + tombol edit/hapus) supaya mesin edit-inline yg udah ada
+// (delegated click listener .ib-edit/.ib.del) langsung jalan tanpa kode
+// tambahan. Kolom "Alias" nggak ada di DB_Player asli → selalu "—".
+function renderPlayerDbTable(players){
+  const tbody = document.getElementById('player-tbody');
+  if(!tbody) return;
+  if(!players.length){
+    tbody.innerHTML = '';
+    const pager = document.getElementById('player-db-pager'); if(pager) pager.style.display='none';
+    return;
+  }
+  _playerDbRows = players;
+  _playerDbPage = 1;
+  renderPlayerDbTablePage();
+}
+function renderPlayerDbTablePage(){
+  const tbody = document.getElementById('player-tbody');
+  if(!tbody) return;
+  const start = (_playerDbPage-1)*DBP_PAGE_SIZE;
+  const pageRows = _playerDbRows.slice(start, start+DBP_PAGE_SIZE);
+  tbody.innerHTML = pageRows.map(p=>{
+    const no = p['No']!=null ? p['No'] : '';
+    const nama = p['Nama Player'] || '';
+    const kategori = (p['Kategori'] && p['Kategori']!=='—') ? p['Kategori'] : '—';
+    const hadir = p['Total\nHadir']!=null ? p['Total\nHadir'] : 0;
+    const lastMatch = (p['Last Match'] && p['Last Match']!=='—') ? p['Last Match'] : '—';
+    const depositRaw = p['Saldo Deposit\n(Rp)'];
+    const hasDeposit = depositRaw && depositRaw!=='—' && Number(depositRaw)>0;
+    const deposit = hasDeposit ? ('Rp ' + Number(depositRaw).toLocaleString('id-ID')) : '—';
+    const shtmRaw = p['Status SHTM'];
+    const hasShtm = shtmRaw && shtmRaw!=='—';
+    const shtmCls = hasShtm && shtmRaw==='Sudah dipakai' ? 'b-gn' : 'b-sh';
+    const shtm = hasShtm ? ('<span class="b '+shtmCls+'">'+escAttr(shtmRaw)+'</span>') : '—';
+    return '<tr><td data-no-edit="1">'+escAttr(String(no))+'</td><td class="pri">'+escAttr(nama)+'</td><td>—</td>'
+      + '<td data-edit-type="kategori"><span class="b b-gy">'+escAttr(kategori)+'</span></td>'
+      + '<td>'+escAttr(String(hadir))+'</td><td>'+escAttr(lastMatch)+'</td>'
+      + '<td data-edit-type="deposit"'+(hasDeposit?' style="color:var(--am);font-weight:500"':'')+'>'+escAttr(deposit)+'</td>'
+      + '<td data-edit-type="shtm-status">'+shtm+'</td>'
+      + '<td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>';
+  }).join('');
+  renderDbPager('player-db', _playerDbRows, _playerDbPage);
+  if(typeof refreshAllKelolaPlayerShtm==='function') refreshAllKelolaPlayerShtm();
+}
 
 // ── Rekap Skorer (tabel admin #scorer-tbody + turunannya di Dashboard/tab
 // Goal scorer) — tarik dari getScorer() (tab Rekap_Skorer di database),
