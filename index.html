@@ -833,7 +833,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <!-- KELOLA PLAYER -->
   <div id="adm-player" class="tab-p" style="background:var(--su);border:1px solid var(--bd);border-top:none;border-radius:0 0 12px 12px;padding:16px;display:none">
     <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input type="text" placeholder="Cari nama player..." style="font-size:12px;padding:7px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn);width:240px">
+      <input type="text" id="player-db-search" placeholder="Cari nama player..." oninput="filterPlayerDbTable(this.value)" style="font-size:12px;padding:7px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn);width:240px">
       <button class="btn btn-prim" onclick="openModal('m-tambah-player-db')"><i class="ti ti-user-plus"></i> Tambah player baru</button>
     </div>
     <table class="tbl">
@@ -1586,18 +1586,14 @@ function showCopyOk() {
 // openModal override sudah di bawah (jersey + lineup view)
 
 
-// ── STOK JERSEY (mock) ──
-const JERSEY_STOK = {
-  'Merah': { M:2, L:2, XL:0, '2XL':1 },
-  'Kuning': { M:1, L:3, XL:1, '2XL':1 },
-  'Biru':   { M:2, L:3, XL:3, '2XL':1 },
-  'Hijau':  { M:2, L:1, XL:4, '2XL':1 },
-};
+// ── STOK JERSEY — diisi dari database (Stok_Jersey) lewat loadJerseyStokFromBackend()
+// di bawah. Mulai kosong dulu di sini (bukan angka dummy lagi) supaya kalau
+// belum sempat ke-load, tabelnya nampilin "Belum ada stok" alih-alih angka
+// mock yang menyesatkan.
+let JERSEY_STOK = {};
 // Stok jersey khusus tipe GK (kiper) — terpisah dari warna tim Field di
 // atas, didaftarkan lewat "Tambah stok" dgn Tipe jersey = GK.
-const JERSEY_STOK_GK = {
-  'GK': { M:2, L:2, XL:2 },
-};
+let JERSEY_STOK_GK = {};
 /* Warna asli (hex) per nama jersey — dipakai buat ikon love berwarna di
    Lihat Line up. Nama jersey bebas ketik (mis. "Hitam Pink"), jadi nggak
    bisa ditebak otomatis dari nama; admin pilih sendiri lewat color-picker
@@ -3694,17 +3690,104 @@ function renderDbPlayerModalPage(){
 }
 window.addEventListener('DOMContentLoaded', loadDbPlayersModal);
 
+// ── Stok jersey (Admin > Stok jersey, grid atas #jersey-stok-table-wrap) —
+// sebelumnya JERSEY_STOK/JERSEY_STOK_GK isinya angka mock yang ditulis
+// manual di kode (nggak pernah nyambung ke DB), jadi bedaannya sama tabel
+// "Tambah stok" yang nariknya dari getStokJersey() (Stok_Jersey di sheet).
+// Sekarang ditarik dari database juga di sini, dikelompokkan ulang jadi
+// {warna: {ukuran: stokTotal}} per Tipe (Field/GK) — bentuk yang dipakai
+// renderJerseyStokTable()/jerseyStokRowHtml().
+function loadJerseyStokFromBackend(){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL + '?action=getStokJersey')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.error){ console.error('getStokJersey error:', data.error); return; }
+      const field = {}, gk = {};
+      (Array.isArray(data)?data:[]).forEach(row=>{
+        const warna = row['Warna'];
+        const tipe = row['Tipe'];
+        const ukuran = row['Ukuran'];
+        const total = parseRupiah(row['Stok Total']);
+        if(!warna || !ukuran) return;
+        const target = (String(tipe).trim().toUpperCase()==='GK') ? gk : field;
+        if(!target[warna]) target[warna] = {};
+        target[warna][ukuran] = total;
+      });
+      JERSEY_STOK = field;
+      JERSEY_STOK_GK = gk;
+      const activeTab = document.getElementById('adm-jersey');
+      if(activeTab && activeTab.style.display!=='none') renderJerseyStokTable();
+    })
+    .catch(err=>{ console.error('Gagal ambil Stok Jersey dari database:', err); });
+}
+window.addEventListener('DOMContentLoaded', loadJerseyStokFromBackend);
+
+// ── Daftar SHTM (Admin > Daftar SHTM, #adm-shtm) — sebelumnya tabel ini
+// CUMA keisi lokal (klik "SHTM Next ✓" di Slot Player match yang lagi
+// aktif), nggak pernah ditarik dari histori database (SHTM_Log). Akibatnya
+// tabel ini kosong tiap buka portal baru, dan karena kode di atas (Kelola
+// Player) narik status SHTM dari tabel ini sebagai "sumber data utama",
+// kolom SHTM di Kelola Player ikut selalu kosong juga. Sekarang histori
+// SHTM_Log ditarik dan dimasukkan duluan, baru status "SHTM Next ✓" yang
+// diklik pas ada match aktif nambah di atasnya seperti biasa.
+function loadShtmFromBackend(){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL + '?action=getShtm')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.error){ console.error('getShtm error:', data.error); return; }
+      renderShtmTbodyFromDb(Array.isArray(data)?data:[]);
+      if(typeof refreshAllKelolaPlayerShtm==='function') refreshAllKelolaPlayerShtm();
+    })
+    .catch(err=>{ console.error('Gagal ambil Daftar SHTM dari database:', err); });
+}
+function renderShtmTbodyFromDb(rows){
+  const tbody = document.querySelector('#adm-shtm tbody');
+  if(!tbody) return;
+  tbody.innerHTML = rows.map((r,i)=>{
+    const nama = r['Nama Player'] || '';
+    const tglDapat = r['Tgl Mendapat SHTM'] || '—';
+    const tglPakai = r['Tgl SHTM Dipakai'] || '—';
+    const status = r['Status'] || 'Belum dipakai';
+    const cls = status === 'Sudah dipakai' ? 'b-gn' : 'b-sh';
+    return '<tr' + (status!=='Sudah dipakai' ? ' style="background:#FFF5F5"' : '') + '>'
+      + '<td data-no-edit="1">'+(i+1)+'</td><td class="pri">'+escAttr(nama)+'</td>'
+      + '<td>'+escAttr(String(tglDapat))+'</td><td style="color:var(--hi)">'+escAttr(String(tglPakai))+'</td>'
+      + '<td data-edit-type="shtm-status"><span class="b '+cls+'">'+escAttr(status)+'</span></td>'
+      + '<td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>';
+  }).join('');
+}
+window.addEventListener('DOMContentLoaded', loadShtmFromBackend);
+
 // ── Admin "Kelola player" (#player-tbody) — sama sumber data kayak modal
 // Database Player di atas (getPlayers()). Baris dirender pakai template
 // yg sama kayak submitTambahPlayerDb() (data-edit-type kategori/deposit/
 // shtm-status + tombol edit/hapus) supaya mesin edit-inline yg udah ada
 // (delegated click listener .ib-edit/.ib.del) langsung jalan tanpa kode
 // tambahan. Kolom "Alias" nggak ada di DB_Player asli → selalu "—".
-function renderPlayerDbTable(players){
+// Ambil nilai field dari beberapa kemungkinan nama header sekaligus — header
+// asli di sheet Sam kadang beda urutan kata/tanpa baris baru dibanding yang
+// diasumsikan di kode (mis. "Deposit Saldo (Rp)" vs "Saldo Deposit\n(Rp)"),
+// jadi dicoba semua supaya nggak diem-diem gagal kebaca cuma gara-gara nama
+// kolomnya sedikit beda.
+function pickField(obj, keys){
+  for(const k of keys){
+    if(obj[k]!=null && obj[k]!=='') return obj[k];
+  }
+  return null;
+}
+function filterPlayerDbTable(q){
+  const query = (q||'').trim().toLowerCase();
+  const source = _dbPlayersCache || [];
+  const filtered = query ? source.filter(p=>String(p['Nama Player']||'').toLowerCase().includes(query)) : source;
+  renderPlayerDbTable(filtered, query.length>0);
+}
+function renderPlayerDbTable(players, isSearch){
   const tbody = document.getElementById('player-tbody');
   if(!tbody) return;
   if(!players.length){
-    tbody.innerHTML = '';
+    tbody.innerHTML = isSearch ? '<tr><td colspan="9" style="color:var(--mu)">Nama player tidak ditemukan.</td></tr>' : '';
     const pager = document.getElementById('player-db-pager'); if(pager) pager.style.display='none';
     return;
   }
@@ -3723,10 +3806,11 @@ function renderPlayerDbTablePage(){
     const kategori = (p['Kategori'] && p['Kategori']!=='—') ? p['Kategori'] : '—';
     const hadir = p['Total\nHadir']!=null ? p['Total\nHadir'] : 0;
     const lastMatch = (p['Last Match'] && p['Last Match']!=='—') ? p['Last Match'] : '—';
-    const depositRaw = p['Saldo Deposit\n(Rp)'];
-    const hasDeposit = depositRaw && depositRaw!=='—' && Number(depositRaw)>0;
-    const deposit = hasDeposit ? ('Rp ' + Number(depositRaw).toLocaleString('id-ID')) : '—';
-    const shtmRaw = p['Status SHTM'];
+    const depositRaw = pickField(p, ['Saldo Deposit\n(Rp)','Deposit Saldo (Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)']);
+    const depositNum = depositRaw!=null && depositRaw!=='—' ? parseRupiah(depositRaw) : 0;
+    const hasDeposit = depositNum > 0;
+    const deposit = hasDeposit ? ('Rp ' + depositNum.toLocaleString('id-ID')) : '—';
+    const shtmRaw = pickField(p, ['Status SHTM','Status\nSHTM']);
     const hasShtm = shtmRaw && shtmRaw!=='—';
     const shtmCls = hasShtm && shtmRaw==='Sudah dipakai' ? 'b-gn' : 'b-sh';
     const shtm = hasShtm ? ('<span class="b '+shtmCls+'">'+escAttr(shtmRaw)+'</span>') : '—';
