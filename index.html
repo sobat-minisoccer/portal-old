@@ -380,7 +380,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 <div class="card" style="margin-bottom:0">
   <div style="padding:11px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <span class="flbl">Match</span>
-    <select id="rpt-match-sel" style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)">
+    <select id="rpt-match-sel" onchange="onRptMatchChange()" style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)">
       <option value="">— Pilih match yang sudah ditutup —</option>
     </select>
     <button class="btn btn-dl" onclick="openReportingLaporanPdf()"><i class="ti ti-download" style="font-size:13px"></i> Download laporan PDF</button>
@@ -396,26 +396,19 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div class="fbar"><span class="flbl">Status</span><select><option>Semua</option><option>Lunas</option><option>Sementara</option><option>Walk-in</option><option>Cancel</option></select></div>
     <table class="tbl">
       <thead><tr><th>Player</th><th>HTM (Rp)</th><th>Label</th><th>Deposit</th><th>Metode</th><th>Jumlah (Rp)</th><th>Tgl Bayar</th><th>Status</th></tr></thead>
-      <tbody>
-        <tr><td class="pri">Malik</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td>95.000</td><td>—</td><td>—</td><td>02/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Ricky <span class="b b-sh" style="font-size:9px">SHTM</span></td><td>50.000</td><td><span class="b b-sh">SHTM</span></td><td>—</td><td>—</td><td>50.000</td><td>—</td><td>04/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Wayan <span class="b b-dp" style="font-size:9px">Dep 70rb</span></td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td style="color:var(--am);font-weight:500">70.000</td><td>—</td><td>—</td><td>25.000</td><td>05/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Jayadi</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td>—</td><td>95.000</td><td>—</td><td>03/09</td><td><span class="b b-gn"><span class="sd sdg"></span>Lunas</span></td></tr>
-        <tr><td class="pri">Heru</td><td>95.000</td><td><span class="b b-gy">Normal</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b b-am"><span class="sd sda"></span>Sementara</span></td></tr>
+      <tbody id="rpt-pembayaran-tbody">
+        <tr><td colspan="8" style="color:var(--mu)">Pilih match yang sudah ditutup di atas dulu.</td></tr>
       </tbody>
-      <tfoot><tr><td colspan="3">Total terkumpul</td><td style="color:var(--am)">Rp 70.000</td><td>Rp 95.000</td><td>Rp 180.000</td><td>Rp 25.000</td><td colspan="2" style="color:var(--gn)">= Rp 1.530.000</td></tr></tfoot>
+      <tfoot id="rpt-pembayaran-tfoot" style="display:none"><tr><td colspan="3">Total terkumpul</td><td id="rpt-pemb-tot-dep" style="color:var(--am)">Rp 0</td><td colspan="2" id="rpt-pemb-tot-jml" style="color:var(--gn)">Rp 0</td><td colspan="2"></td></tr></tfoot>
     </table>
   </div>
   <div id="rpt-operasional" class="tab-p">
     <table class="tbl">
       <thead><tr><th>Item</th><th>Tipe</th><th>Rencana (Rp)</th><th>Realisasi (Rp)</th><th>Selisih</th></tr></thead>
-      <tbody>
-        <tr><td class="pri">Sewa lapangan</td><td><span class="b b-gy">Ops</span></td><td>1.300.000</td><td>1.300.000</td><td>—</td></tr>
-        <tr><td class="pri">Wasit</td><td><span class="b b-gy">Ops</span></td><td>200.000</td><td>200.000</td><td>—</td></tr>
-        <tr><td class="pri">Air + laundry</td><td><span class="b b-gy">Ops</span></td><td>85.000</td><td>85.000</td><td>—</td></tr>
-        <tr><td class="pri">Gimmick voucher</td><td><span class="b b-gy">Ops</span></td><td>29.000</td><td>29.000</td><td>—</td></tr>
+      <tbody id="rpt-operasional-tbody">
+        <tr><td colspan="5" style="color:var(--mu)">Pilih match yang sudah ditutup di atas dulu.</td></tr>
       </tbody>
-      <tfoot><tr><td colspan="2">Total</td><td>Rp 1.614.000</td><td style="color:var(--rd)">Rp 1.614.000</td><td>—</td></tr></tfoot>
+      <tfoot id="rpt-operasional-tfoot" style="display:none"><tr><td colspan="2">Total</td><td id="rpt-ops-tot-rencana">Rp 0</td><td id="rpt-ops-tot-realisasi" style="color:var(--rd)">Rp 0</td><td>—</td></tr></tfoot>
     </table>
   </div>
   <div id="rpt-margin" class="tab-p">
@@ -426,26 +419,22 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div style="padding:14px 16px;border-bottom:1px solid var(--bd)"><div style="position:relative;height:140px"><canvas id="chartRptMargin"></canvas></div></div>
     <table class="tbl">
       <thead><tr><th>Match</th><th>Tipe</th><th>Sales (Rp)</th><th>Cost (Rp)</th><th>Margin (Rp)</th><th>Malik 60%</th><th>Filan 40%</th></tr></thead>
-      <tbody>
-        <tr><td class="pri">6 Sept 2026</td><td><span class="b b-gy">Internal</span></td><td>1.863.500</td><td>1.614.000</td><td style="color:var(--gn);font-weight:600">+249.500</td><td style="color:var(--nv)">149.700</td><td style="color:var(--gn)">99.800</td></tr>
-        <tr><td class="pri">15 Agust BOSS</td><td><span class="b b-gy">Internal</span></td><td>1.822.500</td><td>1.621.000</td><td style="color:var(--gn);font-weight:600">+201.500</td><td style="color:var(--nv)">120.900</td><td style="color:var(--gn)">80.600</td></tr>
-        <tr><td class="pri">26 Juli BIG</td><td><span class="b b-ac">Internal BIG</span></td><td>2.160.000</td><td>1.671.000</td><td style="color:var(--gn);font-weight:600">+489.000</td><td style="color:var(--nv)">293.400</td><td style="color:var(--gn)">195.600</td></tr>
-        <tr><td class="pri">12 Juli BOSS</td><td><span class="b b-gy">Internal</span></td><td>1.850.000</td><td>1.607.000</td><td style="color:var(--gn);font-weight:600">+243.000</td><td style="color:var(--nv)">145.800</td><td style="color:var(--gn)">97.200</td></tr>
+      <tbody id="rpt-margin-tbody">
+        <tr><td colspan="7" style="color:var(--mu)">Memuat data dari database…</td></tr>
       </tbody>
     </table>
   </div>
   <div id="rpt-split" class="tab-p">
     <div style="padding:14px 16px;border-bottom:1px solid var(--bd)">
       <div class="g2">
-        <div class="spl"><div class="spl-own" style="color:var(--nv)"><i class="ti ti-user"></i>Malik · 60%</div><div class="spl-amt" style="color:var(--nv)">Rp 8.297.430</div><div class="spl-sub">+Rp 709.800 dari 4 match terakhir</div><div class="spl-bar"><div class="spl-fill" style="width:60%;background:var(--nv)"></div></div></div>
-        <div class="spl"><div class="spl-own" style="color:var(--gn)"><i class="ti ti-user"></i>Filan · 40%</div><div class="spl-amt" style="color:var(--gn)">Rp 5.472.562</div><div class="spl-sub">+Rp 473.200 dari 4 match terakhir</div><div class="spl-bar"><div class="spl-fill" style="width:40%;background:var(--gn)"></div></div></div>
+        <div class="spl"><div class="spl-own" style="color:var(--nv)"><i class="ti ti-user"></i>Malik · 60%</div><div class="spl-amt" style="color:var(--nv)" id="rpt-split-malik-amt">Rp 0</div><div class="spl-sub" id="rpt-split-malik-sub">—</div><div class="spl-bar"><div class="spl-fill" style="width:60%;background:var(--nv)"></div></div></div>
+        <div class="spl"><div class="spl-own" style="color:var(--gn)"><i class="ti ti-user"></i>Filan · 40%</div><div class="spl-amt" style="color:var(--gn)" id="rpt-split-filan-amt">Rp 0</div><div class="spl-sub" id="rpt-split-filan-sub">—</div><div class="spl-bar"><div class="spl-fill" style="width:40%;background:var(--gn)"></div></div></div>
       </div>
     </div>
     <table class="tbl">
       <thead><tr><th>Match</th><th>Margin</th><th>Net Malik (60%)</th><th>Net Filan (40%)</th><th>Kumulatif Malik</th><th>Kumulatif Filan</th></tr></thead>
-      <tbody>
-        <tr><td class="pri">15 Agust</td><td style="color:var(--gn)">+201.500</td><td style="color:var(--nv);font-weight:500">+120.900</td><td style="color:var(--gn);font-weight:500">+80.600</td><td>8.147.730</td><td>5.372.762</td></tr>
-        <tr><td class="pri">26 Juli BIG</td><td style="color:var(--gn)">+489.000</td><td style="color:var(--nv);font-weight:500">+293.400</td><td style="color:var(--gn);font-weight:500">+195.600</td><td>8.026.830</td><td>5.292.162</td></tr>
+      <tbody id="rpt-split-tbody">
+        <tr><td colspan="6" style="color:var(--mu)">Memuat data dari database…</td></tr>
       </tbody>
     </table>
   </div>
@@ -3657,6 +3646,202 @@ function renderScorerTbodyFromDb(rows){
   if(typeof renderTopSkorFromDb==='function') renderTopSkorFromDb();
 }
 window.addEventListener('DOMContentLoaded', loadScorerFromBackend);
+
+// ── Reporting: tab "Pembayaran player" & "Operasional" — per-MATCH yang
+// dipilih di dropdown #rpt-match-sel. Sumbernya data LOKAL di browser
+// (msMatches — sama kayak yang dipakai Transaksi/PDF laporan), BUKAN dari
+// getDashboard/getMatches: match yang udah lama ditutup di histori
+// Rekap_Keuangan cuma nyimpen 1 baris ringkasan per match (bukan rincian
+// per player/per item biaya), jadi rincian kayak gini cuma ada utk match
+// yang ditutup lewat sistem Transaksi portal ini. Kalau belum ada match
+// aktif/ditutup sama sekali (kayak sekarang), dropdown-nya kosong dan
+// kedua tab ini nampilin placeholder, bukan data contoh lagi.
+function onRptMatchChange(){
+  const sel = document.getElementById('rpt-match-sel');
+  const id = sel ? sel.value : '';
+  renderRptPembayaran(id);
+  renderRptOperasional(id);
+}
+function renderRptPembayaran(id){
+  const tbody = document.getElementById('rpt-pembayaran-tbody');
+  const tfoot = document.getElementById('rpt-pembayaran-tfoot');
+  if(!tbody) return;
+  const m = id && typeof msMatches!=='undefined' ? msMatches[id] : null;
+  if(!m){
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--mu)">Pilih match yang sudah ditutup di atas dulu.</td></tr>';
+    if(tfoot) tfoot.style.display = 'none';
+    return;
+  }
+  const wrap = document.createElement('tbody');
+  wrap.innerHTML = m.slotHtml;
+  const rows = [...wrap.querySelectorAll('tr')];
+  if(!rows.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--mu)">Belum ada player di match ini.</td></tr>';
+    if(tfoot) tfoot.style.display = 'none';
+    return;
+  }
+  let totDep = 0, totJml = 0;
+  tbody.innerHTML = rows.map(tr=>{
+    const tds = tr.children;
+    const nama = slotRowNama(tr);
+    const htmTxt = tds[2] ? tds[2].textContent.trim() : '—';
+    const labelTxt = tds[3] ? tds[3].innerHTML.trim() : '—';
+    const depTxt = tds[4] ? tds[4].textContent.trim() : '—';
+    const metodeTxt = tds[5] ? tds[5].textContent.trim() : '—';
+    const statusTxt = tds[10] ? tds[10].innerHTML.trim() : '—';
+    const htmNum = parseRupiah(htmTxt);
+    const depNum = Math.abs(parseRupiah(depTxt));
+    totDep += depNum; totJml += htmNum;
+    return '<tr><td class="pri">'+escAttr(nama)+'</td><td>'+escAttr(htmTxt)+'</td><td>'+labelTxt+'</td>'
+      + '<td'+(depNum>0?' style="color:var(--am);font-weight:500"':'')+'>'+escAttr(depTxt)+'</td>'
+      + '<td>'+escAttr(metodeTxt)+'</td><td>'+fmtRupiah(htmNum)+'</td>'
+      + '<td>'+escAttr(tds[6]?tds[6].textContent.trim():'—')+'</td><td>'+statusTxt+'</td></tr>';
+  }).join('');
+  if(tfoot){
+    tfoot.style.display = '';
+    const depEl = document.getElementById('rpt-pemb-tot-dep');
+    const jmlEl = document.getElementById('rpt-pemb-tot-jml');
+    if(depEl) depEl.textContent = 'Rp ' + fmtRupiah(totDep);
+    if(jmlEl) jmlEl.textContent = '= Rp ' + fmtRupiah(totJml);
+  }
+}
+function renderRptOperasional(id){
+  const tbody = document.getElementById('rpt-operasional-tbody');
+  const tfoot = document.getElementById('rpt-operasional-tfoot');
+  if(!tbody) return;
+  const m = id && typeof msMatches!=='undefined' ? msMatches[id] : null;
+  if(!m){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--mu)">Pilih match yang sudah ditutup di atas dulu.</td></tr>';
+    if(tfoot) tfoot.style.display = 'none';
+    return;
+  }
+  const wrap = document.createElement('tbody');
+  wrap.innerHTML = m.biayaHtml;
+  const rows = [...wrap.querySelectorAll('tr')];
+  if(!rows.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--mu)">Belum ada item biaya di match ini.</td></tr>';
+    if(tfoot) tfoot.style.display = 'none';
+    return;
+  }
+  let totRencana = 0, totRealisasi = 0;
+  tbody.innerHTML = rows.map(tr=>{
+    const tds = tr.children;
+    const item = tds[0] ? tds[0].textContent.trim() : '—';
+    const tipe = tds[1] ? tds[1].innerHTML.trim() : '—';
+    const rencana = tds[2] ? parseRupiah(tds[2].textContent) : 0;
+    const realisasi = tds[3] ? parseRupiah(tds[3].textContent) : 0;
+    totRencana += rencana; totRealisasi += realisasi;
+    const selisih = realisasi - rencana;
+    const selTxt = selisih===0 ? '—' : (selisih>0?'+':'') + fmtRupiah(selisih);
+    return '<tr><td class="pri">'+escAttr(item)+'</td><td>'+tipe+'</td><td>'+fmtRupiah(rencana)+'</td><td>'+fmtRupiah(realisasi)+'</td>'
+      + '<td'+(selisih>0?' style="color:var(--rd)"':selisih<0?' style="color:var(--gn)"':'')+'>'+selTxt+'</td></tr>';
+  }).join('');
+  if(tfoot){
+    tfoot.style.display = '';
+    const rEl = document.getElementById('rpt-ops-tot-rencana');
+    const aEl = document.getElementById('rpt-ops-tot-realisasi');
+    if(rEl) rEl.textContent = 'Rp ' + fmtRupiah(totRencana);
+    if(aEl) aEl.textContent = 'Rp ' + fmtRupiah(totRealisasi);
+  }
+}
+// Panggil ulang tiap kali dropdown match ke-refresh (msRenderSwitcher dst
+// sudah manggil refreshReportingMatchOptions() — tambahin panggilan ini di
+// situ juga lewat wrapper, biar 2 tab ini ikut kereset kalau match aktif
+// berubah/dihapus).
+(function(){
+  const _origRefresh = window.refreshReportingMatchOptions;
+  if(typeof _origRefresh === 'function'){
+    window.refreshReportingMatchOptions = function(){
+      _origRefresh();
+      onRptMatchChange();
+    };
+  }
+})();
+window.addEventListener('DOMContentLoaded', onRptMatchChange);
+
+// ── Reporting: tab "Margin per match" & "Shared profit" — histori SEMUA
+// match yang udah ditutup dari database (getMatches, baca Rekap_Keuangan
+// apa adanya, termasuk field Sales/Cost/Split/Net/Kumul yang nggak
+// diekspos getDashboard). Ditarik sekali di awal, dipakai buat kedua tabel
+// + kartu ringkasan Shared profit (angka kumulatif & delta dihitung di
+// sini juga, jadi nggak perlu fetch getDashboard lagi).
+function loadReportingMatches(){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL + '?action=getMatches')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.error){ console.error('getMatches error:', data.error); return; }
+      renderRptMarginTable(data);
+      renderRptSplitTable(data);
+    })
+    .catch(err=>{ console.error('Gagal ambil histori match dari database:', err); });
+}
+function fmtSignedRp(n){
+  return (n>=0?'+':'-') + fmtRupiah(Math.abs(n));
+}
+function renderRptMarginTable(matches){
+  const tbody = document.getElementById('rpt-margin-tbody');
+  if(!tbody) return;
+  if(!matches.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
+    return;
+  }
+  const rows = matches.slice().reverse(); // terbaru di atas
+  tbody.innerHTML = rows.map(m=>{
+    const tgl = m['Match / Tanggal'] || '—';
+    const tipe = m['Tipe Event'] || '—';
+    const sales = parseFloat(m['Sales\n(Rp)']) || 0;
+    const cost = parseFloat(m['Cost Ops\n(Rp)']) || 0;
+    const margin = parseFloat(m['Margin\n(Rp)']) || 0;
+    const malik = parseFloat(m['Split Malik\n60% (Rp)']) || 0;
+    const filan = parseFloat(m['Split Filan\n40% (Rp)']) || 0;
+    return '<tr><td class="pri">'+escAttr(tgl)+'</td><td><span class="b b-gy">'+escAttr(tipe)+'</span></td>'
+      + '<td>'+fmtRupiah(sales)+'</td><td>'+fmtRupiah(cost)+'</td>'
+      + '<td style="color:'+(margin>=0?'var(--gn)':'var(--rd)')+';font-weight:600">'+fmtSignedRp(margin)+'</td>'
+      + '<td style="color:var(--nv)">'+fmtRupiah(malik)+'</td><td style="color:var(--gn)">'+fmtRupiah(filan)+'</td></tr>';
+  }).join('');
+}
+function renderRptSplitTable(matches){
+  const tbody = document.getElementById('rpt-split-tbody');
+  if(!tbody) return;
+  if(!matches.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
+    return;
+  }
+  const rows = matches.slice().reverse();
+  tbody.innerHTML = rows.map(m=>{
+    const tgl = m['Match / Tanggal'] || '—';
+    const margin = parseFloat(m['Margin\n(Rp)']) || 0;
+    const netM = parseFloat(m['Net Malik\n(Rp)']) || 0;
+    const netF = parseFloat(m['Net Filan\n(Rp)']) || 0;
+    const kumM = parseFloat(m['Kumul Malik\n(Rp)']) || 0;
+    const kumF = parseFloat(m['Kumul Filan\n(Rp)']) || 0;
+    return '<tr><td class="pri">'+escAttr(tgl)+'</td>'
+      + '<td style="color:'+(margin>=0?'var(--gn)':'var(--rd)')+'">'+fmtSignedRp(margin)+'</td>'
+      + '<td style="color:var(--nv);font-weight:500">'+fmtSignedRp(netM)+'</td>'
+      + '<td style="color:var(--gn);font-weight:500">'+fmtSignedRp(netF)+'</td>'
+      + '<td>'+fmtRupiah(kumM)+'</td><td>'+fmtRupiah(kumF)+'</td></tr>';
+  }).join('');
+
+  // Kartu ringkasan atas — kumulatif terkini + delta N match terakhir,
+  // dihitung langsung dari array ini (sama logika kayak getDashboard()).
+  const last = matches[matches.length-1];
+  const kumM = parseFloat(last['Kumul Malik\n(Rp)']) || 0;
+  const kumF = parseFloat(last['Kumul Filan\n(Rp)']) || 0;
+  const n = Math.min(4, matches.length>0 ? matches.length-1 : 0);
+  const ref = n>0 ? matches[matches.length-1-n] : null;
+  const deltaM = ref ? (kumM - (parseFloat(ref['Kumul Malik\n(Rp)'])||0)) : kumM;
+  const deltaF = ref ? (kumF - (parseFloat(ref['Kumul Filan\n(Rp)'])||0)) : kumF;
+  const malikAmtEl = document.getElementById('rpt-split-malik-amt');
+  const malikSubEl = document.getElementById('rpt-split-malik-sub');
+  const filanAmtEl = document.getElementById('rpt-split-filan-amt');
+  const filanSubEl = document.getElementById('rpt-split-filan-sub');
+  if(malikAmtEl) malikAmtEl.textContent = 'Rp ' + fmtRupiah(kumM);
+  if(filanAmtEl) filanAmtEl.textContent = 'Rp ' + fmtRupiah(kumF);
+  if(malikSubEl) malikSubEl.textContent = n>0 ? ((deltaM>=0?'+Rp ':'-Rp ')+fmtRupiah(Math.abs(deltaM))+' dari '+n+' match terakhir') : 'Belum ada match sebelumnya';
+  if(filanSubEl) filanSubEl.textContent = n>0 ? ((deltaF>=0?'+Rp ':'-Rp ')+fmtRupiah(Math.abs(deltaF))+' dari '+n+' match terakhir') : 'Belum ada match sebelumnya';
+}
+window.addEventListener('DOMContentLoaded', loadReportingMatches);
 </script>
 </body>
 </html>
