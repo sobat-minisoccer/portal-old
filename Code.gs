@@ -153,6 +153,7 @@ function getDashboard() {
   return {
     totalMatch  : closed.length,
     totalPlayer : players.length,
+    lastMatchTgl: last['Match / Tanggal'] || '',
     kumulatifMalik: last['Kumul Malik\n(Rp)'] || last['Kumul Malik'] || 0,
     kumulatifFilan: last['Kumul Filan\n(Rp)'] || last['Kumul Filan'] || 0,
     topScorer,
