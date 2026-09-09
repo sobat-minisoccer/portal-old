@@ -423,6 +423,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <tr><td colspan="7" style="color:var(--mu)">Memuat data dari database…</td></tr>
       </tbody>
     </table>
+    <div id="rpt-margin-pager" style="display:none;padding:10px 16px;border-top:1px solid var(--bd);align-items:center;justify-content:space-between;font-size:12px">
+      <span id="rpt-margin-pager-info" style="color:var(--mu)"></span>
+      <span style="display:flex;gap:6px">
+        <button class="btn btn-sm" id="rpt-margin-prev" onclick="rptMarginGoPage(-1)"><i class="ti ti-chevron-left"></i> Sebelumnya</button>
+        <button class="btn btn-sm" id="rpt-margin-next" onclick="rptMarginGoPage(1)">Berikutnya <i class="ti ti-chevron-right"></i></button>
+      </span>
+    </div>
   </div>
   <div id="rpt-split" class="tab-p">
     <div style="padding:14px 16px;border-bottom:1px solid var(--bd)">
@@ -437,6 +444,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <tr><td colspan="6" style="color:var(--mu)">Memuat data dari database…</td></tr>
       </tbody>
     </table>
+    <div id="rpt-split-pager" style="display:none;padding:10px 16px;border-top:1px solid var(--bd);align-items:center;justify-content:space-between;font-size:12px">
+      <span id="rpt-split-pager-info" style="color:var(--mu)"></span>
+      <span style="display:flex;gap:6px">
+        <button class="btn btn-sm" id="rpt-split-prev" onclick="rptSplitGoPage(-1)"><i class="ti ti-chevron-left"></i> Sebelumnya</button>
+        <button class="btn btn-sm" id="rpt-split-next" onclick="rptSplitGoPage(1)">Berikutnya <i class="ti ti-chevron-right"></i></button>
+      </span>
+    </div>
   </div>
 </div>
 </div>
@@ -3779,15 +3793,44 @@ function loadReportingMatches(){
 function fmtSignedRp(n){
   return (n>=0?'+':'-') + fmtRupiah(Math.abs(n));
 }
-function renderRptMarginTable(matches){
+// Pagination — 10 baris/halaman buat tabel "Margin per match" & "Shared
+// profit" di Reporting (histori bisa puluhan match, biar nggak kepanjangan
+// satu layar). Kedua tabel independen (halamannya masing2), tapi sama2
+// pakai urutan terbaru-di-atas.
+const RPT_PAGE_SIZE = 10;
+let _rptMarginRows = [], _rptMarginPage = 1;
+let _rptSplitRows = [], _rptSplitPage = 1;
+function renderPager(prefix, rows, page){
+  const pager = document.getElementById('rpt-'+prefix+'-pager');
+  const info = document.getElementById('rpt-'+prefix+'-pager-info');
+  const prevBtn = document.getElementById('rpt-'+prefix+'-prev');
+  const nextBtn = document.getElementById('rpt-'+prefix+'-next');
+  if(!pager) return;
+  const totalPages = Math.max(1, Math.ceil(rows.length / RPT_PAGE_SIZE));
+  if(rows.length <= RPT_PAGE_SIZE){ pager.style.display = 'none'; return; }
+  pager.style.display = 'flex';
+  const start = rows.length ? (page-1)*RPT_PAGE_SIZE + 1 : 0;
+  const end = Math.min(page*RPT_PAGE_SIZE, rows.length);
+  if(info) info.textContent = 'Menampilkan ' + start + '–' + end + ' dari ' + rows.length + ' match (halaman ' + page + '/' + totalPages + ')';
+  if(prevBtn) prevBtn.disabled = page<=1;
+  if(nextBtn) nextBtn.disabled = page>=totalPages;
+}
+function rptMarginGoPage(delta){
+  const totalPages = Math.max(1, Math.ceil(_rptMarginRows.length / RPT_PAGE_SIZE));
+  _rptMarginPage = Math.min(totalPages, Math.max(1, _rptMarginPage + delta));
+  renderRptMarginPage();
+}
+function rptSplitGoPage(delta){
+  const totalPages = Math.max(1, Math.ceil(_rptSplitRows.length / RPT_PAGE_SIZE));
+  _rptSplitPage = Math.min(totalPages, Math.max(1, _rptSplitPage + delta));
+  renderRptSplitPage();
+}
+function renderRptMarginPage(){
   const tbody = document.getElementById('rpt-margin-tbody');
   if(!tbody) return;
-  if(!matches.length){
-    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
-    return;
-  }
-  const rows = matches.slice().reverse(); // terbaru di atas
-  tbody.innerHTML = rows.map(m=>{
+  const start = (_rptMarginPage-1)*RPT_PAGE_SIZE;
+  const pageRows = _rptMarginRows.slice(start, start+RPT_PAGE_SIZE);
+  tbody.innerHTML = pageRows.map(m=>{
     const tgl = m['Match / Tanggal'] || '—';
     const tipe = m['Tipe Event'] || '—';
     const sales = parseFloat(m['Sales\n(Rp)']) || 0;
@@ -3800,16 +3843,14 @@ function renderRptMarginTable(matches){
       + '<td style="color:'+(margin>=0?'var(--gn)':'var(--rd)')+';font-weight:600">'+fmtSignedRp(margin)+'</td>'
       + '<td style="color:var(--nv)">'+fmtRupiah(malik)+'</td><td style="color:var(--gn)">'+fmtRupiah(filan)+'</td></tr>';
   }).join('');
+  renderPager('margin', _rptMarginRows, _rptMarginPage);
 }
-function renderRptSplitTable(matches){
+function renderRptSplitPage(){
   const tbody = document.getElementById('rpt-split-tbody');
   if(!tbody) return;
-  if(!matches.length){
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
-    return;
-  }
-  const rows = matches.slice().reverse();
-  tbody.innerHTML = rows.map(m=>{
+  const start = (_rptSplitPage-1)*RPT_PAGE_SIZE;
+  const pageRows = _rptSplitRows.slice(start, start+RPT_PAGE_SIZE);
+  tbody.innerHTML = pageRows.map(m=>{
     const tgl = m['Match / Tanggal'] || '—';
     const margin = parseFloat(m['Margin\n(Rp)']) || 0;
     const netM = parseFloat(m['Net Malik\n(Rp)']) || 0;
@@ -3822,9 +3863,35 @@ function renderRptSplitTable(matches){
       + '<td style="color:var(--gn);font-weight:500">'+fmtSignedRp(netF)+'</td>'
       + '<td>'+fmtRupiah(kumM)+'</td><td>'+fmtRupiah(kumF)+'</td></tr>';
   }).join('');
+  renderPager('split', _rptSplitRows, _rptSplitPage);
+}
+function renderRptMarginTable(matches){
+  const tbody = document.getElementById('rpt-margin-tbody');
+  if(!tbody) return;
+  if(!matches.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
+    const pager = document.getElementById('rpt-margin-pager'); if(pager) pager.style.display='none';
+    return;
+  }
+  _rptMarginRows = matches.slice().reverse(); // terbaru di atas
+  _rptMarginPage = 1;
+  renderRptMarginPage();
+}
+function renderRptSplitTable(matches){
+  const tbody = document.getElementById('rpt-split-tbody');
+  if(!tbody) return;
+  if(!matches.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
+    const pager = document.getElementById('rpt-split-pager'); if(pager) pager.style.display='none';
+    return;
+  }
+  _rptSplitRows = matches.slice().reverse();
+  _rptSplitPage = 1;
+  renderRptSplitPage();
 
   // Kartu ringkasan atas — kumulatif terkini + delta N match terakhir,
-  // dihitung langsung dari array ini (sama logika kayak getDashboard()).
+  // dihitung dari SELURUH data (bukan cuma halaman aktif), sama logika
+  // kayak getDashboard().
   const last = matches[matches.length-1];
   const kumM = parseFloat(last['Kumul Malik\n(Rp)']) || 0;
   const kumF = parseFloat(last['Kumul Filan\n(Rp)']) || 0;
