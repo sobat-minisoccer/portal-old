@@ -504,7 +504,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div id="trx-slot" class="trx-p active">
           <div class="sec-lbl">
             <span id="slot-count-lbl">Slot player — 6 / 28 terisi</span>
-            <button class="btn btn-sm" onclick="openModal('m-tambah-player')"><i class="ti ti-user-plus"></i> Tambah player</button>
+            <button class="btn btn-sm" onclick="populateTpNamaDatalist();openModal('m-tambah-player')"><i class="ti ti-user-plus"></i> Tambah player</button>
             <button class="btn btn-sm" style="background:var(--gn2);color:var(--gn);border-color:#86EFAC;margin-left:auto" onclick="openModal('m-broadcast')">
               <i class="ti ti-broadcast"></i> Generate broadcast
             </button>
@@ -822,12 +822,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <!-- KONFIGURASI -->
   <div id="adm-config" class="tab-p" style="background:var(--su);border:1px solid var(--bd);border-top:none;border-radius:0 0 12px 12px;padding:16px;display:none">
     <div class="g2f" style="max-width:500px">
-      <div class="fg"><div class="fl">HTM Player default (Rp)</div><input type="number" value="95000"></div>
-      <div class="fg"><div class="fl">HTM GK default (Rp)</div><input type="number" value="35000"></div>
-      <div class="fg"><div class="fl">HTM SHTM (Rp)</div><input type="number" value="50000"></div>
-      <div class="fg"><div class="fl">Split Malik (%)</div><input type="number" value="60"></div>
+      <div class="fg"><div class="fl">HTM Player default (Rp)</div><input type="number" id="cfg-htm-player" value="95000"></div>
+      <div class="fg"><div class="fl">HTM GK default (Rp)</div><input type="number" id="cfg-htm-gk" value="35000"></div>
+      <div class="fg"><div class="fl">HTM SHTM (Rp)</div><input type="number" id="cfg-htm-shtm" value="50000"></div>
+      <div class="fg"><div class="fl">Split Malik (%)</div><input type="number" id="cfg-split-malik" value="60"></div>
     </div>
-    <button class="btn btn-prim" style="margin-top:4px"><i class="ti ti-check"></i> Simpan konfigurasi</button>
+    <button class="btn btn-prim" style="margin-top:4px" onclick="submitSimpanKonfigurasi()"><i class="ti ti-check"></i> Simpan konfigurasi</button>
   </div>
 
   <!-- KELOLA PLAYER -->
@@ -979,7 +979,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
   <div class="modal">
     <div class="modal-hd"><div class="modal-title"><i class="ti ti-user-plus" style="color:var(--ac)"></i> Tambah player / walk-in</div><button class="ib" onclick="closeModal('m-tambah-player')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
-      <div class="fg"><div class="fl">Cari nama player (autocomplete dari DB)</div><input type="text" id="tp-nama" placeholder="Ketik nama..."></div>
+      <div class="fg"><div class="fl">Cari nama player (autocomplete dari DB)</div><input type="text" id="tp-nama" list="tp-nama-list" placeholder="Ketik nama..." oninput="onTpNamaInput(this.value)" autocomplete="off">
+        <datalist id="tp-nama-list"></datalist>
+      </div>
       <div class="g2f">
         <div class="fg"><div class="fl">HTM (Rp)</div><input type="number" id="tp-htm" value="95000"></div>
         <div class="fg"><div class="fl">Label harga</div><select id="tp-label"><option>Normal</option><option>SHTM</option><option>Promo</option><option>Free</option><option>Sponsor</option></select></div>
@@ -1427,6 +1429,7 @@ function adminTab(id,btn){
   if(btn)btn.classList.add('active');
   if(id==='jersey') renderJerseyStokTable();
   if(id==='player') refreshAllKelolaPlayerShtm();
+  if(id==='config' && typeof loadKonfigurasiFromBackend==='function') loadKonfigurasiFromBackend();
 }
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -1446,6 +1449,14 @@ function toggleSf(btn,nama,matchDate){
     const toast=document.getElementById('shtm-toast');
     toast.style.display='block';
     setTimeout(()=>{toast.style.display='none';},3500);
+    // Beneran disimpan ke SHTM_Log — dulu cuma toast doang, klaim "tercatat
+    // di Admin" itu bohong (baris ini nggak pernah masuk database).
+    if(typeof msPostToBackend==='function'){
+      const activeMatch = (typeof msMatches!=='undefined' && msActiveId && msMatches[msActiveId]) ? msMatches[msActiveId] : null;
+      const matchLabel = activeMatch ? activeMatch.titleLine : matchDate;
+      msPostToBackend({ action:'flagShtm', nama, tglMatch: matchDate, matchLabel, catatan:'Flag dari Slot Player' });
+      if(typeof loadShtmFromBackend==='function') setTimeout(loadShtmFromBackend, 900);
+    }
   }
 }
 
@@ -1962,14 +1973,26 @@ function jerseyStokSaveRow(btn){
   const tipe = row.dataset.tipe;
   const target = tipe==='GK' ? JERSEY_STOK_GK : JERSEY_STOK;
   if(!target[warna]) target[warna] = {S:0,M:0,L:0,XL:0,'2XL':0,'3XL':0};
+  const deltas = [];
   row.querySelectorAll('.jrs-ed-input').forEach(inp=>{
     const sz = inp.dataset.sz;
     const n = Math.max(0, parseInt(inp.value,10) || 0);
+    const old = target[warna][sz] || 0;
+    if(n !== old) deltas.push({ ukuran: sz, tambah: n - old });
     target[warna][sz] = n;
   });
   showToast('Stok jersey ' + warna + ' (' + tipe + ') diperbarui.');
   refreshAllJerseySelects();
   renderJerseyStokTable();
+  if(GAS_URL && GAS_URL.indexOf('script.google.com')>=0){
+    deltas.forEach(d=>{
+      fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'updateStokJersey', warna, tipe, ukuran: d.ukuran, tambah: d.tambah }) })
+        .then(r=>r.json())
+        .then(res=>{ if(res && res.error) console.error('updateStokJersey error:', res.error); })
+        .catch(err=>{ console.error('Gagal kirim update stok jersey ke database:', err); });
+    });
+  }
 }
 function parseRupiah(s){
   if(s==null) return 0;
@@ -2240,6 +2263,11 @@ function afterRowChange(row){
     const used = statusTd && statusTd.textContent.trim() === 'Sudah dipakai';
     row.style.background = used ? '' : '#FFF5F5';
     refreshKelolaPlayerShtmCell(shtmRowNama(row));
+    const rowIdx = row.dataset.rowIdx;
+    if(rowIdx && typeof msPostToBackend==='function'){
+      msPostToBackend({ action:'updateShtmRow', rowIdx: parseInt(rowIdx,10),
+        nama: shtmRowNama(row), status: statusTd ? statusTd.textContent.trim() : '' });
+    }
   }
   if(row.closest && row.closest('#player-tbody')){
     // Dropdown status SHTM di Kelola Player sama kayak di Daftar SHTM, dan
@@ -2253,6 +2281,15 @@ function afterRowChange(row){
     if(status === 'Belum dipakai' || status === 'Sudah dipakai'){
       pushShtmStatusFromKelolaPlayer(playerDbRowNama(row), status);
     }
+    const rowIdx = row.dataset.rowIdx;
+    if(rowIdx && typeof msPostToBackend==='function'){
+      const kategoriTd = tds[3], depositTd = tds[6];
+      msPostToBackend({ action:'updatePlayerDb', rowIdx: parseInt(rowIdx,10),
+        nama: playerDbRowNama(row),
+        kategori: kategoriTd ? kategoriTd.textContent.trim() : undefined,
+        deposit: depositTd ? parseRupiah(depositTd.textContent) : undefined,
+        statusShtm: status || undefined });
+    }
   }
   if(row.closest && row.closest('#slot-tbody')){
     syncPosisiToJersey(row);
@@ -2263,6 +2300,17 @@ function afterRowChange(row){
   if(row.closest && row.closest('#scorer-tbody')){
     resortScorerDb();
     renderTopSkorFromDb();
+    const rowIdx = row.dataset.rowIdx;
+    if(rowIdx && typeof msPostToBackend==='function'){
+      const tds = row.querySelectorAll(':scope > td');
+      msPostToBackend({ action:'updateScorer', rowIdx: parseInt(rowIdx,10),
+        no: tds[0] ? tds[0].textContent.trim() : '',
+        nama: tds[1] ? tds[1].textContent.trim() : '',
+        kategori: tds[2] ? tds[2].textContent.trim() : '',
+        tahun: tds[3] ? tds[3].textContent.trim() : '',
+        gol: tds[4] ? (parseInt(tds[4].textContent.trim(),10)||0) : 0,
+        uraian: tds[5] ? tds[5].textContent.trim() : '' });
+    }
   }
   recalcAll();
 }
@@ -2345,6 +2393,16 @@ document.addEventListener('click', function(e){
       return;
     }
     const shtmNamaBeforeDelete = wasInShtm ? shtmRowNama(row) : null;
+    const rowIdxBeforeDelete = row ? row.dataset.rowIdx : null;
+    if(wasInShtm && rowIdxBeforeDelete && typeof msPostToBackend==='function'){
+      msPostToBackend({ action:'deleteShtmRow', rowIdx: parseInt(rowIdxBeforeDelete,10) });
+    }
+    if(wasInPlayerDb && rowIdxBeforeDelete && typeof msPostToBackend==='function'){
+      msPostToBackend({ action:'deletePlayerDb', rowIdx: parseInt(rowIdxBeforeDelete,10) });
+    }
+    if(wasInScorerDb && rowIdxBeforeDelete && typeof msPostToBackend==='function'){
+      msPostToBackend({ action:'deleteScorer', rowIdx: parseInt(rowIdxBeforeDelete,10) });
+    }
     if(row) row.remove();
     if(wasInShtm) { renumberShtm(); refreshKelolaPlayerShtmCell(shtmNamaBeforeDelete); }
     if(wasInSlot) renumberSlot();
@@ -2474,6 +2532,39 @@ function computeFinancialsFromLiveDom(){
   const malik = Math.round(margin*0.6);
   const filan = margin - malik;
   return { sales, cost: realisasi, margin, malik, filan };
+}
+// Jumlah biaya kategori "Inventaris" (bukan "Ops") dari match aktif — dipakai
+// utk kolom "Inventaris (Rp)" di Rekap_Keuangan pas Tutup Match. Badge Inv/Ops
+// disimpan di td index 1 tiap baris biaya (lihat submitTambahBiaya()).
+function computeInventarisFromLiveDom(){
+  let inv = 0;
+  document.querySelectorAll('#biaya-tbody tr').forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    const tipeTxt = tds[1] ? tds[1].textContent.trim() : '';
+    if(tipeTxt === 'Inv') inv += parseRupiah(tds[3] ? tds[3].textContent : '');
+  });
+  return inv;
+}
+// Breakdown pembayaran per bank/cash dari slot player match aktif — dipakai
+// utk kolom BCA/BSI/Mandiri/BRI/Cash di Rekap_Keuangan. Cuma player yg
+// statusnya Lunas yg dihitung (Sementara belum beneran masuk rekening), dan
+// metode "Deposit" nggak diitung di sini (uangnya udah masuk pas transaksi
+// deposit sebelumnya, bukan pas match ini).
+function computeBankBreakdownFromLiveDom(){
+  const out = { bca:0, bsi:0, mandiri:0, bri:0, cash:0 };
+  const keyMap = { 'BCA':'bca', 'BSI':'bsi', 'Mandiri':'mandiri', 'BRI':'bri', 'Cash':'cash' };
+  document.querySelectorAll('#slot-tbody tr').forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    const statusTxt = tds[10] ? tds[10].textContent.trim() : '';
+    if(!/Lunas/i.test(statusTxt)) return;
+    const bankTd = tds[5];
+    const bankVal = bankTd ? (bankTd.dataset.bankVal || '') : '';
+    const key = keyMap[bankVal];
+    if(!key) return; // '—', 'Deposit', dll — nggak masuk breakdown bank
+    const htm = parseRupiah(tds[2] ? tds[2].textContent : '');
+    out[key] += htm;
+  });
+  return out;
 }
 // Sama seperti di atas, tapi dari snapshot HTML tersimpan (match yg BUKAN
 // sedang aktif — datanya cuma ada di msMatches[id].slotHtml/biayaHtml, bukan
@@ -2844,7 +2935,16 @@ function msCreateMatch(meta){
     depSaldoHtml: '',
     depLogHtml: '',
     matchScorers: [],
-    activeTab: 'slot'
+    activeTab: 'slot',
+    // Field mentah buat "Tutup match" -> Rekap_Keuangan (No harus dipisah
+    // dari titleLine/subLine yang cuma teks gabungan buat tampilan). Match
+    // lama (draft dari sebelum field ini ada) nggak akan punya ini — Tutup
+    // Match fallback parsing dari titleLine/subLine kalau kosong.
+    tglIso: meta.tglIso || '',
+    venue: meta.venue || '',
+    tipeLapangan: meta.tipeLapangan || '',
+    tipeEvent: meta.tipeEvent || '',
+    jenisGameLabel: meta.jenisGameLabel || ''
   };
   msOrder.push(id);
   msRestore(id);
@@ -3022,7 +3122,8 @@ function submitMatchBaru(){
     titleLine: tglLabel + ' — ' + eventLabel,
     subLine: venue + ' · ' + tipeLap + ' · HTM Rp ' + fmtRupiah(htmP) + ' · GK Rp ' + fmtRupiah(htmG),
     jenisGame,
-    kuota: kuotaGk + kuotaField
+    kuota: kuotaGk + kuotaField,
+    tglIso: tglRaw, venue, tipeLapangan: tipeLap, tipeEvent, jenisGameLabel: jenisSel
   });
   closeModal('m-match-baru');
   showToast('Match baru dibuat: ' + tglLabel + '. Sekarang ada ' + msOrder.length + ' match aktif — pindah lewat tab di atas.');
@@ -3076,6 +3177,34 @@ function submitTambahPlayer(){
   recalcAll();
   showToast(nama + ' ditambahkan ke slot player.');
 }
+// Autocomplete "Cari nama player" di modal Tambah player/walk-in — labelnya
+// sudah lama bilang "dari DB" tapi field-nya beneran nggak pernah
+// disambungkan ke apa pun. _dbPlayersCache (hasil getPlayers(), sama data
+// yang dipakai modal Database Player & Kelola Player) dipakai lewat
+// <datalist> bawaan browser — ketik beberapa huruf langsung muncul saran.
+// Kalau nama yang diketik PERSIS cocok sama salah satu player di DB,
+// ukuran jersey-nya otomatis ikut ke-isi dari profil DB (nggak nimpa
+// field lain spt HTM/label, itu tetap manual sesuai kebutuhan match ini).
+function populateTpNamaDatalist(){
+  const dl = document.getElementById('tp-nama-list');
+  if(!dl) return;
+  const players = _dbPlayersCache || [];
+  dl.innerHTML = players.map(p=>{
+    const nama = p['Nama Player'];
+    return nama ? '<option value="'+escAttr(nama)+'"></option>' : '';
+  }).join('');
+}
+function onTpNamaInput(val){
+  const players = _dbPlayersCache || [];
+  const match = players.find(p => (p['Nama Player']||'').trim().toLowerCase() === val.trim().toLowerCase());
+  if(!match) return;
+  const ukuranSel = document.getElementById('tp-ukuran');
+  const ukuranDb = match['Ukuran\nDominan'];
+  if(ukuranSel && ukuranDb){
+    const hasOption = [...ukuranSel.options].some(o=>o.value===ukuranDb);
+    if(hasOption) ukuranSel.value = ukuranDb;
+  }
+}
 
 function submitTambahBiaya(){
   if(msIsActiveLocked()){ showToast('Match sudah ditutup.'); closeModal('m-tambah-biaya'); return; }
@@ -3111,6 +3240,11 @@ function submitTambahDeposit(){
   closeModal('m-tambah-deposit');
   refreshSlotDepositTriggers();
   showToast('Deposit ' + player + ' Rp ' + fmtRupiah(jumlah) + ' tersimpan.');
+  if(typeof msPostToBackend==='function'){
+    msPostToBackend({ action:'addDeposit', nama: player, jumlah,
+      sumber, matchId: (typeof msActiveId!=='undefined' ? msActiveId : '') || '—',
+      keterangan: 'Tambah deposit dari Transaksi' });
+  }
 }
 
 /* ── PAKAI DEPOSIT (dari kolom Deposit di Slot Player) ──
@@ -3313,6 +3447,14 @@ function submitPakaiDeposit(){
     closeModal('m-pakai-deposit');
     recalcAll();
     showToast('Pemakaian deposit ' + nama + ' dibatalkan.');
+    if(prevUsed > 0 && typeof msPostToBackend==='function'){
+      // Nggak ada aksi "batalkan useDeposit" di backend — dikembalikan dgn
+      // nulis entri deposit masuk lagi (reversal), biar saldo di database
+      // ikut balik naik, konsisten sama tampilan lokal yang baru dibatalkan.
+      msPostToBackend({ action:'addDeposit', nama, jumlah: prevUsed,
+        sumber:'Batal pakai deposit', matchId: (typeof msActiveId!=='undefined'?msActiveId:'')||'—',
+        keterangan:'Reversal — batal pakai deposit di Transaksi' });
+    }
     return;
   }
 
@@ -3332,6 +3474,10 @@ function submitPakaiDeposit(){
   closeModal('m-pakai-deposit');
   recalcAll();
   showToast('Deposit ' + nama + ' dipakai Rp ' + fmtRupiah(jumlah) + (sisa > 0 ? ' — sisa Rp ' + fmtRupiah(sisa) + ' perlu dibayar via metode lain.' : ' — HTM lunas dari deposit.'));
+  if(typeof msPostToBackend==='function'){
+    msPostToBackend({ action:'useDeposit', namaPemain: nama, jumlah,
+      matchId: (typeof msActiveId!=='undefined' ? msActiveId : '') || '—' });
+  }
 }
 
 function populateGolPlayerSelect(){
@@ -3390,6 +3536,13 @@ function submitTambahStok(){
   renderJerseyStokTable();
   closeModal('m-tambah-stok');
   showToast('Stok jersey ' + warna + ' (' + tipe + ' · ' + ukuran + ') +' + jumlah + ' unit.' + (isNewColor ? ' Jenis baru langsung muncul di tabel status jersey.' : ''));
+  if(GAS_URL && GAS_URL.indexOf('script.google.com')>=0){
+    fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'updateStokJersey', warna, tipe, ukuran, tambah: jumlah }) })
+      .then(r=>r.json())
+      .then(res=>{ if(res && res.error) { console.error('updateStokJersey error:', res.error); showToast('Gagal simpan stok ke database: ' + res.error); } })
+      .catch(err=>{ console.error('Gagal kirim update stok jersey ke database:', err); showToast('Stok tersimpan lokal, tapi gagal kirim ke database — cek koneksi.'); });
+  }
 }
 
 function submitTambahPlayerDb(){
@@ -3412,6 +3565,16 @@ function submitTambahPlayerDb(){
   closeModal('m-tambah-player-db');
   showToast('Player ' + nama + ' ditambahkan ke database (No ' + no + ').');
   refreshKelolaPlayerShtmCell(nama);
+  if(GAS_URL && GAS_URL.indexOf('script.google.com')>=0){
+    fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'addPlayerDb', nama, kategori, alias }) })
+      .then(r=>r.json())
+      .then(res=>{
+        if(res && res.error){ console.error('addPlayerDb error:', res.error); showToast('Gagal simpan ke database: ' + res.error); return; }
+        if(typeof loadDbPlayersModal==='function') loadDbPlayersModal();
+      })
+      .catch(err=>{ console.error('Gagal simpan player baru ke database:', err); showToast('Player tersimpan lokal, tapi gagal kirim ke database — cek koneksi.'); });
+  }
 }
 function submitTambahScorer(){
   const nama = document.getElementById('sc-nama').value.trim();
@@ -3439,6 +3602,33 @@ function submitTambahScorer(){
   closeModal('m-tambah-scorer');
   showToast('Pencetak gol ' + nama + ' ditambahkan ke rekap skorer.');
   renderTopSkorFromDb();
+  if(GAS_URL && GAS_URL.indexOf('script.google.com')>=0){
+    fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'addScorer', nama, kategori, tahun, gol, uraian }) })
+      .then(r=>r.json())
+      .then(res=>{
+        if(res && res.error){ console.error('addScorer error:', res.error); showToast('Gagal simpan ke database: ' + res.error); return; }
+        if(typeof loadScorerFromBackend==='function') loadScorerFromBackend();
+      })
+      .catch(err=>{ console.error('Gagal simpan skorer baru ke database:', err); showToast('Skorer tersimpan lokal, tapi gagal kirim ke database — cek koneksi.'); });
+  }
+}
+// Dipakai Tutup Match — daftar unit jersey yg beneran dipakai di match ini
+// (1 entri per player yg pilih warna), buat dikembalikan ke stok pas match
+// ditutup (lihat closeMatch() di Code.gs: tiap entri -1 dari "Dipakai").
+function computeJerseyUsedListFromLiveDom(){
+  const list = [];
+  document.querySelectorAll('#slot-tbody tr').forEach(row=>{
+    const jerseySel = row.querySelector('.jersey-sel');
+    if(!jerseySel) return;
+    const warna = jerseySel.value;
+    if(!warna) return;
+    const ukuranTd = row.children[9];
+    const uk = ukuranTd ? ukuranTd.textContent.trim() : '';
+    if(!uk) return;
+    list.push({ warna, uk });
+  });
+  return list;
 }
 function submitTutupMatch(){
   const m = msMatches[msActiveId];
@@ -3449,11 +3639,73 @@ function submitTutupMatch(){
   // krn snapshot cuma ke-update lewat "Simpan" atau pindah match) — jadi
   // diam-diam membuang data yg baru ditambahkan tapi belum sempat disimpan.
   msCaptureCurrent();
+
+  // Hitung angka final match ini dari isi tabel LIVE — sumber SAMA PERSIS
+  // yg dipakai kartu "Rekap akhir" (computeFinancialsFromLiveDom()) — jadi
+  // yg dikirim ke Rekap_Keuangan konsisten sama yg ditampilkan di layar.
+  // Ini HARUS dihitung SEBELUM status diubah/msRestore(), selagi tabel slot
+  // & biaya match ini masih ada di DOM.
+  const fin = computeFinancialsFromLiveDom();
+  const inv = computeInventarisFromLiveDom();
+  const bank = computeBankBreakdownFromLiveDom();
+  const jerseyUsed = computeJerseyUsedListFromLiveDom();
+
+  // tglMatch/tahun: pakai field mentah (tersimpan sejak match dibuat) kalau
+  // ada; match lama/draft dari sebelum field ini ada fallback parsing dari
+  // titleLine (format "7 September 2026 — Internal SMS").
+  let tahun = '';
+  if(m.tglIso){ tahun = m.tglIso.split('-')[0]; }
+  else {
+    const ymatch = /((19|20)\d{2})/.exec(m.titleLine || '');
+    if(ymatch) tahun = ymatch[1];
+  }
+  const tglMatch = (m.titleLine || '').split('—')[0].trim();
+  const tipeEventFallback = (m.titleLine || '').includes('—') ? (m.titleLine || '').split('—')[1].trim() : '';
+
+  const payload = {
+    action: 'closeMatch',
+    matchId: m.id,
+    tglMatch, tahun,
+    jenisGame: m.jenisGameLabel || (m.jenisGame==='football' ? 'Football (11 vs 11)' : 'Minisoccer (7 vs 7)'),
+    tipeEvent: m.tipeEvent || tipeEventFallback,
+    venue: m.venue || '',
+    tipeLapangan: m.tipeLapangan || '',
+    totalSales: fin.sales,
+    totalCost: fin.cost,
+    totalInv: inv,
+    bca: bank.bca, bsi: bank.bsi, mandiri: bank.mandiri, bri: bank.bri, cash: bank.cash,
+    jerseyUsed
+  };
+
   m.status = 'tutup';
   closeModal('m-tutup-match');
   msRestore(msActiveId);
   msPersist();
-  showToast('Match "' + m.titleLine + '" ditutup dan dikunci.');
+  showToast('Match "' + m.titleLine + '" ditutup dan dikunci. Mengirim ke Rekap Keuangan...');
+
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0){
+    showToast('GAS_URL belum diset — Rekap Keuangan TIDAK ke-update otomatis. Hubungi admin sistem.');
+    return;
+  }
+  // INI YANG PALING PENTING buat Sam: tutup match harus beneran nambah
+  // baris ke Rekap_Keuangan (kumulatif Malik/Filan), bukan cuma ngunci
+  // tampilan lokal doang seperti sebelumnya.
+  fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) })
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && res.error){
+        console.error('closeMatch error:', res.error);
+        showToast('Match ditutup, TAPI GAGAL kirim ke Rekap Keuangan: ' + res.error + ' — hubungi admin sistem.');
+        return;
+      }
+      showToast('Tercatat di Rekap Keuangan — match #' + res.matchNo + ', margin Rp ' + fmtRupiah(res.margin) + ' (Malik Rp ' + fmtRupiah(res.splitMalik) + ' · Filan Rp ' + fmtRupiah(res.splitFilan) + ').');
+      if(typeof applyRptMarginFilter==='function') applyRptMarginFilter();
+      if(typeof loadDashboardRealStats==='function') loadDashboardRealStats();
+    })
+    .catch(err=>{
+      console.error('Gagal kirim closeMatch ke database:', err);
+      showToast('Match ditutup lokal, TAPI GAGAL kirim ke Rekap Keuangan (koneksi terputus) — cek internet lalu coba tutup ulang, atau hubungi admin.');
+    });
 }
 
 /* ── INIT multi-match ──
@@ -3829,7 +4081,7 @@ function renderShtmTbodyFromDb(rows){
     const tglPakai = r['Tgl SHTM Dipakai'] || '—';
     const status = r['Status'] || 'Belum dipakai';
     const cls = status === 'Sudah dipakai' ? 'b-gn' : 'b-sh';
-    return '<tr' + (status!=='Sudah dipakai' ? ' style="background:#FFF5F5"' : '') + '>'
+    return '<tr data-row-idx="'+(r._row||'')+'"' + (status!=='Sudah dipakai' ? ' style="background:#FFF5F5"' : '') + '>'
       + '<td data-no-edit="1">'+(i+1)+'</td><td class="pri">'+escAttr(nama)+'</td>'
       + '<td>'+escAttr(String(tglDapat))+'</td><td style="color:var(--hi)">'+escAttr(String(tglPakai))+'</td>'
       + '<td data-edit-type="shtm-status"><span class="b '+cls+'">'+escAttr(status)+'</span></td>'
@@ -3892,7 +4144,7 @@ function renderPlayerDbTablePage(){
     const hasShtm = shtmRaw && shtmRaw!=='—';
     const shtmCls = hasShtm && shtmRaw==='Sudah dipakai' ? 'b-gn' : 'b-sh';
     const shtm = hasShtm ? ('<span class="b '+shtmCls+'">'+escAttr(shtmRaw)+'</span>') : '—';
-    return '<tr><td data-no-edit="1">'+escAttr(String(no))+'</td><td class="pri">'+escAttr(nama)+'</td><td>—</td>'
+    return '<tr data-row-idx="'+(p._row||'')+'"><td data-no-edit="1">'+escAttr(String(no))+'</td><td class="pri">'+escAttr(nama)+'</td><td>—</td>'
       + '<td data-edit-type="kategori"><span class="b b-gy">'+escAttr(kategori)+'</span></td>'
       + '<td>'+escAttr(String(hadir))+'</td><td>'+escAttr(lastMatch)+'</td>'
       + '<td data-edit-type="deposit"'+(hasDeposit?' style="color:var(--am);font-weight:500"':'')+'>'+escAttr(deposit)+'</td>'
@@ -3932,7 +4184,7 @@ function renderScorerTbodyFromDb(rows){
       const tahun = r['Tahun']!=null ? r['Tahun'] : '';
       const gol = r['Total Gol']!=null ? r['Total Gol'] : 0;
       const uraian = (r['Uraian'] && r['Uraian']!=='—') ? r['Uraian'] : '—';
-      return '<tr><td data-no-edit="1">' + escAttr(String(no)) + '</td><td class="pri">' + escAttr(nama) + '</td>'
+      return '<tr data-row-idx="' + (r._row||'') + '"><td data-no-edit="1">' + escAttr(String(no)) + '</td><td class="pri">' + escAttr(nama) + '</td>'
         + '<td data-edit-type="kategori"><span class="b b-gy">' + escAttr(kategori) + '</span></td>'
         + '<td data-edit-type="tahun"><span class="b b-gy">' + escAttr(String(tahun)) + '</span></td>'
         + '<td data-edit-type="gol">' + escAttr(String(gol)) + '</td>'
@@ -3943,6 +4195,42 @@ function renderScorerTbodyFromDb(rows){
   if(typeof renderTopSkorFromDb==='function') renderTopSkorFromDb();
 }
 window.addEventListener('DOMContentLoaded', loadScorerFromBackend);
+
+// ── Admin > Konfigurasi (#adm-config) — dulu 4 input ini nilainya statis
+// dari HTML (95000/35000/50000/60), tombol "Simpan konfigurasi" bahkan
+// nggak punya onclick sama sekali (nggak nyimpen ke mana-mana). Sekarang
+// ditarik dari getConfig() (yg juga sudah dibenerin di Code.gs supaya
+// beneran baca balik dari PropertiesService, bukan angka hardcoded lagi)
+// tiap kali tab ini dibuka, dan "Simpan" nulis balik ke sana.
+function loadKonfigurasiFromBackend(){
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  fetch(GAS_URL + '?action=getConfig')
+    .then(r=>r.json())
+    .then(cfg=>{
+      if(cfg.error){ console.error('getConfig error:', cfg.error); return; }
+      const idMap = { 'cfg-htm-player':'htmPlayer', 'cfg-htm-gk':'htmGk', 'cfg-htm-shtm':'htmShtm', 'cfg-split-malik':'splitMalik' };
+      Object.keys(idMap).forEach(elId=>{
+        const el = document.getElementById(elId);
+        if(el && cfg[idMap[elId]]!=null) el.value = cfg[idMap[elId]];
+      });
+    })
+    .catch(err=>{ console.error('Gagal ambil Konfigurasi dari database:', err); });
+}
+function submitSimpanKonfigurasi(){
+  const htmPlayer  = parseInt(document.getElementById('cfg-htm-player').value,10) || 0;
+  const htmGk      = parseInt(document.getElementById('cfg-htm-gk').value,10) || 0;
+  const htmShtm    = parseInt(document.getElementById('cfg-htm-shtm').value,10) || 0;
+  const splitMalik = parseInt(document.getElementById('cfg-split-malik').value,10) || 0;
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0){ showToast('GAS_URL belum diset — konfigurasi tidak bisa disimpan.'); return; }
+  fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ action:'updateConfig', htmPlayer, htmGk, htmShtm, splitMalik }) })
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && res.error){ showToast('Gagal simpan konfigurasi: ' + res.error); return; }
+      showToast('Konfigurasi tersimpan ke database.');
+    })
+    .catch(err=>{ console.error('Gagal simpan konfigurasi:', err); showToast('Gagal simpan konfigurasi — cek koneksi.'); });
+}
 
 // ── Reporting: tab "Pembayaran player" & "Operasional" — per-MATCH yang
 // dipilih di dropdown #rpt-match-sel. Sumbernya data LOKAL di browser

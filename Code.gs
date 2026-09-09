@@ -15,6 +15,9 @@ const SHEET = {
   INVENTARIS: 'Inventaris',
   SCORER   : 'Rekap_Skorer', // tab baru — BELUM ada di sheet data riil kamu juga,
                               // dibikin otomatis sama setupSheets()
+  DRAFTS   : 'Match_Drafts', // tab baru — draft match Transaksi yang masih
+                              // berjalan (belum ditutup), dipakai supaya
+                              // "Simpan" nyambung ke browser/device lain
 };
 
 // ── CORS & Router ──────────────────────────────────────────
@@ -32,6 +35,7 @@ function doGet(e) {
       case 'getDashboard':     result = getDashboard(); break;
       case 'getConfig':        result = getConfig(); break;
       case 'getScorer':        result = getScorer(); break;
+      case 'getMatchDrafts':   result = getMatchDrafts(); break;
       default: result = { error: 'Unknown action: ' + action };
     }
   } catch(err) {
@@ -66,6 +70,12 @@ function doPost(e) {
       case 'addScorer':         result = addScorer(payload); break;
       case 'updateScorer':      result = updateScorer(payload); break;
       case 'deleteScorer':      result = deleteScorer(payload); break;
+      case 'saveMatchDraft':    result = saveMatchDraft(payload); break;
+      case 'deleteMatchDraft':  result = deleteMatchDraft(payload); break;
+      case 'updatePlayerDb':    result = updatePlayerDb(payload); break;
+      case 'deletePlayerDb':    result = deletePlayerDb(payload); break;
+      case 'updateShtmRow':     result = updateShtmRow(payload); break;
+      case 'deleteShtmRow':     result = deleteShtmRow(payload); break;
       default: result = { error: 'Unknown action: ' + action };
     }
   } catch(err) {
@@ -105,6 +115,30 @@ function toNum(v) {
   if (typeof v === 'number') return v;
   const n = Number(v);
   return isNaN(n) ? 0 : n;
+}
+
+// ── Header-safe write helpers ───────────────────────────────
+// Dipakai buat sheet yang struktur ASLINYA belum 100% confirmed cocok
+// sama urutan kolom yang diasumsikan di kode ini — DB_Player & SHTM_Log
+// terutama (DB_Player punya sheet real punya Sam sendiri, sebelumnya
+// dari sebelumnya, header text-nya kebukti beda dari yang diasumsikan
+// kode, misal "Saldo Deposit\n(Rp)" vs "Deposit Saldo (Rp)"). Daripada
+// nulis ke kolom berdasarkan posisi/index tetap (yang beresiko salah
+// kolom & ngerusak data Sam kalau urutan asli beda), fungsi-fungsi ini
+// nyari kolom berdasarkan NAMA header dulu, baru nulis ke situ.
+function getHeaderMap(sheetName, headerRow) {
+  const ws   = getSheet(sheetName);
+  const hdrs = ws.getRange(headerRow, 1, 1, ws.getLastColumn()).getValues()[0]
+                 .map(h => String(h).trim());
+  const map  = {};
+  hdrs.forEach((h, i) => { if (h) map[h] = i + 1; }); // 1-based kolom
+  return { ws, map, hdrs };
+}
+function findCol(map, aliases) {
+  for (let i = 0; i < aliases.length; i++) {
+    if (map[aliases[i]] !== undefined) return map[aliases[i]];
+  }
+  return -1;
 }
 
 function generateId(prefix) {
@@ -277,17 +311,68 @@ function getDeposit() {
 
 // ── GET: Config ─────────────────────────────────────────────
 function getConfig() {
-  // Ambil dari sheet Rekap baris BASELINE untuk kumul
+  // HTM/split disimpan di PropertiesService (ditulis updateConfig()).
+  // Dulu fungsi ini selalu balikin angka hardcoded & GAK PERNAH baca
+  // baliknya — jadi "Simpan konfigurasi" nulis, tapi ke-load-nya tetep
+  // angka lama terus. Dibenerin: baca PropertiesService dulu, fallback
+  // ke default kalau belum pernah di-set.
+  const props = PropertiesService.getScriptProperties();
+  // Kumul tetap dari baris terakhir Rekap_Keuangan (itu sumber kebenarannya)
   const rekap = getMatches();
   const last  = rekap[rekap.length - 1] || {};
   return {
-    htmPlayer  : 95000,
-    htmGk      : 35000,
-    htmShtm    : 50000,
-    splitMalik : 60,
+    htmPlayer  : toNum(props.getProperty('HTM_PLAYER'))  || 95000,
+    htmGk      : toNum(props.getProperty('HTM_GK'))      || 35000,
+    htmShtm    : toNum(props.getProperty('HTM_SHTM'))    || 50000,
+    splitMalik : toNum(props.getProperty('SPLIT_MALIK')) || 60,
     kumulMalik : last['Kumul Malik\n(Rp)'] || last['Kumul Malik'] || 8147730,
     kumulFilan : last['Kumul Filan\n(Rp)'] || last['Kumul Filan'] || 5372762,
   };
+}
+
+// ── GET/SET: Match Drafts ───────────────────────────────────
+// Draft match Transaksi yang masih berjalan (belum ditutup) — supaya
+// tombol "Simpan" di satu browser/device kelihatan lagi kalau portal
+// dibuka di browser/device lain, bukan cuma localStorage browser itu
+// doang. 1 baris per match; kolom "Data" isinya JSON blob snapshot match
+// itu (persis bentuk yang tadinya cuma disimpan ke localStorage lewat
+// msPersist() di index.html — title, tabel slot/biaya/deposit sbg HTML
+// string, dll). Match yang dihapus di Transaksi juga dihapus barisnya
+// di sini (lihat deleteMatchDraft). Match yang sudah ditutup TETAP ikut
+// tersimpan di sini apa adanya (sama kayak localStorage) — Match_Drafts
+// bukan sumber kebenaran finansial (itu tetap Rekap_Keuangan), cuma
+// cerminan draft/riwayat lokal Transaksi biar nyambung antar browser.
+function getMatchDrafts() {
+  return sheetToObjects(SHEET.DRAFTS, 2);
+}
+function saveMatchDraft(p) {
+  const id = p.matchId;
+  if (!id) return { error: 'matchId wajib diisi' };
+  const ws = getSheet(SHEET.DRAFTS);
+  const data = ws.getDataRange().getValues();
+  let targetRow = -1;
+  for (let r = 2; r < data.length; r++) { // data mulai row 3 (index 2)
+    if (String(data[r][0]) === String(id)) { targetRow = r + 1; break; }
+  }
+  const now = new Date();
+  const row = [id, JSON.stringify(p.data || {}), now];
+  if (targetRow === -1) {
+    const lastRow = Math.max(ws.getLastRow(), 2);
+    ws.getRange(lastRow + 1, 1, 1, 3).setValues([row]);
+  } else {
+    ws.getRange(targetRow, 1, 1, 3).setValues([row]);
+  }
+  return { ok: true, matchId: id, updatedAt: now.toISOString() };
+}
+function deleteMatchDraft(p) {
+  const id = p.matchId;
+  if (!id) return { error: 'matchId wajib diisi' };
+  const ws = getSheet(SHEET.DRAFTS);
+  const data = ws.getDataRange().getValues();
+  for (let r = 2; r < data.length; r++) {
+    if (String(data[r][0]) === String(id)) { ws.deleteRow(r + 1); break; }
+  }
+  return { ok: true, matchId: id };
 }
 
 // ── POST: Create Match ──────────────────────────────────────
@@ -547,20 +632,18 @@ function updateStokJersey(p) {
 }
 
 // ── POST: Close Match ───────────────────────────────────────
+// CATATAN ARSITEKTUR: versi lama fungsi ini butuh sheet per-match
+// (SS().getSheetByName(p.matchId)) yang cuma dibuat oleh createMatch()
+// — tapi Transaksi di frontend TIDAK PERNAH pakai createMatch()/sheet
+// per-match itu (semua data match cuma ada di localStorage + Match_Drafts,
+// bentuknya HTML snapshot). Jadi versi lama ini nggak akan pernah jalan
+// (selalu balikin {error:'Sheet not found'}). Ditulis ulang: semua angka
+// (sales/cost/inventaris/breakdown bank) dikirim langsung dari frontend
+// (dihitung dari data match yang aktif di layar Transaksi — sumbernya
+// computeFinancialsFromLiveDom() di index.html, itu rumus yang sama persis
+// dipakai buat kartu ringkasan "Rekap akhir"), bukan dihitung ulang dari
+// sheet per-match yang nggak pernah ada.
 function closeMatch(p) {
-  const ws = SS().getSheetByName(p.matchId);
-  if (!ws) return { error: 'Sheet not found' };
-
-  // 1. Set status match = Ditutup
-  const data = ws.getDataRange().getValues();
-  for (let r = 0; r < data.length; r++) {
-    if (data[r][0] === 'Status Match') {
-      ws.getRange(r+1, 3).setValue('Ditutup');
-      break;
-    }
-  }
-
-  // 2. Hitung sales, cost, margin dari data player & biaya
   const sales  = p.totalSales  || 0;
   const cost   = p.totalCost   || 0;
   const margin = sales - cost;
@@ -570,42 +653,43 @@ function closeMatch(p) {
   const nm     = sm - Math.round(inv * 0.6);
   const nf     = sf - Math.round(inv * 0.4);
 
-  // 3. Tambah baris ke Rekap_Keuangan
-  const rekap  = getSheet(SHEET.REKAP);
-  // Cari baris BASELINE atau last row
-  const rdata  = rekap.getDataRange().getValues();
-  let insertRow = rekap.getLastRow() + 1;
-  for (let r = rdata.length-1; r >= 0; r--) {
-    if (rdata[r][0] === 'BASELINE') { insertRow = r+1; break; }
-  }
+  // Tambah baris BARU ke Rekap_Keuangan — SELALU di baris paling bawah
+  // (setelah baris terakhir yang udah kepake, entah itu BASELINE doang
+  // atau udah ada puluhan match historis Sam di situ). Versi lama cari
+  // baris 'BASELINE' dan selalu nyisip TEPAT SETELAHNYA — itu bug: kalau
+  // udah ada match lain di bawah baseline (kasus nyata di sheet Sam),
+  // insert akan NIMPA baris match yang udah ada, bukan nambah baris baru.
+  const rekap   = getSheet(SHEET.REKAP);
+  const rdata   = rekap.getDataRange().getValues();
+  const insertRow = rekap.getLastRow() + 1;
 
-  // Kumul dari baris sebelumnya
+  // Kumul dari baris tepat di atasnya (baris terakhir yang udah kepake —
+  // entah BASELINE atau match sebelumnya)
   const prevRow  = rdata[insertRow-2] || [];
-  const prevKumM = (prevRow[14] && typeof prevRow[14] === 'number') ? prevRow[14] : 8147730;
-  const prevKumF = (prevRow[15] && typeof prevRow[15] === 'number') ? prevRow[15] : 5372762;
+  const prevKumM = (typeof prevRow[14] === 'number') ? prevRow[14] : 8147730;
+  const prevKumF = (typeof prevRow[15] === 'number') ? prevRow[15] : 5372762;
   const kumM     = prevKumM + nm;
   const kumF     = prevKumF + nf;
 
-  const matchNo = (insertRow - 3); // nomor match baru
+  const matchNo = (insertRow - 3); // nomor match baru (baris 3 = BASELINE = match "0")
   rekap.getRange(insertRow, 1, 1, 22).setValues([[
     matchNo, p.tglMatch, p.jenisGame, p.tipeEvent,
     p.venue, p.tipeLapangan,
     sales, cost, margin, sm, sf,
     inv, nm, nf, kumM, kumF,
     p.bca||0, p.bsi||0, p.mandiri||0, p.bri||0, p.cash||0,
-    ''
+    p.lap || ''
   ]]);
   // Kolom 23 "Tahun" — dipakai grafik "Profit per match" biar bisa
   // dikelompokin per kuartal/tahun. Match lama (sebelum kolom ini ada)
   // diisi manual sama Sam; match baru yang ditutup lewat sistem ini
-  // otomatis kepakai tahun berjalan saat ditutup.
-  rekap.getRange(insertRow, 23).setValue(new Date().getFullYear());
+  // pakai tahun match itu sendiri kalau dikirim dari frontend (dari
+  // tanggal match, bukan tanggal ditutup), fallback ke tahun berjalan.
+  rekap.getRange(insertRow, 23).setValue(p.tahun || new Date().getFullYear());
 
-  // 4. Kembalikan semua stok jersey dari match ini
-  // (data player sudah dikurangi saat addPlayer, dikembalikan jika deletePlayer)
-  // Saat close, jersey dianggap dikembalikan (stok dipakai → 0 lagi)
+  // Kembalikan semua stok jersey dari match ini (dianggap dipakai selesai)
   if (p.jerseyUsed && Array.isArray(p.jerseyUsed)) {
-    p.jerseyUsed.forEach(j => updateJerseyStok(j.warna, j.uk, -1));
+    p.jerseyUsed.forEach(j => { if (j && j.warna && j.uk) updateJerseyStok(j.warna, j.uk, -1); });
   }
 
   return {
@@ -865,6 +949,17 @@ function setupSheets() {
     ws.getRange(3,1,seedScorer.length,6).setValues(seedScorer);
   }
 
+  // ── Match_Drafts ── (draft match Transaksi yang masih berjalan, dipakai
+  // supaya "Simpan" nyambung ke browser/device lain — lihat catatan di
+  // getMatchDrafts()/saveMatchDraft() di atas. Tab baru, aman dibikin
+  // kapan aja, nggak nyentuh tab lain.)
+  ws = ensureSheet(SHEET.DRAFTS);
+  if (ws.getLastRow() < 2) {
+    writeHeader(ws, 'Match_Drafts — draft match Transaksi aktif, buat sinkron antar browser/device', [
+      'MatchId','Data','UpdatedAt'
+    ]);
+  }
+
   // Hapus "Sheet1" bawaan Google kalau masih ada dan kosong
   const def = ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1 && def.getLastRow() === 0) {
@@ -910,14 +1005,91 @@ function deleteScorer(p) {
 }
 
 // ── POST: Add New Player to DB ──────────────────────────────
+// Header-safe (lihat catatan getHeaderMap di atas) — DB_Player itu sheet
+// ASLI punya Sam sendiri (bukan dibikin baru sama setupSheets()), dan
+// urutan kolomnya udah kebukti beda dari asumsi lama kode ini. Nulis
+// berdasarkan NAMA kolom, jadi walau urutan asli beda, tetep masuk ke
+// kolom yang benar (bukan positional/asal-nempel-index).
 function addNewPlayer(p) {
-  const ws      = getSheet(SHEET.PLAYER);
+  const { ws, map, hdrs } = getHeaderMap(SHEET.PLAYER, 2);
   const lastRow = ws.getLastRow() + 1;
   const no      = lastRow - 2;
-  ws.getRange(lastRow, 1, 1, 17).setValues([[
-    no, p.nama, p.kategori || '—', 0, 0, 0,
-    p.ukuran || '—', '—', 0, '—', '—', '—', p.jerseyPribadi || '—',
-    '—', 'Aktif', p.catatan || '', today()
-  ]]);
+  const rowArr  = new Array(hdrs.length).fill('');
+  function set(aliases, val) {
+    const c = findCol(map, aliases);
+    if (c > 0) rowArr[c-1] = val;
+  }
+  set(['No'], no);
+  set(['Nama Player','Nama'], p.nama);
+  set(['Kategori'], p.kategori || '—');
+  set(['Total Hadir','Total\nHadir'], 0);
+  set(['Total Gol','Total\nGol'], 0);
+  set(['Total SHTM','Total\nSHTM'], 0);
+  set(['Ukuran Jersey','Ukuran\nDominan','Ukuran'], p.ukuran || '—');
+  set(['Warna Favorit','Warna\nFavorit'], '—');
+  set(['Deposit Saldo (Rp)','Saldo Deposit\n(Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)'], 0);
+  set(['Metode Favorit','Metode\nFavorit'], '—');
+  set(['Bank'], '—');
+  set(['Kontak'], p.kontak || '—');
+  set(['Jersey Pribadi','Jersey\nPribadi'], p.jerseyPribadi || '—');
+  set(['Alias'], p.alias || '—');
+  set(['Status'], 'Aktif');
+  set(['Status SHTM','Status\nSHTM'], '—');
+  set(['Catatan'], p.catatan || '');
+  set(['Tgl Daftar','Tgl\nDaftar'], today());
+  ws.getRange(lastRow, 1, 1, rowArr.length).setValues([rowArr]);
   return { ok: true, row: lastRow };
+}
+
+// ── POST: Update / Delete Player (Kelola Player, header-safe) ──────
+function updatePlayerDb(p) {
+  if (!p.rowIdx) return { error: 'rowIdx wajib diisi' };
+  const { ws, map } = getHeaderMap(SHEET.PLAYER, 2);
+  function set(aliases, val) {
+    if (val === undefined || val === null) return;
+    const c = findCol(map, aliases);
+    if (c > 0) ws.getRange(p.rowIdx, c).setValue(val);
+  }
+  set(['Nama Player','Nama'], p.nama);
+  set(['Kategori'], p.kategori);
+  set(['Ukuran Jersey','Ukuran\nDominan','Ukuran'], p.ukuran);
+  set(['Deposit Saldo (Rp)','Saldo Deposit\n(Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)'], p.deposit);
+  set(['Status SHTM','Status\nSHTM'], p.statusShtm);
+  set(['Status'], p.status);
+  set(['Kontak'], p.kontak);
+  set(['Jersey Pribadi','Jersey\nPribadi'], p.jerseyPribadi);
+  set(['Catatan'], p.catatan);
+  return { ok: true };
+}
+
+function deletePlayerDb(p) {
+  if (!p.rowIdx) return { error: 'rowIdx wajib diisi' };
+  const ws = getSheet(SHEET.PLAYER);
+  ws.deleteRow(p.rowIdx);
+  return { ok: true };
+}
+
+// ── POST: Update / Delete SHTM row (Daftar SHTM, header-safe) ──────
+function updateShtmRow(p) {
+  if (!p.rowIdx) return { error: 'rowIdx wajib diisi' };
+  const { ws, map } = getHeaderMap(SHEET.SHTM, 2);
+  function set(aliases, val) {
+    if (val === undefined || val === null) return;
+    const c = findCol(map, aliases);
+    if (c > 0) ws.getRange(p.rowIdx, c).setValue(val);
+  }
+  set(['Nama Player'], p.nama);
+  set(['Tgl Mendapat SHTM'], p.tglMendapat);
+  set(['Tgl SHTM Dipakai'], p.tglDipakai);
+  set(['Status'], p.status);
+  set(['Match'], p.match);
+  set(['Catatan'], p.catatan);
+  return { ok: true };
+}
+
+function deleteShtmRow(p) {
+  if (!p.rowIdx) return { error: 'rowIdx wajib diisi' };
+  const ws = getSheet(SHEET.SHTM);
+  ws.deleteRow(p.rowIdx);
+  return { ok: true };
 }
