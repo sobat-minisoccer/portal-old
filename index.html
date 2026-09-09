@@ -3416,6 +3416,63 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 const GAS_URL='https://script.google.com/macros/s/AKfycbw3UoBnC9YyPWZQPcsxsvRzCTTxRBTo1k1Nz3DSg6RmCuWpUMA_59UDWQpe1mIwgMy3XQ/exec';
 
+// ── "Profit per match — Minisoccer vs Football": kelompokin margin tiap
+// match ke kuartal LAP_LABELS ('Okt–Des\'23' dst) pakai kolom "Tahun" yg
+// baru ditambah di Rekap_Keuangan + nama bulan dari "Match / Tanggal"
+// ("21 Des","12 April",...). QUARTER_NAMES diambil dari LAP_LABELS sendiri
+// (bukan diketik ulang) supaya karakter dash-nya pasti sama persis.
+const QUARTER_NAMES = [0,1,2,3].map(i => LAP_LABELS[i].replace(/'\d\d$/,''));
+const MONTH_PREFIXES = [['jan',1],['feb',2],['mar',3],['apr',4],['mei',5],['jun',6],['jul',7],['agu',8],['sep',9],['okt',10],['nov',11],['des',12]];
+function buildLapDataFromMatches(matches){
+  const mk = () => new Array(LAP_LABELS.length).fill(0);
+  const buckets = {
+    semua:   { mini: mk(), foot: mk() },
+    internal:{ mini: mk(), foot: mk() },
+    join:    { mini: mk(), foot: mk() },
+    sparing: { mini: mk(), foot: mk() }
+  };
+  let skipped = 0;
+  (matches||[]).forEach(m=>{
+    const tahun = parseInt(m.tahun,10);
+    if(!tahun || !m.tgl){ skipped++; return; }
+    const parts = String(m.tgl).trim().split(/\s+/);
+    if(parts.length<2){ skipped++; return; }
+    const tok = parts[1].toLowerCase();
+    const found = MONTH_PREFIXES.find(([pre])=>tok.startsWith(pre));
+    if(!found){ skipped++; return; }
+    const shifted = ((found[1] - 10 + 12) % 12);
+    const qIdx = Math.floor(shifted/3);
+    const label = QUARTER_NAMES[qIdx] + "'" + String(tahun).slice(-2);
+    const idx = LAP_LABELS.indexOf(label);
+    if(idx<0){ skipped++; return; }
+    const jenisKey = /foot/i.test(m.jenis||'') ? 'foot' : 'mini';
+    const marginK = Math.round((m.margin||0)/1000);
+    buckets.semua[jenisKey][idx] += marginK;
+    const tipe = m.tipe||'';
+    let cat = null;
+    if(/internal/i.test(tipe)) cat='internal';
+    else if(/join/i.test(tipe)) cat='join';
+    else if(/sparing/i.test(tipe)) cat='sparing';
+    if(cat) buckets[cat][jenisKey][idx] += marginK;
+  });
+  if(skipped>0) console.warn('buildLapDataFromMatches: '+skipped+' match dilewati (kolom Tahun kosong / format tanggal tidak dikenali)');
+  return buckets;
+}
+function applyRealLapData(matches){
+  const hasAnyTahun = (matches||[]).some(m=>m.tahun);
+  if(!hasAnyTahun) return; // kolom Tahun belum diisi — biarin data contoh lama
+  Object.assign(LAP_DATA, buildLapDataFromMatches(matches));
+  const box = document.querySelector('#page-dashboard .card [onclick*="filterTipe"]')?.closest('div[style*="flex-wrap"]');
+  let tipe = 'semua';
+  const activeChip = box ? box.querySelector('.chip.active') : null;
+  if(activeChip){
+    const mm = (activeChip.getAttribute('onclick')||'').match(/filterTipe\('(\w+)'/);
+    if(mm) tipe = mm[1];
+  }
+  const dd = LAP_DATA[tipe] || LAP_DATA.semua;
+  mkLapChart(dd.mini, dd.foot);
+}
+
 // ── DASHBOARD: nyambung ke database asli (getDashboard, yg baca
 // Rekap_Keuangan & DB_Player asli). Sekarang termasuk: Total match, Player
 // terdaftar, Terakhir, Match terbaik, chart Margin per match (12/24/Semua),
@@ -3494,8 +3551,19 @@ function loadDashboardRealStats(){
         if(deltaFilanEl) deltaFilanEl.textContent = n>0 ? (fmtDeltaRp(d.deltaFilan) + ' dari ' + n + ' match terakhir') : 'Belum ada match sebelumnya';
       }
 
-      // Chart "Margin per match" (12/24/Semua)
-      if(Array.isArray(d.matches)) applyRealMarginData(d.matches);
+      // Chart "Margin per match" (12/24/Semua) — dibungkus try/catch biar
+      // kalau Chart.js gagal ke-load (CDN lambat/diblok), chart satunya di
+      // bawah ini tetap kecoba, bukan ikut batal semua.
+      if(Array.isArray(d.matches)){
+        try{ applyRealMarginData(d.matches); }
+        catch(err){ console.error('Gagal render chart Margin per match:', err); }
+      }
+
+      // Chart "Profit per match — Minisoccer vs Football" (butuh kolom Tahun)
+      if(Array.isArray(d.matches)){
+        try{ applyRealLapData(d.matches); }
+        catch(err){ console.error('Gagal render chart Profit per match:', err); }
+      }
     })
     .catch(err=>{ console.error('Gagal ambil data Dashboard dari database:', err); });
 }
