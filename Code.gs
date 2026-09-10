@@ -140,6 +140,11 @@ function findCol(map, aliases) {
   }
   return -1;
 }
+// Varian header kolom saldo deposit di DB_Player — dipakai bareng di semua
+// tempat yang baca/tulis kolom ini (addNewPlayer, updatePlayerDb,
+// getPlayerDepositSaldo) supaya daftarnya nggak ke-duplikat & gampang
+// beda sendiri-sendiri kalau nanti ada varian baru.
+const DEPOSIT_COL_ALIASES = ['Deposit Saldo (Rp)','Saldo Deposit\n(Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)'];
 
 function generateId(prefix) {
   const d  = new Date();
@@ -557,6 +562,46 @@ function useShtm(p) {
 }
 
 // ── POST: Deposit ───────────────────────────────────────────
+// Kolom "Saldo Deposit" di DB_Player adalah SATU-SATUNYA angka saldo yang
+// dipercaya (bukan dihitung ulang dari jumlah transaksi Deposit_Log) —
+// soalnya sebagian saldo player itu asalnya dari data lama/manual (diisi
+// langsung ke DB_Player, bukan lewat transaksi yang tercatat), jadi kalau
+// saldo dihitung ulang dari NOL berdasarkan ledger doang, saldo lama itu
+// bisa keitung 0 padahal beneran ada — malah bikin "Saldo deposit tidak
+// cukup" muncul padahal saldonya ada. Deposit_Log tetap jalan sbg BUKU
+// CATATAN/riwayat transaksi (kapan, berapa, match mana — buat tab Deposit
+// di Admin), tapi bukan lagi sumber penghitungan saldo aktif.
+// addDeposit = +jumlah ke saldo DB_Player. useDeposit = -jumlah (ditolak
+// kalau saldo DB_Player SAAT INI kurang dari yang mau dipakai). Dua-duanya
+// nulis baris riwayat ke Deposit_Log DULU baru nge-update saldo DB_Player,
+// biar riwayatnya tetep lengkap konsisten sama saldo akhirnya.
+function getPlayerDepositSaldo(nama) {
+  const { ws, map } = getHeaderMap(SHEET.PLAYER, 2);
+  const nameCol    = findCol(map, ['Nama Player','Nama']);
+  const depositCol = findCol(map, DEPOSIT_COL_ALIASES);
+  if (nameCol < 1 || depositCol < 1) return { ws, rowIdx: -1, depositCol: -1, saldo: 0 };
+  const lastRow = ws.getLastRow();
+  if (lastRow >= 3) {
+    const names = ws.getRange(3, nameCol, lastRow - 2, 1).getValues();
+    for (let i = 0; i < names.length; i++) {
+      if (String(names[i][0]).trim() === String(nama).trim()) {
+        const rowIdx = i + 3;
+        const saldo  = toNum(ws.getRange(rowIdx, depositCol).getValue());
+        return { ws, rowIdx, depositCol, saldo };
+      }
+    }
+  }
+  // Player belum ada row-nya di DB_Player (mis. walk-in yg blm pernah
+  // didaftarin ke DB) — dianggap saldo 0, nggak ada tempat nyimpen cache.
+  return { ws, rowIdx: -1, depositCol, saldo: 0 };
+}
+function adjustPlayerDepositSaldo(nama, delta) {
+  const info = getPlayerDepositSaldo(nama);
+  if (info.rowIdx < 0 || info.depositCol < 1) return null;
+  const next = Math.max(0, info.saldo + delta);
+  info.ws.getRange(info.rowIdx, info.depositCol).setValue(next);
+  return next;
+}
 function addDeposit(p) {
   const ws      = getSheet(SHEET.DEPOSIT);
   const lastRow = ws.getLastRow() + 1;
@@ -565,26 +610,22 @@ function addDeposit(p) {
     p.sumber || 'Cancel → Deposit', p.keterangan || '',
     p.jumlah, 0, p.jumlah
   ]]);
-  return { ok: true };
+  const saldoBaru = adjustPlayerDepositSaldo(p.nama, p.jumlah);
+  return { ok: true, saldoDbPlayer: saldoBaru };
 }
 
 function useDeposit(p) {
-  const ws   = getSheet(SHEET.DEPOSIT);
-  const data = ws.getDataRange().getValues();
-  // Hitung saldo aktif player
-  let saldo = 0;
-  for (let r = 2; r < data.length; r++) {
-    if (data[r][1] === p.namaPemain) {
-      saldo += (data[r][5] || 0) - (data[r][6] || 0);
-    }
-  }
-  if (saldo < p.jumlah) return { error: 'Saldo deposit tidak cukup' };
+  const info = getPlayerDepositSaldo(p.namaPemain);
+  if (info.saldo < p.jumlah) return { error: 'Saldo deposit tidak cukup' };
+  const saldoSisa = info.saldo - p.jumlah;
+  const ws      = getSheet(SHEET.DEPOSIT);
   const lastRow = ws.getLastRow() + 1;
   ws.getRange(lastRow, 1, 1, 8).setValues([[
     today(), p.namaPemain, p.matchId,
-    'Digunakan', 'Bayar HTM', 0, p.jumlah, saldo - p.jumlah
+    'Digunakan', 'Bayar HTM', 0, p.jumlah, saldoSisa
   ]]);
-  return { ok: true, saldoSisa: saldo - p.jumlah };
+  adjustPlayerDepositSaldo(p.namaPemain, -p.jumlah);
+  return { ok: true, saldoSisa };
 }
 
 // ── POST: Stok Jersey ───────────────────────────────────────
@@ -1027,7 +1068,7 @@ function addNewPlayer(p) {
   set(['Total SHTM','Total\nSHTM'], 0);
   set(['Ukuran Jersey','Ukuran\nDominan','Ukuran'], p.ukuran || '—');
   set(['Warna Favorit','Warna\nFavorit'], '—');
-  set(['Deposit Saldo (Rp)','Saldo Deposit\n(Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)'], 0);
+  set(DEPOSIT_COL_ALIASES, 0);
   set(['Metode Favorit','Metode\nFavorit'], '—');
   set(['Bank'], '—');
   set(['Kontak'], p.kontak || '—');
@@ -1053,7 +1094,7 @@ function updatePlayerDb(p) {
   set(['Nama Player','Nama'], p.nama);
   set(['Kategori'], p.kategori);
   set(['Ukuran Jersey','Ukuran\nDominan','Ukuran'], p.ukuran);
-  set(['Deposit Saldo (Rp)','Saldo Deposit\n(Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)'], p.deposit);
+  set(DEPOSIT_COL_ALIASES, p.deposit);
   set(['Status SHTM','Status\nSHTM'], p.statusShtm);
   set(['Status'], p.status);
   set(['Kontak'], p.kontak);

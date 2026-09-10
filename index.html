@@ -504,7 +504,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <div id="trx-slot" class="trx-p active">
           <div class="sec-lbl">
             <span id="slot-count-lbl">Slot player — 6 / 28 terisi</span>
-            <button class="btn btn-sm" onclick="populateTpNamaDatalist();openModal('m-tambah-player')"><i class="ti ti-user-plus"></i> Tambah player</button>
+            <button class="btn btn-sm" onclick="resetTambahPlayerForm();populateTpNamaDatalist();openModal('m-tambah-player')"><i class="ti ti-user-plus"></i> Tambah player</button>
             <button class="btn btn-sm" style="background:var(--gn2);color:var(--gn);border-color:#86EFAC;margin-left:auto" onclick="openModal('m-broadcast')">
               <i class="ti ti-broadcast"></i> Generate broadcast
             </button>
@@ -527,6 +527,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <th style="width:48px">Ukuran</th>
                 <th style="width:82px">Status</th>
                 <th style="width:82px" id="th-formasi">Formasi</th>
+                <th style="width:80px">Jumlah Bayar</th>
                 <th style="width:60px">Aksi</th>
               </tr>
             </thead>
@@ -984,7 +985,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       </div>
       <div class="g2f">
         <div class="fg"><div class="fl">HTM (Rp)</div><input type="number" id="tp-htm" value="95000"></div>
-        <div class="fg"><div class="fl">Label harga</div><select id="tp-label"><option>Normal</option><option>SHTM</option><option>Promo</option><option>Free</option><option>Sponsor</option></select></div>
+        <div class="fg"><div class="fl">Label harga</div><select id="tp-label" onchange="onTpLabelChange(this)"><option>Normal</option><option>SHTM</option><option>Promo</option><option>Free</option><option>Sponsor</option></select></div>
         <div class="fg"><div class="fl">Posisi</div><select id="tp-posisi"><option>Field</option><option>GK</option></select></div>
         <div class="fg"><div class="fl">Ukuran jersey</div><select id="tp-ukuran"><option>M</option><option>L</option><option>XL</option><option>2XL</option></select></div>
         <div class="fg"><div class="fl">Status</div><select id="tp-status"><option>Sementara</option><option>Lunas</option><option>Walk-in</option></select></div>
@@ -1834,8 +1835,12 @@ document.addEventListener('DOMContentLoaded', function() {
 function escAttr(s){
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 }
-const BANK_METHODS = ['','BCA','BSI','Mandiri','BRI','BNI','Cash','Deposit'];
+// "Deposit" DIHAPUS dari daftar ini (dulu ada di sini) — sekarang deposit
+// punya kolom & mekanisme sendiri (checklist + nominal di kolom Deposit),
+// jadi nggak perlu lagi jadi salah satu opsi di dropdown Bank/Cash.
+const BANK_METHODS = ['','BCA','BSI','Mandiri','BRI','BNI','Cash'];
 const LABEL_OPTIONS = ['Normal','SHTM','Promo','Free','Sponsor'];
+const STATUS_OPTIONS = ['Sementara','Lunas','Walk-in'];
 const UKURAN_OPTIONS = ['M','L','XL','2XL'];
 const SHTM_STATUS_OPTIONS = ['Belum dipakai','Sudah dipakai'];
 const KATEGORI_OPTIONS = ['SMS','BMR','Umum'];
@@ -2088,6 +2093,47 @@ function enterEditCell(el){
     el.innerHTML = `<select class="ms-ed-input" data-edit-type="shtm-status" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
     return;
   }
+  if(el.dataset && el.dataset.editType==='status'){
+    // Status player di Slot Player (Sementara/Lunas/Walk-in) — dulu kolom ini
+    // nggak punya data-edit-type sama sekali, jadi nggak match heuristik
+    // generik manapun (badge-nya punya elemen "titik" nested di dalam) dan
+    // efeknya keliatan "kekunci", klik edit nggak ngubah apa-apa. Sekarang
+    // jadi dropdown yang sama kayak di form Tambah player. "—" (mis. player
+    // Free) dianggap belum ada pilihan — nggak ada yg keselect duluan.
+    const cur = el.textContent.trim();
+    const opts = STATUS_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    el.innerHTML = `<select class="ms-ed-input" data-edit-type="status" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
+    return;
+  }
+  if(el.dataset && el.dataset.editType==='deposit-used'){
+    // Kolom Deposit di Slot Player — sekarang bisa langsung diedit inline
+    // lewat pensil (checklist "pakai deposit" + nominal), nggak wajib lewat
+    // modal "Pakai deposit" terpisah lagi. Nominalnya default ke saldo
+    // deposit player kalau ada (dari match ini atau dari DB_Player), tapi
+    // tetap bisa diubah manual. Checkbox-nya sendiri BUKAN ms-ed-input (biar
+    // nggak double-diproses doSaveEdit) — statusnya dibaca ulang dari DOM di
+    // commitInput lewat input nominalnya.
+    const row = el.closest('tr');
+    const nama = row ? slotRowNama(row) : '';
+    const prevUsed = Math.abs(parseRupiah(el.textContent.trim()));
+    el.dataset.prevUsed = String(prevUsed); // disimpan sblm innerHTML diganti — dipakai applyDepositUsage
+    const depRow = findDepositRow(nama);
+    const saldoTersedia = (depRow ? parseRupiah(depRow.children[1].textContent) : 0) + prevUsed;
+    const defaultJumlah = prevUsed > 0 ? prevUsed : saldoTersedia;
+    const checked = defaultJumlah > 0;
+    el.innerHTML = `<label style="display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;cursor:${saldoTersedia>0?'pointer':'default'}">`
+      + `<input type="checkbox" class="dep-use-chk"${checked?' checked':''}${saldoTersedia<=0?' disabled':''}>`
+      + `<input type="number" class="ms-ed-input dep-use-amt" data-edit-type="deposit-used" min="0" max="${saldoTersedia}" step="1000" value="${defaultJumlah}" style="width:74px"${checked?'':' disabled'}>`
+      + `</label>`;
+    const chk = el.querySelector('.dep-use-chk');
+    const amt = el.querySelector('.dep-use-amt');
+    chk.addEventListener('change', ()=>{
+      amt.disabled = !chk.checked;
+      if(chk.checked){ if(!amt.value || parseInt(amt.value,10)<=0) amt.value = saldoTersedia; amt.focus(); }
+      else amt.value = '0';
+    });
+    return;
+  }
   if(el.dataset && el.dataset.editType==='kategori'){
     const cur = el.textContent.trim();
     const opts = KATEGORI_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
@@ -2175,6 +2221,23 @@ function commitInput(input){
     const td = input.parentNode;
     const cls = input.value==='Sudah dipakai' ? 'b-gn' : 'b-sh';
     td.innerHTML = `<span class="b ${cls}">${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='status'){
+    const td = input.parentNode;
+    const cls = input.value==='Lunas' ? 'b-gn' : (input.value==='Sementara' ? 'b-am' : 'b-gy');
+    const dot = input.value==='Lunas' ? '<span class="sd sdg"></span>' : (input.value==='Sementara' ? '<span class="sd sda"></span>' : '');
+    td.innerHTML = `<span class="b ${cls}">${dot}${input.value}</span>`;
+    return;
+  }
+  if(input.dataset.editType==='deposit-used'){
+    const td = input.closest('td');
+    if(!td) return;
+    const chk = td.querySelector('.dep-use-chk');
+    const useIt = chk ? chk.checked : false;
+    const requested = useIt ? (parseInt(input.value,10) || 0) : 0;
+    const row = td.closest('tr');
+    if(row) applyDepositUsage(row, requested);
     return;
   }
   if(input.dataset.editType==='kategori'){
@@ -2876,6 +2939,53 @@ function msHideEmptyState(){
   if(card) card.style.display = '';
   if(empty) empty.style.display = 'none';
 }
+// Data Transaksi (slot-tbody dkk) disimpan sbg HTML MENTAH (string) di
+// msMatches[id].slotHtml — ke localStorage & backend Match_Drafts — lalu
+// di-restore APA ADANYA di sini. Konsekuensinya: baris yang dibuat & sempat
+// disimpan SEBELUM sebuah fix di atas dikirim (mis. kolom Status belum
+// dropdown, kolom Deposit masih data-no-edit, kolom Jumlah Bayar belum ada
+// sama sekali) nggak otomatis ikut kebenerin cuma krn kodenya udah diupdate
+// — markup lama itu ya tetap kepakai selama-lamanya kecuali direparasi
+// manual. Fungsi ini jalan tiap kali match di-restore (ganti tab match /
+// buka ulang dari draft) buat nge-upgrade baris2 lama ke markup terbaru.
+function repairSlotRowMarkup(){
+  const tbody = document.getElementById('slot-tbody');
+  if(!tbody) return;
+  tbody.querySelectorAll(':scope > tr').forEach(row=>{
+    // data-nama di <tr> — baris lama blm punya ini, isi dari text node
+    // pertama kolom Nama (row masih fresh dari innerHTML, blm ada kolom
+    // manapun yg dalam mode edit di titik ini, jadi aman dibaca dari DOM).
+    if(!row.dataset.nama){
+      const cell = row.children[1];
+      const first = cell && cell.childNodes[0];
+      const nama = first ? first.textContent.trim() : (cell ? cell.textContent.trim() : '');
+      if(nama) row.dataset.nama = nama;
+    }
+    const tds = row.querySelectorAll(':scope > td');
+    // Kolom Status (index 10) — dulu nggak punya data-edit-type sama sekali,
+    // jadi pensil-edit keliatan "kekunci" (nggak match heuristik generik apa
+    // pun krn badge-nya punya elemen "titik" nested di dalam).
+    const statusTd = tds[10];
+    if(statusTd && !statusTd.dataset.editType) statusTd.dataset.editType = 'status';
+    // Kolom Deposit (index 4) — dulu data-no-edit="1" (sama sekali nggak
+    // bisa diedit inline, cuma bisa lewat modal "Pakai deposit" terpisah).
+    const depositTd = tds[4];
+    if(depositTd && depositTd.dataset.noEdit){
+      delete depositTd.dataset.noEdit;
+      depositTd.dataset.editType = 'deposit-used';
+    }
+    // Kolom Jumlah Bayar — baris yg dibuat sblm kolom ini ada cuma punya 13
+    // <td> (bukan 14: No..Status, Formasi, Aksi — tanpa Jumlah Bayar).
+    // Indeks 0-11 identik di markup lama & baru (Jumlah Bayar disisipkan
+    // paling akhir sblm Aksi), jadi aman disisipin tanpa geser kolom lain.
+    if(tds.length === 13){
+      const actsTd = tds[12];
+      const jbTd = document.createElement('td');
+      jbTd.textContent = '—';
+      row.insertBefore(jbTd, actsTd);
+    }
+  });
+}
 function msRestore(id){
   const m = msMatches[id];
   if(!m) return;
@@ -2883,6 +2993,7 @@ function msRestore(id){
   document.getElementById('mhd-title').textContent = m.titleLine;
   document.getElementById('mhd-sub').textContent = m.subLine;
   document.getElementById('slot-tbody').innerHTML = m.slotHtml;
+  repairSlotRowMarkup();
   document.getElementById('biaya-tbody').innerHTML = m.biayaHtml;
   document.getElementById('dep-saldo-list').innerHTML = m.depSaldoHtml;
   document.getElementById('dep-log-tbody').innerHTML = m.depLogHtml;
@@ -3133,8 +3244,13 @@ function submitTambahPlayer(){
   if(msIsActiveLocked()){ showToast('Match sudah ditutup.'); closeModal('m-tambah-player'); return; }
   const nama = document.getElementById('tp-nama').value.trim();
   if(!nama){ showToast('Nama player belum diisi.'); return; }
-  const htm = parseRupiah(document.getElementById('tp-htm').value);
   const label = document.getElementById('tp-label').value;
+  const isFree = label === 'Free';
+  // Free = beneran nggak bayar, bukan cuma HTM 0 — dipaksa 0 di sini juga
+  // (bukan cuma andelin auto-zero di form) buat jaga-jaga kalau labelnya
+  // di-set Free tanpa event 'change' sempat kepicu.
+  const htm = isFree ? 0 : parseRupiah(document.getElementById('tp-htm').value);
+  const jumlahBayar = isFree ? 0 : parseRupiah(document.getElementById('tp-jumlah').value);
   const posisi = document.getElementById('tp-posisi').value;
   const ukuran = document.getElementById('tp-ukuran').value;
   const status = document.getElementById('tp-status').value;
@@ -3147,19 +3263,35 @@ function submitTambahPlayer(){
   const statusDot = status==='Lunas' ? '<span class="sd sdg"></span>' : (status==='Sementara' ? '<span class="sd sda"></span>' : '');
   const titleLine = document.getElementById('mhd-title').textContent;
   const tglLabel = titleLine.split('—')[0].trim();
-  const tglBayarIso = status==='Lunas' ? isoDate(new Date()) : '';
+  const tglBayarIso = (!isFree && status==='Lunas') ? isoDate(new Date()) : '';
   const tglBayar = tglBayarIso ? fmtTglBayarSingkat(new Date()) : '—';
+  // Player "Free" nggak akan pernah bayar sama sekali — beda dari "belum
+  // bayar" (yg masih nunggu pembayaran nanti). Jadi Deposit/Bank/Cash/
+  // Tgl Bayar/Status beneran "-" (bukan status Lunas/Sementara/placeholder
+  // "— (belum/sementara)"), meskipun kolomnya tetap bisa diedit kalau
+  // ternyata nanti perlu diubah manual.
+  const depositCellContent = isFree ? '—' : depositCellHtml(nama, 0);
+  const bankVal = isFree ? '' : metode;
+  const bankCellContent = isFree ? '—' : bankDisplayHtml(metode);
+  const tglBayarCellTxt = isFree ? '—' : tglBayar;
+  const statusCellHtml = isFree ? '—' : `<span class="b ${statusBadgeClass}">${statusDot}${status}</span>`;
   const tr = document.createElement('tr');
+  // data-nama = sumber nama yang STABIL utk row ini, nggak kayak baca ulang
+  // dari text node kolom Nama (slotRowNama versi lama) — itu jadi ketipu
+  // begitu kolom Nama ikut masuk mode edit lebih dulu drpd kolom lain (mis.
+  // kolom Deposit skrg ada di sesudahnya di urutan DOM), krn text node-nya
+  // udah kegantiin <input> pas kolom Deposit baru mulai diproses.
+  tr.dataset.nama = nama;
   tr.innerHTML = `
     <td style="color:var(--hi)" data-no-edit="1">${no}</td>
     <td style="font-weight:500">${nama} <button class="sf sf-off" onclick="toggleSf(this,'${nama.replace(/'/g,"\\'")}','${tglLabel}')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
     <td>${fmtRupiah(htm)}</td><td data-edit-type="label"><span class="b ${labelBadgeClass}">${label}</span></td>
-    <td style="color:var(--mu)" data-no-edit="1">${depositCellHtml(nama, 0)}</td><td data-edit-type="bank" data-bank-val="${escAttr(metode)}"${metode?'':' style="color:var(--mu)"'}>${bankDisplayHtml(metode)}</td>
-    <td data-edit-type="tglbayar" data-date="${tglBayarIso}"${tglBayar==='—'?' style="color:var(--mu)"':''}>${tglBayar}</td>
+    <td style="color:var(--mu)" data-edit-type="deposit-used">${depositCellContent}</td><td data-edit-type="bank" data-bank-val="${escAttr(bankVal)}"${bankVal?'':' style="color:var(--mu)"'}>${bankCellContent}</td>
+    <td data-edit-type="tglbayar" data-date="${isFree?'':tglBayarIso}"${tglBayarCellTxt==='—'?' style="color:var(--mu)"':''}>${tglBayarCellTxt}</td>
     <td data-edit-type="posisi"><span class="b b-gy">${isGk?'GK':'Field'}</span></td>
     <td>${jerseySelectHtml(isGk?'gk':'field','')}</td>
     <td data-edit-type="ukuran"><span class="b b-gy">${ukuran}</span></td>
-    <td><span class="b ${statusBadgeClass}">${statusDot}${status}</span></td>
+    <td data-edit-type="status">${statusCellHtml}</td>
     <td class="td-formasi">
       <span class="formasi-dash" style="color:var(--mu)">—</span>
       <select class="formasi-sel" style="display:none;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);font-family:var(--fn);max-width:68px">
@@ -3168,6 +3300,7 @@ function submitTambahPlayer(){
         <option>CMF</option><option>CF</option><option>SS</option>
       </select>
     </td>
+    <td>${fmtRupiah(jumlahBayar)}</td>
     <td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
   tbody.appendChild(tr);
   setGameMode(isFootball ? 'football' : 'mini');
@@ -3203,6 +3336,33 @@ function onTpNamaInput(val){
   if(ukuranSel && ukuranDb){
     const hasOption = [...ukuranSel.options].some(o=>o.value===ukuranDb);
     if(hasOption) ukuranSel.value = ukuranDb;
+  }
+}
+// Dulu modal ini nggak pernah di-reset — nama/HTM/label/dst dari player
+// SEBELUMNYA masih nempel begitu modal dibuka lagi buat player berikutnya
+// (mis. abis nambah "Airlangga", buka lagi buat "Wira" tapi field-nya masih
+// keisi "Airlangga"). Sekarang direset ke default tiap kali modal dibuka.
+function resetTambahPlayerForm(){
+  const setVal = (id,val) => { const el = document.getElementById(id); if(el) el.value = val; };
+  setVal('tp-nama', '');
+  setVal('tp-htm', '95000');
+  setVal('tp-label', 'Normal');
+  setVal('tp-posisi', 'Field');
+  setVal('tp-ukuran', 'M');
+  setVal('tp-status', 'Sementara');
+  setVal('tp-metode', '');
+  setVal('tp-jumlah', '');
+}
+// Player dgn label "Free" HTM-nya 0 (nggak bayar) — HTM & Jumlah bayar
+// otomatis ke-0 begitu label ini dipilih, admin nggak perlu ngetik manual.
+// Ganti balik ke label lain nggak otomatis ngisi ulang HTM (nilainya udah
+// ke-0, admin isi manual sesuai HTM match ini).
+function onTpLabelChange(sel){
+  if(sel.value === 'Free'){
+    const htmEl = document.getElementById('tp-htm');
+    const jumlahEl = document.getElementById('tp-jumlah');
+    if(htmEl) htmEl.value = '0';
+    if(jumlahEl) jumlahEl.value = '0';
   }
 }
 
@@ -3333,18 +3493,53 @@ function ensureSlotId(row){
   if(!row.dataset.slotId) row.dataset.slotId = 'slot-' + (++_slotIdSeq) + '-' + Date.now();
   return row.dataset.slotId;
 }
+// Saldo deposit ASLI player, dari DB_Player (bukan cuma yang sempat
+// "Tambah deposit" manual di match ini) — sumbernya sama kayak Kelola
+// Player (_dbPlayersCache, hasil getPlayers()).
+function getDbDepositBalance(nama){
+  const players = _dbPlayersCache || [];
+  const p = players.find(pl => (pl['Nama Player']||'').trim().toLowerCase() === nama.trim().toLowerCase());
+  if(!p) return 0;
+  const raw = pickField(p, ['Saldo Deposit\n(Rp)','Deposit Saldo (Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)']);
+  return raw!=null ? parseRupiah(raw) : 0;
+}
+function seedDepositRowFromDb(nama, saldo){
+  const list = document.getElementById('dep-saldo-list');
+  if(!list) return null;
+  const row = document.createElement('div');
+  row.className='dep-row';
+  row.dataset.fromDb = '1';
+  row.innerHTML = `<div style="font-weight:500;min-width:100px">${escAttr(nama)}</div><div style="font-size:14px;font-weight:700;color:var(--am);min-width:90px">Rp ${fmtRupiah(saldo)}</div><div style="flex:1;font-size:11px;color:var(--mu)">Saldo dari database — bisa dipakai di match ini</div><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div>`;
+  list.appendChild(row);
+  return row;
+}
 function findDepositRow(nama){
   const rows = document.querySelectorAll('#dep-saldo-list .dep-row');
   for(const r of rows){
     const rn = r.children[0] ? r.children[0].textContent.trim() : '';
     if(rn === nama) return r;
   }
+  // Belum ada baris LOKAL buat player ini di match ini — ini akar masalah
+  // yang dilaporkan: "Pakai deposit" & kolom isian Jumlah di modalnya
+  // selalu mulai dari 0, padahal player itu beneran punya saldo deposit
+  // aktif di database (dari match2 sebelumnya), cuma belum sempat "Tambah
+  // deposit" manual di MATCH INI. Sekarang ditarik otomatis dari DB_Player
+  // begitu pertama kali dibutuhkan (dicek pas render kolom Deposit / pas
+  // buka modal Pakai deposit), supaya saldo asli langsung kepakai tanpa
+  // admin harus re-input manual tiap match padahal datanya udah ada.
+  const dbBalance = getDbDepositBalance(nama);
+  if(dbBalance > 0) return seedDepositRowFromDb(nama, dbBalance);
   return null;
 }
 function slotRowNama(row){
-  // Ambil dari text node PERTAMA di kolom Nama saja (sebelum badge/tombol
-  // apa pun spt SHTM, "Dep 70rb", Next) — lebih tahan banting drpd nebak2
-  // daftar kata yg harus dibuang dari textContent gabungan.
+  // Prioritas: data-nama di <tr> itu sendiri — stabil, nggak kepengaruh
+  // walau kolom Nama lagi dalam mode edit (text node-nya udah kegantiin
+  // <input>, jadi kalau masih nebak dari situ hasilnya bisa kosong).
+  if(row.dataset && row.dataset.nama) return row.dataset.nama;
+  // Fallback (baris lama sblm data-nama ada): ambil dari text node PERTAMA
+  // di kolom Nama saja (sebelum badge/tombol apa pun spt SHTM, "Dep 70rb",
+  // Next) — lebih tahan banting drpd nebak2 daftar kata yg harus dibuang
+  // dari textContent gabungan.
   const cell = row.children[1];
   const first = cell.childNodes[0];
   return first ? first.textContent.trim() : cell.textContent.trim();
@@ -3397,6 +3592,55 @@ function removeDepositLogRow(slotId){
   const tr = tbody && tbody.querySelector(`tr[data-slot-id="${slotId}"]`);
   if(tr) tr.remove();
 }
+// Satu-satunya tempat yang benar-benar MENGUBAH state pemakaian deposit
+// (saldo di dep-saldo-list, log di dep-log-tbody, tampilan kolom Deposit +
+// catatan "Sisa" di Bank/Cash, dan sync ke backend) — dipakai baik dari
+// edit inline kolom Deposit (commitInput) maupun dari modal "Pakai deposit"
+// (submitPakaiDeposit), supaya nggak ada 2 salinan logika delta/clamping
+// yang bisa beda sendiri-sendiri.
+// jumlahRequested = TOTAL nominal deposit yang mau dipakai utk row ini
+// (bukan delta) — 0 berarti batalkan pemakaian. Diclamp ke saldo tersedia.
+// Aksi 'useDeposit' di backend itu log transaksi INCREMENTAL (bukan
+// absolute-setter), jadi yang dikirim ke backend adalah DELTA-nya
+// (requested - prevUsed), bukan requested itu sendiri — biar saldo di
+// database nggak kepotong dobel kalau admin edit ulang jumlahnya.
+function applyDepositUsage(row, jumlahRequested){
+  const nama = slotRowNama(row);
+  const htm = parseRupiah(row.children[2].textContent);
+  const depositTd = row.children[4];
+  const bankTd = row.children[5];
+  const slotId = ensureSlotId(row);
+  const prevUsed = Math.abs(parseRupiah(depositTd.dataset.prevUsed != null ? depositTd.dataset.prevUsed : depositTd.textContent));
+  const depRow = findDepositRow(nama);
+  const saldoAsal = (depRow ? parseRupiah(depRow.children[1].textContent) : 0) + prevUsed;
+  let jumlah = Math.max(0, jumlahRequested || 0);
+  if(jumlah > saldoAsal) jumlah = saldoAsal;
+  const delta = jumlah - prevUsed;
+  if(jumlah <= 0){
+    if(prevUsed > 0 && depRow) depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoAsal);
+    depositTd.innerHTML = depositCellHtml(nama, 0);
+    updateBankSisaNote(bankTd, 0);
+    removeDepositLogRow(slotId);
+  } else {
+    const saldoBaru = saldoAsal - jumlah;
+    if(depRow) depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoBaru);
+    upsertDepositLogRow(slotId, nama, jumlah, saldoBaru);
+    depositTd.innerHTML = depositCellHtml(nama, jumlah);
+    updateBankSisaNote(bankTd, htm - jumlah);
+  }
+  delete depositTd.dataset.prevUsed;
+  if(delta !== 0 && typeof msPostToBackend==='function'){
+    if(delta > 0){
+      msPostToBackend({ action:'useDeposit', namaPemain: nama, jumlah: delta,
+        matchId: (typeof msActiveId!=='undefined' ? msActiveId : '') || '—' });
+    } else {
+      msPostToBackend({ action:'addDeposit', nama, jumlah: -delta,
+        sumber:'Penyesuaian pakai deposit', matchId: (typeof msActiveId!=='undefined'?msActiveId:'')||'—',
+        keterangan:'Reversal — penyesuaian pemakaian deposit di Transaksi' });
+    }
+  }
+  return { jumlah, saldoAsal, htm };
+}
 function pdToggleJumlah(){
   const pakai = document.getElementById('pd-pakai').value === 'Pakai';
   const inp = document.getElementById('pd-jumlah');
@@ -3428,56 +3672,30 @@ function submitPakaiDeposit(){
   const row = pdActiveRow;
   if(!row) return;
   const nama = slotRowNama(row);
-  const htm = parseRupiah(row.children[2].textContent);
-  const depositTd = row.children[4];
-  const bankTd = row.children[5];
-  const slotId = ensureSlotId(row);
-  const prevUsed = Math.abs(parseRupiah(depositTd.textContent));
-  const depRow = findDepositRow(nama);
-  const saldoAsal = (depRow ? parseRupiah(depRow.children[1].textContent) : 0) + prevUsed;
   const pakai = document.getElementById('pd-pakai').value === 'Pakai';
 
   if(!pakai){
-    if(prevUsed > 0 && depRow){
-      depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoAsal);
-    }
-    depositTd.innerHTML = depositCellHtml(nama, 0);
-    updateBankSisaNote(bankTd, 0);
-    removeDepositLogRow(slotId);
+    const prevUsed = Math.abs(parseRupiah(row.children[4].textContent));
+    applyDepositUsage(row, 0);
     closeModal('m-pakai-deposit');
     recalcAll();
     showToast('Pemakaian deposit ' + nama + ' dibatalkan.');
-    if(prevUsed > 0 && typeof msPostToBackend==='function'){
-      // Nggak ada aksi "batalkan useDeposit" di backend — dikembalikan dgn
-      // nulis entri deposit masuk lagi (reversal), biar saldo di database
-      // ikut balik naik, konsisten sama tampilan lokal yang baru dibatalkan.
-      msPostToBackend({ action:'addDeposit', nama, jumlah: prevUsed,
-        sumber:'Batal pakai deposit', matchId: (typeof msActiveId!=='undefined'?msActiveId:'')||'—',
-        keterangan:'Reversal — batal pakai deposit di Transaksi' });
-    }
     return;
   }
 
   let jumlah = parseRupiah(document.getElementById('pd-jumlah').value);
+  const prevUsed = Math.abs(parseRupiah(row.children[4].textContent));
+  const depRow = findDepositRow(nama);
+  const saldoAsal = (depRow ? parseRupiah(depRow.children[1].textContent) : 0) + prevUsed;
   if(!depRow || saldoAsal <= 0){ showToast(nama + ' tidak punya saldo deposit.'); return; }
   if(jumlah > saldoAsal){ jumlah = saldoAsal; showToast('Jumlah disesuaikan ke saldo tersedia (Rp ' + fmtRupiah(saldoAsal) + ').'); }
   if(jumlah <= 0){ showToast('Jumlah harus lebih dari 0.'); return; }
 
-  const saldoBaru = saldoAsal - jumlah;
-  depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoBaru);
-  upsertDepositLogRow(slotId, nama, jumlah, saldoBaru);
-
-  depositTd.innerHTML = depositCellHtml(nama, jumlah);
-  const sisa = htm - jumlah;
-  updateBankSisaNote(bankTd, sisa);
-
+  const res = applyDepositUsage(row, jumlah);
   closeModal('m-pakai-deposit');
   recalcAll();
-  showToast('Deposit ' + nama + ' dipakai Rp ' + fmtRupiah(jumlah) + (sisa > 0 ? ' — sisa Rp ' + fmtRupiah(sisa) + ' perlu dibayar via metode lain.' : ' — HTM lunas dari deposit.'));
-  if(typeof msPostToBackend==='function'){
-    msPostToBackend({ action:'useDeposit', namaPemain: nama, jumlah,
-      matchId: (typeof msActiveId!=='undefined' ? msActiveId : '') || '—' });
-  }
+  const sisa = res.htm - res.jumlah;
+  showToast('Deposit ' + nama + ' dipakai Rp ' + fmtRupiah(res.jumlah) + (sisa > 0 ? ' — sisa Rp ' + fmtRupiah(sisa) + ' perlu dibayar via metode lain.' : ' — HTM lunas dari deposit.'));
 }
 
 function populateGolPlayerSelect(){
@@ -4046,6 +4264,13 @@ function loadJerseyStokFromBackend(){
       });
       JERSEY_STOK = field;
       JERSEY_STOK_GK = gk;
+      // PENTING: dropdown jersey yang UDAH kepilih (mis. slot player yang
+      // ditambahin sebelum fetch ini kelar) masih pegang notif "Habis!" yang
+      // dihitung dari JERSEY_STOK/JERSEY_STOK_GK kosong ({}) — nilai awal
+      // sebelum data DB ini kebaca. Tanpa refresh di sini, notif itu nempel
+      // salah terus sampai admin ngoprek dropdown-nya manual. Makanya jersey
+      // GK/field kelihatan "Habis!" padahal stok sebenarnya masih ada.
+      refreshAllJerseySelects();
       const activeTab = document.getElementById('adm-jersey');
       if(activeTab && activeTab.style.display!=='none') renderJerseyStokTable();
     })
