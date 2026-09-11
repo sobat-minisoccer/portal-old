@@ -558,7 +558,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td data-edit-type="tglbayar" data-date="2026-09-02">02/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">GK</span></td>
                 <td>
-                  <select class="jersey-sel" data-posisi="gk" onchange="onJerseyChange(this)">
+                  <select class="jersey-sel" data-posisi="gk" onchange="onJerseyChangeUser(this)">
                     <option value="">— pilih</option>
                     <option value="Merah">Merah</option>
                     <option value="Kuning">Kuning</option>
@@ -587,7 +587,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td data-edit-type="tglbayar" data-date="2026-09-04">04/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
-                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
+                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChangeUser(this)">
                     <option value="">— pilih</option>
                     <option value="Merah" selected>Merah</option>
                     <option value="Kuning">Kuning</option>
@@ -616,7 +616,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td data-edit-type="tglbayar" data-date="2026-09-05">05/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
-                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
+                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChangeUser(this)">
                     <option value="">— pilih</option>
                     <option value="Merah" selected>Merah</option>
                     <option value="Kuning">Kuning</option>
@@ -645,7 +645,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td data-edit-type="tglbayar" data-date="2026-09-03">03/09</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
-                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
+                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChangeUser(this)">
                     <option value="">— pilih</option>
                     <option value="Merah" selected>Merah</option>
                     <option value="Kuning">Kuning</option>
@@ -674,7 +674,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
                 <td data-edit-type="tglbayar" data-date="" style="color:var(--mu)">—</td>
                 <td data-edit-type="posisi"><span class="b b-gy">Field</span></td>
                 <td>
-                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChange(this)">
+                  <select class="jersey-sel" data-posisi="field" onchange="onJerseyChangeUser(this)">
                     <option value="">— pilih</option>
                     <option value="Merah">Merah</option>
                     <option value="Kuning" selected>Kuning</option>
@@ -1678,6 +1678,44 @@ function getWarnaTerpakai() {
   return [...set];
 }
 
+// Sisa stok kombinasi warna+posisi+ukuran TERTENTU (bukan dijumlah semua
+// ukuran kayak dulu) — ini yang bikin dulu "Kelola Jersey" bisa nunjukin
+// 3/2 (kepakai lebih dari stok) padahal di Slot Player masih keliatan "OK"
+// terus & masih bisa dipilih: cek lama cuma "ada sisa di ukuran APA AJA
+// buat warna ini", bukan "ada sisa di UKURAN si player ini". Return null
+// kalau ukuran-nya belum keisi (blm bisa dicek per-ukuran).
+function jerseyStokSisa(warna, posisi, ukuran, usage){
+  if(!warna || !ukuran) return null;
+  const stokMap = posisi === 'gk' ? JERSEY_STOK_GK[warna] : JERSEY_STOK[warna];
+  const total = (stokMap && stokMap[ukuran]) || 0;
+  const key = warna + '|' + posisi;
+  const used = (usage[key] && usage[key][ukuran]) || 0;
+  return total - used;
+}
+// Bangun daftar <option> warna Field dgn opsi yg stok-nya abis (utk ukuran
+// SI PLAYER INI) otomatis disabled + dikasih label "stok habis" — TAPI
+// nggak nge-disable pilihan yg emang lagi kepilih (row ini sendiri jgn
+// ke-block dari pilihannya sendiri).
+function buildFieldJerseyOptionsHtml(row, currentVal){
+  const ukuranTd = row ? row.children[9] : null;
+  const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+  const usage = computeJerseyUsage(row); // excludeRow = row ini sendiri
+  const colors = Object.keys(JERSEY_STOK);
+  // Kalau warna yg lagi kepilih ternyata BELUM ada di JERSEY_STOK saat ini
+  // (mis. data stok dari backend belum kelar ke-load pas match lagi
+  // di-restore dari draft), tetap tampilin warna itu sbg opsi — jangan
+  // sampai pilihan yg udah ke-simpan ilang cuma gara2 daftar warnanya lagi
+  // nggak lengkap sesaat pas render.
+  const allColors = (currentVal && !colors.includes(currentVal)) ? [...colors, currentVal] : colors;
+  let opts = '<option value="">— pilih</option>';
+  allColors.forEach(c=>{
+    const sisa = jerseyStokSisa(c, 'field', ukuran, usage);
+    const habis = sisa !== null && sisa <= 0 && c !== currentVal;
+    opts += `<option value="${c}"${c===currentVal?' selected':''}${habis?' disabled':''}>${habis ? c+' — stok habis' : c}</option>`;
+  });
+  return opts;
+}
+
 // Saat jersey dropdown berubah
 function onJerseyChange(sel) {
   const warna = sel.value;
@@ -1690,26 +1728,48 @@ function onJerseyChange(sel) {
     return;
   }
 
-  // Update notifikasi
+  // Update notifikasi — dicek per UKURAN si player ini, bukan dijumlah
+  // semua ukuran (lihat komentar jerseyStokSisa di atas).
   if(!warna) {
     notif.innerHTML = '';
     notif.className = 'jersey-notif';
   } else {
-    const stok = JERSEY_STOK[warna];
-    const total = stok ? Object.values(stok).reduce((a,b)=>a+b,0) : 0;
-    if(total > 0) {
+    const row = sel.closest('tr');
+    const ukuranTd = row ? row.children[9] : null;
+    const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+    const usage = computeJerseyUsage(row);
+    const sisa = jerseyStokSisa(warna, 'field', ukuran, usage);
+    if(sisa === null) {
+      // Ukuran blm keisi (jarang, tapi jaga2) — fallback ke cek lama.
+      const stok = JERSEY_STOK[warna];
+      const total = stok ? Object.values(stok).reduce((a,b)=>a+b,0) : 0;
+      notif.innerHTML = total>0 ? '<i class="ti ti-check" style="font-size:9px"></i> OK' : '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Habis!';
+      notif.className = total>0 ? 'jersey-notif jok' : 'jersey-notif jwarn';
+    } else if(sisa > 0) {
       notif.innerHTML = '<i class="ti ti-check" style="font-size:9px"></i> OK';
       notif.className = 'jersey-notif jok';
     } else {
-      notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Habis!';
+      notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Stok ' + ukuran + ' habis!';
       notif.className = 'jersey-notif jwarn';
     }
   }
 
-  // Setelah field jersey berubah, rebuild semua GK dropdown
-  document.querySelectorAll('.jersey-sel[data-posisi="gk"]').forEach(gkSel => {
-    updateGkOptions(gkSel);
-  });
+  // Warna yg baru dipilih ngurangin jatah utk player LAIN yg ukurannya
+  // sama — rebuild semua dropdown Field+GK biar disabled-nya ikut update.
+  refreshAllJerseySelects();
+}
+
+// Dipakai di onchange="" (interaksi user beneran) — beda dari onJerseyChange
+// polos yg juga dipanggil program (msRestore, refreshAllJerseySelects, dst)
+// buat sekadar re-render tampilan doang. Pilihan Jersey sebelumnya CUMA
+// kesimpen di localStorage browser ini — sama kayak bug No Show kemarin,
+// klik ganti jersey nggak pernah manggil msPersist() jadi nggak pernah
+// nyampe ke Match_Drafts, makanya reset lagi begitu dibuka di browser lain.
+// Sekarang tiap kali USER yg ganti (bukan program yg lagi nge-refresh
+// tampilan), langsung ke-push ke database juga.
+function onJerseyChangeUser(sel){
+  onJerseyChange(sel);
+  if(typeof msPersist==='function') msPersist();
 }
 
 // Update GK dropdown: hanya tampilkan warna yang dipakai field players
@@ -1717,6 +1777,10 @@ function updateGkOptions(gkSel) {
   const warnaTerpakai = getWarnaTerpakai();
   const currentVal = gkSel.value;
   const notif = gkSel.nextElementSibling;
+  const row = gkSel.closest('tr');
+  const ukuranTd = row ? row.children[9] : null;
+  const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+  const usage = computeJerseyUsage(row);
 
   // Rebuild options — daftar warna tim (ikut stok jersey terbaru) + opsi "GK" khusus
   // (jersey kiper terpisah dari warna tim, jadi selalu tersedia apa pun warna field yang dipakai)
@@ -1726,7 +1790,12 @@ function updateGkOptions(gkSel) {
   daftarWarna.forEach(w => {
     html += `<option value="${w}"${currentVal===w?' selected':''}>${w}</option>`;
   });
-  html += `<option value="GK"${currentVal==='GK'?' selected':''}>GK (jersey kiper)</option>`;
+  // Jersey GK sendiri (bukan warna tim) — ini yg kepakainya jelas nempel ke
+  // stok JERSEY_STOK_GK['GK'], jadi bisa dicek per-ukuran & di-disable
+  // kalau abis (persis kasus GK 3/2 yg kelihatan di Kelola Jersey).
+  const gkSisa = jerseyStokSisa('GK', 'gk', ukuran, usage);
+  const gkHabis = gkSisa !== null && gkSisa <= 0 && currentVal !== 'GK';
+  html += `<option value="GK"${currentVal==='GK'?' selected':''}${gkHabis?' disabled':''}>${gkHabis ? 'GK (jersey kiper) — stok habis' : 'GK (jersey kiper)'}</option>`;
   gkSel.innerHTML = html;
 
   // Kalau nilai lama sudah tidak tersedia di pilihan baru, clear (kecuali "GK", selalu valid)
@@ -1742,8 +1811,24 @@ function updateGkOptions(gkSel) {
   if(!selectedWarna) {
     notif.innerHTML = '';
     notif.className = 'jersey-notif';
+  } else if(selectedWarna === 'GK') {
+    // Jersey GK sendiri — sama kayak opsi-nya di atas, dicek per-ukuran.
+    if(gkSisa === null) {
+      const stok = JERSEY_STOK_GK['GK'];
+      const total = stok ? Object.values(stok).reduce((a,b)=>a+b,0) : 0;
+      notif.innerHTML = total>0 ? '<i class="ti ti-check" style="font-size:9px"></i> OK' : '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Habis!';
+      notif.className = total>0 ? 'jersey-notif jok' : 'jersey-notif jwarn';
+    } else if(gkSisa > 0) {
+      notif.innerHTML = '<i class="ti ti-check" style="font-size:9px"></i> OK';
+      notif.className = 'jersey-notif jok';
+    } else {
+      notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Stok ' + ukuran + ' habis!';
+      notif.className = 'jersey-notif jwarn';
+    }
   } else {
-    const stok = selectedWarna === 'GK' ? JERSEY_STOK_GK['GK'] : JERSEY_STOK[selectedWarna];
+    // GK pakai warna tim — belum ada penelusuran stok khusus utk kasus ini
+    // (jersey tim yg dipakai GK), tetap pakai cek lama (total semua ukuran).
+    const stok = JERSEY_STOK[selectedWarna];
     const total = stok ? Object.values(stok).reduce((a,b)=>a+b,0) : 0;
     if(total > 0) {
       notif.innerHTML = '<i class="ti ti-check" style="font-size:9px"></i> OK';
@@ -1903,23 +1988,39 @@ function bankDisplayHtml(selected){
   return selected ? `<span class="b b-ac">${escAttr(selected)}</span>` : '—';
 }
 /* Warna jersey yang tersedia — diambil dari JERSEY_STOK supaya warna baru
-   yang didaftarkan lewat "Tambah stok" langsung muncul di semua dropdown jersey. */
-function jerseySelectHtml(posisi, selected){
-  const colors = Object.keys(JERSEY_STOK);
-  let opts = '<option value="">— pilih</option>';
-  colors.forEach(c=>{ opts += `<option value="${c}"${c===selected?' selected':''}>${c}</option>`; });
-  if(posisi==='gk') opts += `<option value="GK"${selected==='GK'?' selected':''}>GK (jersey kiper)</option>`;
-  return `<select class="jersey-sel" data-posisi="${posisi}" onchange="onJerseyChange(this)">${opts}</select><div class="jersey-notif" style="font-size:10px;margin-top:3px"></div>`;
+   yang didaftarkan lewat "Tambah stok" langsung muncul di semua dropdown
+   jersey. Opsi warna yg stok-nya abis (utk ukuran player ybs) otomatis
+   disabled + dikasih label "stok habis" — lihat buildFieldJerseyOptionsHtml. */
+function jerseySelectHtml(posisi, selected, ukuran){
+  let opts;
+  if(posisi==='field'){
+    // Row blm ke-attach ke DOM (lagi dibangun) — pakai helper yg sama biar
+    // konsisten, tapi manual (nggak ada `row` buat di-exclude krn row ini
+    // sendiri emang blm ada di #slot-tbody).
+    const usage = computeJerseyUsage();
+    const colors = Object.keys(JERSEY_STOK);
+    opts = '<option value="">— pilih</option>';
+    colors.forEach(c=>{
+      const sisa = ukuran ? jerseyStokSisa(c, 'field', ukuran, usage) : null;
+      const habis = sisa !== null && sisa <= 0 && c !== selected;
+      opts += `<option value="${c}"${c===selected?' selected':''}${habis?' disabled':''}>${habis ? c+' — stok habis' : c}</option>`;
+    });
+  } else {
+    const colors = Object.keys(JERSEY_STOK);
+    opts = '<option value="">— pilih</option>';
+    colors.forEach(c=>{ opts += `<option value="${c}"${c===selected?' selected':''}>${c}</option>`; });
+    opts += `<option value="GK"${selected==='GK'?' selected':''}>GK (jersey kiper)</option>`;
+  }
+  return `<select class="jersey-sel" data-posisi="${posisi}" onchange="onJerseyChangeUser(this)">${opts}</select><div class="jersey-notif" style="font-size:10px;margin-top:3px"></div>`;
 }
 function refreshAllJerseySelects(){
-  // Field: rebuild dari daftar warna JERSEY_STOK terbaru. GK: biarkan updateGkOptions
+  // Field: rebuild dari daftar warna JERSEY_STOK terbaru + disable opsi yg
+  // stok-nya abis utk ukuran player di baris itu. GK: biarkan updateGkOptions
   // yang urus (punya logika filter tersendiri + opsi "GK" khusus).
   document.querySelectorAll('.jersey-sel[data-posisi="field"]').forEach(sel=>{
     const current = sel.value;
-    const colors = Object.keys(JERSEY_STOK);
-    let opts = '<option value="">— pilih</option>';
-    colors.forEach(c=>{ opts += `<option value="${c}"${c===current?' selected':''}>${c}</option>`; });
-    sel.innerHTML = opts;
+    const row = sel.closest('tr');
+    sel.innerHTML = buildFieldJerseyOptionsHtml(row, current);
   });
   document.querySelectorAll('.jersey-sel[data-posisi="gk"]').forEach(updateGkOptions);
 }
@@ -1933,12 +2034,17 @@ function refreshAllJerseySelects(){
    Format sel: {terpakai}/{total} — sisi kiri jumlah yg sudah dipakai
    di match ini, sisi kanan total stok yg dimiliki. */
 const JERSEY_SIZE_ORDER = ['S','M','L','XL','2XL','3XL'];
-function computeJerseyUsage(){
+// excludeRow (opsional): lewatin baris ini pas ngitung usage — dipakai pas
+// ngecek "boleh nggak SI BARIS INI pilih warna X" biar dia nggak ketauan
+// ngeblok pilihannya sendiri (pilihan yg udah dia pegang bukan "jatah orang
+// lain" yg harus dikurangin dari sisa stok buat dia sendiri).
+function computeJerseyUsage(excludeRow){
   // key "{warna}|field" atau "{warna}|gk" -> {ukuran: jumlah}. Dipisah per
   // posisi supaya nama yg sama (mis. keduanya "GK") tidak ketuker antara
   // stok Field & stok GK.
   const usage = {};
   document.querySelectorAll('#slot-tbody tr').forEach(row=>{
+    if(excludeRow && row===excludeRow) return;
     const jerseySel = row.querySelector('.jersey-sel');
     if(!jerseySel) return;
     const warna = jerseySel.value;
@@ -2430,6 +2536,9 @@ function afterRowChange(row){
   }
   if(row.closest && row.closest('#slot-tbody')){
     syncPosisiToJersey(row);
+    // Ukuran (atau field lain) bisa aja abis diedit -- refresh dropdown
+    // jersey semua baris biar disabled/notif "stok habis"-nya ikut update.
+    refreshAllJerseySelects();
   }
   if(row.classList && row.classList.contains('dep-row')){
     refreshSlotDepositTriggers();
@@ -2556,7 +2665,7 @@ document.addEventListener('click', function(e){
     }
     if(row) row.remove();
     if(wasInShtm) { renumberShtm(); refreshKelolaPlayerShtmCell(shtmNamaBeforeDelete); }
-    if(wasInSlot) renumberSlot();
+    if(wasInSlot){ renumberSlot(); refreshAllJerseySelects(); }
     if(wasDepRow) refreshSlotDepositTriggers();
     if(wasInPlayerDb) renumberPlayerDb();
     if(wasInScorerDb){ resortScorerDb(); renderTopSkorFromDb(); }
@@ -3442,7 +3551,7 @@ function submitTambahPlayer(){
     <td style="color:var(--mu)" data-edit-type="deposit-used">${depositCellContent}</td><td data-edit-type="bank" data-bank-val="${escAttr(bankVal)}"${bankVal?'':' style="color:var(--mu)"'}>${bankCellContent}</td>
     <td data-edit-type="tglbayar" data-date="${isFree?'':tglBayarIso}"${tglBayarCellTxt==='—'?' style="color:var(--mu)"':''}>${tglBayarCellTxt}</td>
     <td data-edit-type="posisi"><span class="b b-gy">${isGk?'GK':'Field'}</span></td>
-    <td>${jerseySelectHtml(isGk?'gk':'field','')}</td>
+    <td>${jerseySelectHtml(isGk?'gk':'field','',ukuran)}</td>
     <td data-edit-type="ukuran"><span class="b b-gy">${ukuran}</span></td>
     <td data-edit-type="status">${statusCellHtml}</td>
     <td class="td-formasi">
