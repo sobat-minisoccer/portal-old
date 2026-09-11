@@ -363,9 +363,51 @@ function getConfig() {
 // otomatis tiap kali getMatchDrafts() dipanggil, setelah cukup waktu buat
 // nyebar ke semua device yang mungkin lagi dibuka.
 const MATCH_DRAFT_TOMBSTONE_TTL_DAYS = 14;
+// Google Sheets nolak isi 1 SEL lebih dari 50.000 karakter. Match yang
+// pemainnya udah banyak (jersey+No Show+formasi dst per baris) gampang
+// nembus itu (match 28 pemain terisi penuh bisa 60rb+ karakter) -- begitu
+// kena limit, setValues() di saveMatchDraft() gagal diam2 dari sisi Sheets,
+// browser cuma lihat "gagal kirim ke database" (CORS/network error) tanpa
+// tahu sebabnya beneran limit karakter. Solusi: JSON-nya dipecah rata ke
+// beberapa KOLOM (bukan 1 kolom), disambung lagi otomatis pas dibaca.
+const MATCH_DRAFT_CHUNK_SIZE = 45000;
+const MATCH_DRAFT_CHUNK_COLS = 8; // kolom B..I -> kapasitas total ~360rb karakter, kolom J = UpdatedAt
+function chunkStringForSheet_(str, size) {
+  const chunks = [];
+  for (let i = 0; i < str.length; i += size) chunks.push(str.slice(i, i + size));
+  while (chunks.length < MATCH_DRAFT_CHUNK_COLS) chunks.push('');
+  return chunks;
+}
+// Baca semua baris Match_Drafts, otomatis sambung ulang isi kolom Data yang
+// ke-pecah, TERMASUK baris lama yang masih format sebelum fitur ini ada
+// (1 kolom "Data" polos, kolom C = UpdatedAt) -- supaya draft yang sudah
+// kepenuhin (mis. sudah diisi 20+ pemain) TIDAK hilang cuma gara2 migrasi
+// struktur kolom ini. Baris lama otomatis ke-tulis ulang ke format baru
+// begitu match itu di-"Simpan"/disentuh lagi lewat saveMatchDraft().
+function readMatchDraftRows_() {
+  const ws = getSheet(SHEET.DRAFTS);
+  const data = ws.getDataRange().getValues();
+  const rows = [];
+  for (let r = 2; r < data.length; r++) {
+    const row = data[r];
+    if (!row[0]) continue;
+    const newFormatUpdatedAt = row[1 + MATCH_DRAFT_CHUNK_COLS]; // kolom J
+    let json, updatedAt;
+    if (newFormatUpdatedAt) {
+      json = row.slice(1, 1 + MATCH_DRAFT_CHUNK_COLS).join('');
+      updatedAt = newFormatUpdatedAt;
+    } else {
+      // Format lama: Data cuma di kolom B, UpdatedAt di kolom C
+      json = row[1] || '';
+      updatedAt = row[2];
+    }
+    rows.push({ MatchId: row[0], Data: json, UpdatedAt: updatedAt, _row: r + 1 });
+  }
+  return rows;
+}
 function getMatchDrafts() {
   pruneOldMatchDraftTombstones();
-  return sheetToObjects(SHEET.DRAFTS, 2);
+  return readMatchDraftRows_();
 }
 function saveMatchDraft(p) {
   const id = p.matchId;
@@ -377,12 +419,16 @@ function saveMatchDraft(p) {
     if (String(data[r][0]) === String(id)) { targetRow = r + 1; break; }
   }
   const now = new Date();
-  const row = [id, JSON.stringify(p.data || {}), now];
+  const json = JSON.stringify(p.data || {});
+  if (json.length > MATCH_DRAFT_CHUNK_SIZE * MATCH_DRAFT_CHUNK_COLS) {
+    return { error: 'Data match ini kepanjangan buat disimpan (' + json.length + ' karakter) — hubungi admin.' };
+  }
+  const row = [id, ...chunkStringForSheet_(json, MATCH_DRAFT_CHUNK_SIZE), now];
   if (targetRow === -1) {
     const lastRow = Math.max(ws.getLastRow(), 2);
-    ws.getRange(lastRow + 1, 1, 1, 3).setValues([row]);
+    ws.getRange(lastRow + 1, 1, 1, row.length).setValues([row]);
   } else {
-    ws.getRange(targetRow, 1, 1, 3).setValues([row]);
+    ws.getRange(targetRow, 1, 1, row.length).setValues([row]);
   }
   return { ok: true, matchId: id, updatedAt: now.toISOString() };
 }
@@ -392,31 +438,33 @@ function deleteMatchDraft(p) {
   const ws = getSheet(SHEET.DRAFTS);
   const data = ws.getDataRange().getValues();
   const now = new Date();
-  const tombstoneRow = [id, JSON.stringify({ __deleted: true, deletedAt: now.toISOString() }), now];
+  const json = JSON.stringify({ __deleted: true, deletedAt: now.toISOString() });
+  const tombstoneRow = [id, ...chunkStringForSheet_(json, MATCH_DRAFT_CHUNK_SIZE), now];
   let targetRow = -1;
   for (let r = 2; r < data.length; r++) {
     if (String(data[r][0]) === String(id)) { targetRow = r + 1; break; }
   }
   if (targetRow === -1) {
     const lastRow = Math.max(ws.getLastRow(), 2);
-    ws.getRange(lastRow + 1, 1, 1, 3).setValues([tombstoneRow]);
+    ws.getRange(lastRow + 1, 1, 1, tombstoneRow.length).setValues([tombstoneRow]);
   } else {
-    ws.getRange(targetRow, 1, 1, 3).setValues([tombstoneRow]);
+    ws.getRange(targetRow, 1, 1, tombstoneRow.length).setValues([tombstoneRow]);
   }
   return { ok: true, matchId: id };
 }
 function pruneOldMatchDraftTombstones() {
   const ws = getSheet(SHEET.DRAFTS);
-  const data = ws.getDataRange().getValues();
+  const rows = readMatchDraftRows_();
   const cutoff = new Date().getTime() - MATCH_DRAFT_TOMBSTONE_TTL_DAYS * 24 * 60 * 60 * 1000;
-  // hapus dari bawah ke atas biar index baris yang belum diproses gak geser
-  for (let r = data.length - 1; r >= 2; r--) {
+  // hapus dari bawah ke atas biar _row baris yang belum diproses gak geser
+  rows.sort((a, b) => b._row - a._row);
+  rows.forEach(row => {
     let parsed;
-    try { parsed = JSON.parse(data[r][1]); } catch (e) { continue; }
-    if (!parsed || !parsed.__deleted) continue;
-    const updatedAt = data[r][2] ? new Date(data[r][2]).getTime() : 0;
-    if (updatedAt && updatedAt < cutoff) ws.deleteRow(r + 1);
-  }
+    try { parsed = JSON.parse(row.Data); } catch (e) { return; }
+    if (!parsed || !parsed.__deleted) return;
+    const updatedAt = row.UpdatedAt ? new Date(row.UpdatedAt).getTime() : 0;
+    if (updatedAt && updatedAt < cutoff) ws.deleteRow(row._row);
+  });
 }
 
 // ── POST: Create Match ──────────────────────────────────────
@@ -1102,7 +1150,7 @@ function setupSheets() {
   ws = ensureSheet(SHEET.DRAFTS);
   if (ws.getLastRow() < 2) {
     writeHeader(ws, 'Match_Drafts — draft match Transaksi aktif, buat sinkron antar browser/device', [
-      'MatchId','Data','UpdatedAt'
+      'MatchId','Data1','Data2','Data3','Data4','Data5','Data6','Data7','Data8','UpdatedAt'
     ]);
   }
 
