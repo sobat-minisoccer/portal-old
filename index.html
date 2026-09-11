@@ -159,6 +159,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 .stbl select{font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);background:var(--su);color:var(--tx);font-family:var(--fn);max-width:70px}
 .stbl tr.row-noshow{background:#FFF0F5}
 .stbl tr.row-noshow:hover td{background:#FFE4EF}
+/* Wrapper tabel Slot Player — scroll sendiri (2 arah) + header freeze,
+   TERPISAH dari scroll halaman utama. Tanpa ini, tabel ikut manjang
+   ke bawah bareng halaman & header kolom (No/Nama/HTM/dst) ikut kescroll
+   ilang begitu daftar player-nya panjang. */
+.stbl-scroll{max-height:60vh;overflow:auto;border:1px solid var(--bd);border-radius:var(--r)}
+.stbl-scroll .stbl{border-collapse:separate;border-spacing:0}
+.stbl-scroll .stbl thead th{position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--bd)}
 
 /* JERSEY */
 .jok{font-size:10px;color:var(--gn);display:flex;align-items:center;gap:3px}
@@ -521,6 +528,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
               <i class="ti ti-layout-grid"></i> Lihat line up
             </button>
           </div>
+          <div class="stbl-scroll">
           <table class="stbl">
             <thead>
               <tr>
@@ -689,6 +697,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
 
         <!-- BIAYA -->
