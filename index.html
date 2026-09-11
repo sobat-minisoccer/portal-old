@@ -702,7 +702,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 
         <!-- BIAYA -->
         <div id="trx-biaya" class="trx-p">
-          <div class="sec-lbl">Biaya match <button class="btn btn-sm" onclick="openModal('m-tambah-biaya')"><i class="ti ti-plus"></i> Tambah item biaya</button></div>
+          <div class="sec-lbl">Biaya match <button class="btn btn-sm" onclick="resetTambahBiayaForm();openModal('m-tambah-biaya')"><i class="ti ti-plus"></i> Tambah item biaya</button></div>
           <table class="stbl">
             <thead><tr><th>Item</th><th>Tipe</th><th>Rencana (Rp)</th><th>Realisasi (Rp)</th><th>Malik 60%</th><th>Filan 40%</th><th>Aksi</th></tr></thead>
             <tbody id="biaya-tbody">
@@ -717,7 +717,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 
         <!-- DEPOSIT -->
         <div id="trx-deposit" class="trx-p">
-          <div class="sec-lbl">Deposit player <button class="btn btn-sm" onclick="openModal('m-tambah-deposit')"><i class="ti ti-plus"></i> Tambah deposit</button></div>
+          <div class="sec-lbl">Deposit player <button class="btn btn-sm" onclick="resetTambahDepositForm();openModal('m-tambah-deposit')"><i class="ti ti-plus"></i> Tambah deposit</button></div>
           <div style="padding:14px 16px">
             <div id="dep-saldo-list">
             <div class="dep-row">
@@ -3697,6 +3697,22 @@ function onTpLabelChange(sel){
   }
 }
 
+// Dulu form "Tambah item biaya" nggak pernah kereset -- Nama/Kategori/Tipe/
+// Rencana/Realisasi tetap nyimpen nilai terakhir yg diisi, jadi kalau modal
+// dibuka lagi (mis. buat nambah item LAIN) form-nya masih penuh nilai item
+// SEBELUMNYA. Sekarang dipanggil sebelum modal dibuka (spt pola
+// resetTambahPlayerForm) DAN sesudah berhasil "Simpan", biar kepakenya lagi
+// selalu mulai dari kosong.
+function resetTambahBiayaForm(){
+  const setVal = (id,val) => { const el = document.getElementById(id); if(el) el.value = val; };
+  setVal('tb-item', '');
+  setVal('tb-kategori', 'Lapangan');
+  setVal('sel-tipe', 'Operasional');
+  setVal('tb-rencana', '');
+  setVal('tb-realisasi', '');
+  const invOpts = document.getElementById('inv-opts');
+  if(invOpts) invOpts.style.display = 'none';
+}
 function submitTambahBiaya(){
   if(msIsActiveLocked()){ showToast('Match sudah ditutup.'); closeModal('m-tambah-biaya'); return; }
   const item = document.getElementById('tb-item').value.trim();
@@ -3710,10 +3726,17 @@ function submitTambahBiaya(){
   tr.innerHTML = `<td style="font-weight:500">${item}</td><td><span class="b b-gy">${tipe==='Inventaris'?'Inv':'Ops'}</span></td><td>${fmtRupiah(rencana)}</td><td>${fmtRupiah(realisasi)}</td><td>—</td><td>—</td><td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td>`;
   tbody.appendChild(tr);
   closeModal('m-tambah-biaya');
+  resetTambahBiayaForm();
   recalcAll();
   showToast('Item biaya "' + item + '" ditambahkan.');
 }
 
+function resetTambahDepositForm(){
+  const setVal = (id,val) => { const el = document.getElementById(id); if(el) el.value = val; };
+  setVal('td-player', '');
+  setVal('td-jumlah', '');
+  setVal('td-sumber', 'Cancel → Deposit');
+}
 function submitTambahDeposit(){
   const player = document.getElementById('td-player').value.trim();
   if(!player){ showToast('Nama player belum diisi.'); return; }
@@ -3729,6 +3752,7 @@ function submitTambahDeposit(){
   logTr.innerHTML = `<td>Baru</td><td class="pri">${player}</td><td><span class="b b-am">${sumber}</span></td><td style="color:var(--gn)">+${fmtRupiah(jumlah)}</td><td>—</td><td style="color:var(--am);font-weight:500">${fmtRupiah(jumlah)}</td><td>—</td>`;
   logTbody.prepend(logTr);
   closeModal('m-tambah-deposit');
+  resetTambahDepositForm();
   refreshSlotDepositTriggers();
   showToast('Deposit ' + player + ' Rp ' + fmtRupiah(jumlah) + ' tersimpan.');
   if(typeof msPostToBackend==='function'){
@@ -4057,6 +4081,10 @@ function submitTambahGol(){
   const max = m.matchScorers[0].gol;
   renderScorer('t-match-scorer', m.matchScorers.map((s,i)=>({rank:i+1,name:s.name,gol:s.gol,pct:Math.round(s.gol/max*100),cat:''})));
   closeModal('m-tambah-gol');
+  // tg-player udah otomatis kereset tiap modal dibuka lg (populateGolPlayerSelect),
+  // tapi tg-jumlah/tg-ket nggak -- disamain jg biar nggak nyisa nilai lama.
+  document.getElementById('tg-jumlah').value = '1';
+  document.getElementById('tg-ket').value = '';
   showToast('Gol ' + nama + ' (+' + jumlah + ') dicatat untuk match ini.');
 }
 
@@ -4494,6 +4522,14 @@ function loadDbPlayersModal(){
       _dbPlayersCache = data;
       renderDbPlayerModal(data);
       renderPlayerDbTable(data);
+      // getDbDepositBalance() butuh _dbPlayersCache buat tahu player mana yg
+      // punya saldo deposit aktif di database. Fetch ini async dan kadang
+      // baru kelar SETELAH player sempat ditambah ke Slot Player -- row yg
+      // udah kadung dirender pas cache masih kosong bakal permanen kelihatan
+      // "—" (nggak ada opsi "Pakai deposit") walau datanya beneran ada,
+      // krn nggak ada yg nge-triggerin render ulang kolom Deposit-nya lagi
+      // stlh cache ini kelar. Makanya di-refresh sekali lagi di sini.
+      if(typeof refreshSlotDepositTriggers==='function') refreshSlotDepositTriggers();
     })
     .catch(err=>{ console.error('Gagal ambil Database Player dari database:', err); });
 }
