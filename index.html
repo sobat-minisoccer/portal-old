@@ -3123,11 +3123,30 @@ function msPersist(){
 }
 function msPostToBackend(payload){
   if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
+  // Dulu bener2 fire-and-forget — cuma nangkep error jaringan (fetch()
+  // sendiri yang gagal, mis. internet putus), nggak pernah baca isi
+  // balesannya sama sekali. Efeknya kalau backend nolak/gagal (error script
+  // di Code.gs, action nggak dikenal, dst) itu SAMA SEKALI nggak kelihatan
+  // di layar — tampilan tetap keliatan "berhasil" krn perubahan lokal udah
+  // duluan diterapkan sebelum fetch ini kelar, padahal database-nya nggak
+  // ke-update. Sekarang balesannya dibaca: kalau ada res.error, muncul
+  // toast biar ketauan — bukan cuma diem2 gagal kayak sebelumnya.
   fetch(GAS_URL, {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'}, // hindari CORS preflight ke Apps Script
     body: JSON.stringify(payload)
-  }).catch(err=>{ console.error('Gagal kirim ke database (' + payload.action + '):', err); });
+  })
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && res.error){
+        console.error('Backend error (' + payload.action + '):', res.error);
+        showToast('Gagal simpan ke database (' + payload.action + '): ' + res.error);
+      }
+    })
+    .catch(err=>{
+      console.error('Gagal kirim ke database (' + payload.action + '):', err);
+      showToast('Perubahan tersimpan lokal, tapi gagal terkirim ke database — cek koneksi / pastikan Apps Script sudah di-deploy versi terbaru.');
+    });
 }
 function msSyncDraftsToBackend(){
   msOrder.forEach(id=>{
