@@ -2028,7 +2028,7 @@ function jerseySelectHtml(posisi, selected, ukuran){
   }
   return `<select class="jersey-sel" data-posisi="${posisi}" onchange="onJerseyChangeUser(this)">${opts}</select><div class="jersey-notif" style="font-size:10px;margin-top:3px"></div>`;
 }
-function refreshAllJerseySelects(){
+function rebuildAllJerseySelectOptions(){
   // Field: rebuild dari daftar warna JERSEY_STOK terbaru + disable opsi yg
   // stok-nya abis utk ukuran player di baris itu. GK: biarkan updateGkOptions
   // yang urus (punya logika filter tersendiri + opsi "GK" khusus).
@@ -2038,6 +2038,55 @@ function refreshAllJerseySelects(){
     sel.innerHTML = buildFieldJerseyOptionsHtml(row, current);
   });
   document.querySelectorAll('.jersey-sel[data-posisi="gk"]').forEach(updateGkOptions);
+}
+// Cek SEMUA row yang pilihan jersey-nya SENDIRI ternyata udah oversold
+// (dipakai > stok, hitungan termasuk row itu sendiri -- lihat catatan di
+// jerseyStokSisa) -- bukan cuma nge-disable opsi BARU yang belum dipilih
+// (itu udah ditangani buildFieldJerseyOptionsHtml), tapi row yang PILIHAN
+// LAMA-nya sendiri jadi nggak valid lagi (mis. row lain belakangan ikut
+// milih warna+ukuran yg sama sampai kelebihan kapasitas) juga harus
+// otomatis ke-reset ke "-" + notif "Stok habis", bukan cuma dikasih
+// warning doang sementara pilihan lama yg udah nggak valid tetap nyantol.
+// Diproses dari row PALING BARU (No terbesar) duluan -- kalau beberapa row
+// berebut kapasitas yg sama, row yg lebih DULU milih menang klaim, row yg
+// belakangan yg ke-reset (first come, first served).
+function resetOversoldJerseySelections(){
+  let anyReset = false;
+  const sels = [...document.querySelectorAll('.jersey-sel')].reverse();
+  sels.forEach(sel=>{
+    const warna = sel.value;
+    if(!warna) return;
+    const posisi = sel.dataset.posisi === 'gk' ? 'gk' : 'field';
+    const stokMap = posisi === 'gk' ? JERSEY_STOK_GK[warna] : JERSEY_STOK[warna];
+    // Warna blm terdaftar stoknya sama sekali (mis. GK pakai warna tim --
+    // sengaja blm ada penelusuran stok khusus utk kasus itu, atau data stok
+    // dari backend blm sempat kemuat) -- jangan dipaksa habis/direset.
+    if(!stokMap) return;
+    const row = sel.closest('tr');
+    const ukuranTd = row ? row.children[9] : null;
+    const ukuran = getUkuranFromTd(ukuranTd);
+    const usage = computeJerseyUsage(row);
+    const sisa = jerseyStokSisa(warna, posisi, ukuran, usage);
+    if(sisa !== null && sisa <= 0){
+      sel.value = '';
+      const notif = sel.nextElementSibling;
+      if(notif){
+        notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Stok habis';
+        notif.className = 'jersey-notif jwarn';
+      }
+      anyReset = true;
+    }
+  });
+  if(anyReset && typeof msPersist==='function') msPersist();
+  return anyReset;
+}
+function refreshAllJerseySelects(){
+  rebuildAllJerseySelectOptions();
+  const anyReset = resetOversoldJerseySelections();
+  // Abis reset, opsi & status disabled semua select perlu di-rebuild ulang
+  // supaya kapasitas yg baru kebebas (dari row yg direset) langsung kepakai
+  // di daftar opsi row lain.
+  if(anyReset) rebuildAllJerseySelectOptions();
 }
 
 /* ── STOK JERSEY (Admin) — tabel dinamis dari JERSEY_STOK ──
@@ -2085,11 +2134,12 @@ function jerseyStokRowHtml(warna, tipe, stokMap, usage){
     if(total===0 && used===0){
       html += `<td data-sz="${sz}" style="text-align:center;color:var(--mu)">—</td>`;
     } else {
+      // Cuma dipakai > stok (beneran oversold) yang di-warning merah --
+      // dipakai == stok (mis. 1/1, 2/2) berarti pas penuh, BUKAN masalah,
+      // jadi ditampilin normal aja (sama kayak permintaan Sam).
       const over = used > total;
-      const full = used===total && total>0;
-      const style = over || full ? 'color:var(--rd);font-weight:600' : 'color:var(--tx)';
-      const warn = over ? ' <i class="ti ti-alert-triangle" style="font-size:10px" title="Terpakai melebihi stok!"></i>'
-        : (full ? ' <i class="ti ti-alert-circle" style="font-size:10px" title="Stok habis"></i>' : '');
+      const style = over ? 'color:var(--rd);font-weight:600' : 'color:var(--tx)';
+      const warn = over ? ' <i class="ti ti-alert-triangle" style="font-size:10px" title="Terpakai melebihi stok!"></i>' : '';
       html += `<td data-sz="${sz}" style="text-align:center;${style}">${used}/${total}${warn}</td>`;
     }
   });
