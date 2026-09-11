@@ -236,13 +236,31 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 .lap-tbl tfoot td{border-top:1.5px solid var(--tx);border-bottom:none;padding-top:6px}
 .lap-tbl tr.lap-hl td{background:var(--gn2);color:var(--gn);font-weight:700}
 .lap-tbl tr.lap-hl.lap-neg td{background:var(--rd2);color:var(--rd)}
+.lap-tbl tr.lap-noshow td{background:#FFE0EA}
 .lap-note{font-size:10.5px;color:var(--mu);margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd)}
 @media print{
+  html,body{height:auto!important}
   body *{visibility:hidden}
   #laporan-pdf-content,#laporan-pdf-content *{visibility:visible}
-  .modal,.modal-ov{overflow:visible!important;max-height:none!important;background:none!important;box-shadow:none!important;padding:0!important;position:static!important}
+  .modal,.modal-ov{overflow:visible!important;max-height:none!important;background:none!important;box-shadow:none!important;padding:0!important;position:static!important;max-width:none!important;width:100%!important}
+  .modal-body{padding:0!important;overflow:visible!important}
   #laporan-pdf-content{position:absolute;top:0;left:0;width:100%}
   .no-print{display:none!important}
+  /* Warna (highlight margin merah/hijau, No show pink) defaultnya dibuang
+     browser pas print -- ini yg bikin legend & highlight ilang di hasil
+     cetak/PDF walau kelihatan normal di layar. Dipaksa tetap ikut kecetak. */
+  #laporan-pdf-content,#laporan-pdf-content *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  /* "Fit" ke 1 halaman A4 landscape: cegah baris tabel / blok kepotong
+     nanggung di tengah pas pindah halaman, dan skala grid 2-kolom (Biaya
+     vs Pembayaran player) turun dikit kalau kepanjangan drpd maksa 1 kolom
+     doang yg akhirnya beranak banyak halaman. */
+  .lap-grid{grid-template-columns:1fr 1.3fr;gap:14px}
+  .lap-hd{break-inside:avoid;break-after:avoid}
+  .lap-tbl{break-inside:auto;font-size:10.5px}
+  .lap-tbl thead{display:table-header-group}
+  .lap-tbl tr{break-inside:avoid}
+  .lap-sec-title{break-after:avoid}
+  .lap-note{break-inside:avoid}
 }
 @page{size:A4 landscape;margin:10mm}
 .modal-hd{padding:13px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
@@ -2593,14 +2611,28 @@ function afterRowChange(row){
       pushShtmStatusFromKelolaPlayer(playerDbRowNama(row), status);
     }
     const rowIdx = row.dataset.rowIdx;
+    const kategoriTd = tds[3], hadirTd = tds[4], depositTd = tds[6];
     if(rowIdx && typeof msPostToBackend==='function'){
-      const kategoriTd = tds[3], hadirTd = tds[4], depositTd = tds[6];
       msPostToBackend({ action:'updatePlayerDb', rowIdx: parseInt(rowIdx,10),
         nama: playerDbRowNama(row),
         kategori: kategoriTd ? kategoriTd.textContent.trim() : undefined,
         hadir: hadirTd ? (parseInt(hadirTd.textContent.trim(),10)||0) : undefined,
         deposit: depositTd ? parseRupiah(depositTd.textContent) : undefined,
         statusShtm: status || undefined });
+    }
+    // Edit inline deposit di Kelola Player ("saldo Julius saya tambahin
+    // manual 50.000 di sini") ngirim ke DB (updatePlayerDb di atas), tapi
+    // _dbPlayersCache -- sumber yg dibaca getDbDepositBalance() buat nentuin
+    // muncul-nya tombol "Pakai deposit" pas player itu ditambah ke Slot
+    // Player -- nggak ikut ke-patch. Efeknya: saldo udah bener di database
+    // & keliatan bener di Kelola Player sendiri, tapi begitu player itu
+    // ditambah ke match (di sesi yg sama, tanpa reload), Slot Player masih
+    // baca cache lama (0) -- tombol "Pakai deposit" nggak muncul. Sekarang
+    // cache-nya ikut dipatch di sini juga, dan kolom Deposit di Slot Player
+    // (kalau kebetulan player ini udah ada di situ) langsung disegarkan.
+    if(depositTd){
+      syncDbPlayersCacheDeposit(playerDbRowNama(row), parseRupiah(depositTd.textContent));
+      if(typeof refreshSlotDepositTriggers==='function') refreshSlotDepositTriggers();
     }
   }
   if(row.closest && row.closest('#slot-tbody')){
@@ -2609,6 +2641,10 @@ function afterRowChange(row){
     // jersey semua baris biar disabled/notif "stok habis"-nya ikut update.
     refreshAllJerseySelects();
   }
+  // Edit inline di tabel Biaya match (mis. koreksi Realisasi) sama-sama data
+  // match aktif -- persist otomatis, sama alasan kayak nambah/hapus biaya.
+  const wasBiayaEdit = row.closest && row.closest('#biaya-tbody');
+  const wasSlotEdit = row.closest && row.closest('#slot-tbody');
   if(row.classList && row.classList.contains('dep-row')){
     refreshSlotDepositTriggers();
   }
@@ -2628,6 +2664,7 @@ function afterRowChange(row){
     }
   }
   recalcAll();
+  if(wasBiayaEdit || wasSlotEdit){ if(typeof msPersist==='function') msPersist(); }
 }
 /* Posisi (Field/GK) sekarang bisa diedit terpisah dari kolom No. Kalau posisi
    berubah, dropdown Jersey di row yang sama disesuaikan: GK dapat opsi
@@ -2697,6 +2734,7 @@ document.addEventListener('click', function(e){
     const wasJerseyStokRow = row && row.closest && row.closest('#jersey-stok-table-wrap');
     const wasInPlayerDb = row && row.closest && row.closest('#player-tbody');
     const wasInScorerDb = row && row.closest && row.closest('#scorer-tbody');
+    const wasInBiaya = row && row.closest && row.closest('#biaya-tbody');
     if(wasJerseyStokRow){
       const warna = row.dataset.warna;
       const tipe = row.dataset.tipe;
@@ -2744,6 +2782,11 @@ document.addEventListener('click', function(e){
     if(wasInPlayerDb) renumberPlayerDb();
     if(wasInScorerDb){ resortScorerDb(); renderTopSkorFromDb(); }
     recalcAll();
+    // Hapus baris Biaya match, atau player dari Slot Player, sama-sama data
+    // match aktif yang dulu cuma nyangkut di tabel (DOM) doang sampai admin
+    // sempat klik "Simpan" manual -- akar masalah yg sama kayak "nambah
+    // biaya kok ga kesimpen". Sekarang auto-persist juga pas dihapus.
+    if(wasInBiaya || wasInSlot){ if(typeof msPersist==='function') msPersist(); }
     return;
   }
   if(noBtn){
@@ -2840,7 +2883,7 @@ function recalcRekap(){
     }
   }
 }
-function recalcAll(){ recalcSlot(); recalcBiaya(); recalcRekap(); }
+function recalcAll(){ recalcSlot(); recalcBiaya(); recalcRekap(); if(typeof refreshDashKumulatifWidget==='function') refreshDashKumulatifWidget(); }
 
 /* ── LAPORAN PDF (Cost & Benefit) ──
    Format diadaptasi dari contoh laporan yg sudah dipakai (Biaya | Pembayaran
@@ -2927,17 +2970,42 @@ function computeMatchFinancials(m){
   const filan = margin - malik;
   return { sales, cost: realisasi, margin, malik, filan };
 }
-// Kumulatif dari semua match berstatus "tutup" yg diketahui di sesi browser
-// ini (belum tersambung database, jadi bukan kumulatif sepanjang masa).
+// Profit kumulatif "asli": baseline REAL dari database (Rekap_Keuangan,
+// ditarik via getDashboard() -- SEMUA match yg sudah ditutup, dari sesi
+// atau device mana pun, bukan cuma yg kebetulan lagi kebuka di browser ini)
+// DITAMBAH margin match yang SEDANG AKTIF sekarang, kalau match itu belum
+// ditutup. Kalau match aktifnya sudah 'tutup', dia udah otomatis masuk
+// baseline (submitTutupMatch nulis ke Rekap_Keuangan) -- jangan ditambah
+// dobel. _dashKumulBaseline ditarik sekali di awal (loadDashboardRealStats,
+// dipanggil pas app dibuka) dan dipakai bareng di sini + widget Dashboard
+// (refreshDashKumulatifWidget), jadi dua-duanya selalu konsisten & nyambung
+// ke database asli, bukan cuma ngitung dari sesi browser ini doang lagi.
+let _dashKumulBaseline = null;
 function computeCumulativeProfit(){
-  let malik=0, filan=0, count=0;
-  msOrder.forEach(id=>{
-    const m = msMatches[id];
-    if(!m || m.status !== 'tutup') return;
-    const f = (id === msActiveId) ? computeFinancialsFromLiveDom() : computeMatchFinancials(m);
-    malik += f.malik; filan += f.filan; count++;
-  });
-  return { malik, filan, count };
+  const baseline = _dashKumulBaseline || {malik:0, filan:0};
+  let malik = baseline.malik, filan = baseline.filan;
+  let liveAdded = false;
+  if(msActiveId && msMatches[msActiveId] && msMatches[msActiveId].status !== 'tutup'){
+    const f = computeFinancialsFromLiveDom();
+    malik += f.malik; filan += f.filan;
+    liveAdded = true;
+  }
+  return { malik, filan, hasBaseline: !!_dashKumulBaseline, liveAdded };
+}
+// Widget "Shared profit kumulatif" di Dashboard -- dipanggil tiap kali
+// baseline database baru ketarik (loadDashboardRealStats) MAUPUN tiap kali
+// data match aktif berubah (recalcAll), supaya angkanya selalu naik/turun
+// live ngikutin match yang sedang berjalan, bukan cuma freeze di baseline
+// lama sampai match itu ditutup.
+function refreshDashKumulatifWidget(){
+  if(!_dashKumulBaseline) return; // belum sempat ketarik dari database -- biarin placeholder lama apa adanya
+  const kumulMalikEl = document.getElementById('dash-kumul-malik');
+  const kumulFilanEl = document.getElementById('dash-kumul-filan');
+  const totalBersamaEl = document.getElementById('dash-total-bersama');
+  const live = computeCumulativeProfit();
+  if(kumulMalikEl) kumulMalikEl.textContent = 'Rp ' + Math.round(live.malik).toLocaleString('id-ID');
+  if(kumulFilanEl) kumulFilanEl.textContent = 'Rp ' + Math.round(live.filan).toLocaleString('id-ID');
+  if(totalBersamaEl) totalBersamaEl.textContent = 'Rp ' + Math.round(live.malik+live.filan).toLocaleString('id-ID');
 }
 // id opsional: match mana yg mau dilaporkan. Kosong/tidak diisi = match
 // yang lagi aktif di Transaksi (perilaku asli, dipakai tab Rekap akhir).
@@ -2983,14 +3051,15 @@ function generateLaporanPdf(id){
       bank: tds[5] ? (tds[5].dataset.bankVal || '') : '',
       tglBayar: tds[6] ? tds[6].textContent.trim() : '',
       htm: tds[2] ? tds[2].textContent.trim() : '',
-      status: tds[10] ? tds[10].textContent.trim() : ''
+      status: tds[10] ? tds[10].textContent.trim() : '',
+      noShow: tr.classList.contains('row-noshow')
     };
   });
   const shtmDipakai = slotRows.filter(r=>r.label==='SHTM').map(r=>r.nama);
 
   const biayaHtml = biayaRows.map(b=>`<tr><td>${escAttr(b.item)}</td><td>${escAttr(b.kategori)}</td><td style="text-align:right">${escAttr(b.realisasi)}</td></tr>`).join('')
     || '<tr><td colspan="3" style="color:var(--mu)">Belum ada biaya tercatat</td></tr>';
-  const playerHtml = slotRows.map(p=>`<tr><td>${escAttr(p.no)}</td><td>${escAttr(p.nama)}</td><td>${escAttr(p.posisi)}</td><td>${escAttr(p.label)}</td><td>${escAttr(p.bank||'—')}</td><td>${escAttr(p.tglBayar||'—')}</td><td>${escAttr(p.status)}</td><td style="text-align:right">${escAttr(p.htm)}</td></tr>`).join('')
+  const playerHtml = slotRows.map(p=>`<tr${p.noShow?' class="lap-noshow"':''}><td>${escAttr(p.no)}</td><td>${escAttr(p.nama)}${p.noShow?' <span style="color:#BE185D;font-size:9.5px;font-weight:600">(No show)</span>':''}</td><td>${escAttr(p.posisi)}</td><td>${escAttr(p.label)}</td><td>${escAttr(p.bank||'—')}</td><td>${escAttr(p.tglBayar||'—')}</td><td>${escAttr(p.status)}</td><td style="text-align:right">${escAttr(p.htm)}</td></tr>`).join('')
     || '<tr><td colspan="8" style="color:var(--mu)">Belum ada player tercatat</td></tr>';
 
   const generatedAt = new Date().toLocaleString('id-ID', {dateStyle:'long', timeStyle:'short'});
@@ -3021,7 +3090,7 @@ function generateLaporanPdf(id){
             <tr><td>Split Filan (40%)</td><td style="text-align:right">Rp ${fmtRupiah(f.filan)}</td></tr>
           </tbody>
         </table>
-        <div class="lap-sec-title" style="margin-top:16px">Profit kumulatif <span style="font-weight:400;text-transform:none;letter-spacing:0">(match "tutup" di sesi ini — ${cum.count} match, belum tersambung database)</span></div>
+        <div class="lap-sec-title" style="margin-top:16px">Profit kumulatif <span style="font-weight:400;text-transform:none;letter-spacing:0">(${cum.hasBaseline ? 'baseline database (Rekap_Keuangan)' : 'baseline database belum kemuat, cek koneksi'}${cum.liveAdded ? ' + margin match aktif ini' : ''})</span></div>
         <table class="lap-tbl">
           <tbody>
             <tr><td>Malik</td><td style="text-align:right">Rp ${fmtRupiah(cum.malik)}</td></tr>
@@ -3030,7 +3099,12 @@ function generateLaporanPdf(id){
         </table>
       </div>
       <div class="lap-col">
-        <div class="lap-sec-title">Pembayaran player (${slotRows.length})</div>
+        <div class="lap-sec-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Pembayaran player (${slotRows.length})</span>
+          <span style="display:flex;align-items:center;gap:5px;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--mu)">
+            <span style="display:inline-block;width:13px;height:7px;border-radius:2px;background:#FFCFE0;border:1px solid #F472B6"></span> No show
+          </span>
+        </div>
         <table class="lap-tbl">
           <thead><tr><th>No</th><th>Pemain</th><th>Posisi</th><th>Tipe bayar</th><th>Metode</th><th>Tgl Bayar</th><th>Status</th><th style="text-align:right">Jumlah</th></tr></thead>
           <tbody>${playerHtml}</tbody>
@@ -3733,6 +3807,14 @@ function submitTambahBiaya(){
   closeModal('m-tambah-biaya');
   resetTambahBiayaForm();
   recalcAll();
+  // Dulu item biaya cuma nyangkut di tabel (DOM) doang -- nggak pernah
+  // kekirim ke database sama sekali kecuali admin sempat klik "Simpan"
+  // manual. Efeknya persis yg dilaporin: kebuka lagi di browser/device lain
+  // (atau reload) -> biayanya ilang, padahal kelihatannya udah "tersimpan"
+  // di layar. Sekarang tiap nambah item biaya langsung ikut ke-persist
+  // otomatis ke Match_Drafts (pola sama kayak toggle No show & ganti warna
+  // jersey), jadi nggak perlu inget2 klik "Simpan" manual lagi.
+  if(typeof msPersist==='function') msPersist();
   showToast('Item biaya "' + item + '" ditambahkan.');
 }
 
@@ -4115,6 +4197,10 @@ function submitTambahGol(){
   // tapi tg-jumlah/tg-ket nggak -- disamain jg biar nggak nyisa nilai lama.
   document.getElementById('tg-jumlah').value = '1';
   document.getElementById('tg-ket').value = '';
+  // Sama kayak Tambah item biaya -- dulu gol yg dicatat di sini cuma nyangkut
+  // di memori/tabel lokal, nggak ikut ke-persist kecuali klik "Simpan"
+  // manual. Sekarang otomatis ke-sync ke Match_Drafts tiap kali gol dicatat.
+  if(typeof msPersist==='function') msPersist();
   showToast('Gol ' + nama + ' (+' + jumlah + ') dicatat untuk match ini.');
 }
 
@@ -4501,16 +4587,17 @@ function loadDashboardRealStats(){
         if(bestMatchEl) bestMatchEl.textContent = (d.bestMatch.tgl||'—') + (d.bestMatch.tipe ? (' — ' + d.bestMatch.tipe) : '');
       }
 
-      // Shared profit kumulatif
+      // Shared profit kumulatif -- baseline REAL dari Rekap_Keuangan
+      // (di-cache di _dashKumulBaseline), lalu di-render lewat
+      // refreshDashKumulatifWidget() yg juga otomatis nambahin margin match
+      // yg lagi aktif sekarang (kalau belum ditutup) -- lihat
+      // computeCumulativeProfit(). Dipanggil ulang tiap recalcAll() jg,
+      // jadi widget ini "hidup" ngikutin match yang sedang berjalan.
       if(typeof d.kumulatifMalik==='number' && typeof d.kumulatifFilan==='number'){
-        const kumulMalikEl = document.getElementById('dash-kumul-malik');
-        const kumulFilanEl = document.getElementById('dash-kumul-filan');
+        _dashKumulBaseline = { malik: d.kumulatifMalik, filan: d.kumulatifFilan };
+        refreshDashKumulatifWidget();
         const deltaMalikEl = document.getElementById('dash-delta-malik');
         const deltaFilanEl = document.getElementById('dash-delta-filan');
-        const totalBersamaEl = document.getElementById('dash-total-bersama');
-        if(kumulMalikEl) kumulMalikEl.textContent = 'Rp ' + Math.round(d.kumulatifMalik).toLocaleString('id-ID');
-        if(kumulFilanEl) kumulFilanEl.textContent = 'Rp ' + Math.round(d.kumulatifFilan).toLocaleString('id-ID');
-        if(totalBersamaEl) totalBersamaEl.textContent = 'Rp ' + Math.round(d.kumulatifMalik+d.kumulatifFilan).toLocaleString('id-ID');
         const n = d.deltaN || 0;
         if(deltaMalikEl) deltaMalikEl.textContent = n>0 ? (fmtDeltaRp(d.deltaMalik) + ' dari ' + n + ' match terakhir') : 'Belum ada match sebelumnya';
         if(deltaFilanEl) deltaFilanEl.textContent = n>0 ? (fmtDeltaRp(d.deltaFilan) + ' dari ' + n + ' match terakhir') : 'Belum ada match sebelumnya';
