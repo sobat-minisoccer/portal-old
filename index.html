@@ -1684,6 +1684,21 @@ function getWarnaTerpakai() {
 // terus & masih bisa dipilih: cek lama cuma "ada sisa di ukuran APA AJA
 // buat warna ini", bukan "ada sisa di UKURAN si player ini". Return null
 // kalau ukuran-nya belum keisi (blm bisa dicek per-ukuran).
+// Baca ukuran SEBENARNYA dari sel kolom Ukuran suatu row — robust walau
+// selnya lagi kebuka dalam mode edit (pensil diklik tp blm sempat commit).
+// Baca langsung pakai textContent pas <select>-nya masih kebuka bakal
+// nyampur jadi satu string gabungan SEMUA opsi (mis. "MLXL2XL"), bukan
+// nilai yang beneran lagi kepilih di dropdown-nya — makanya kemarin bisa
+// muncul notif "Stok MLXL2XL habis!" pas stoknya sendiri sebenarnya masih
+// ada. Juga menyamakan "—" (opsi kosong) jadi string kosong, konsisten sama
+// perlakuan "ukuran belum keisi" di tempat lain.
+function getUkuranFromTd(ukuranTd){
+  if(!ukuranTd) return '';
+  const sel = ukuranTd.querySelector('select');
+  if(sel) return sel.value || '';
+  const txt = ukuranTd.textContent.trim();
+  return txt === '—' ? '' : txt;
+}
 function jerseyStokSisa(warna, posisi, ukuran, usage){
   if(!warna || !ukuran) return null;
   const stokMap = posisi === 'gk' ? JERSEY_STOK_GK[warna] : JERSEY_STOK[warna];
@@ -1698,7 +1713,7 @@ function jerseyStokSisa(warna, posisi, ukuran, usage){
 // ke-block dari pilihannya sendiri).
 function buildFieldJerseyOptionsHtml(row, currentVal){
   const ukuranTd = row ? row.children[9] : null;
-  const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+  const ukuran = getUkuranFromTd(ukuranTd);
   const usage = computeJerseyUsage(row); // excludeRow = row ini sendiri
   const colors = Object.keys(JERSEY_STOK);
   // Kalau warna yg lagi kepilih ternyata BELUM ada di JERSEY_STOK saat ini
@@ -1736,7 +1751,7 @@ function onJerseyChange(sel) {
   } else {
     const row = sel.closest('tr');
     const ukuranTd = row ? row.children[9] : null;
-    const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+    const ukuran = getUkuranFromTd(ukuranTd);
     const usage = computeJerseyUsage(row);
     const sisa = jerseyStokSisa(warna, 'field', ukuran, usage);
     if(sisa === null) {
@@ -1749,7 +1764,7 @@ function onJerseyChange(sel) {
       notif.innerHTML = '<i class="ti ti-check" style="font-size:9px"></i> OK';
       notif.className = 'jersey-notif jok';
     } else {
-      notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Stok ' + ukuran + ' habis!';
+      notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Stok habis';
       notif.className = 'jersey-notif jwarn';
     }
   }
@@ -1779,7 +1794,7 @@ function updateGkOptions(gkSel) {
   const notif = gkSel.nextElementSibling;
   const row = gkSel.closest('tr');
   const ukuranTd = row ? row.children[9] : null;
-  const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+  const ukuran = getUkuranFromTd(ukuranTd);
   const usage = computeJerseyUsage(row);
 
   // Rebuild options — daftar warna tim (ikut stok jersey terbaru) + opsi "GK" khusus
@@ -1822,7 +1837,7 @@ function updateGkOptions(gkSel) {
       notif.innerHTML = '<i class="ti ti-check" style="font-size:9px"></i> OK';
       notif.className = 'jersey-notif jok';
     } else {
-      notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Stok ' + ukuran + ' habis!';
+      notif.innerHTML = '<i class="ti ti-alert-triangle" style="font-size:9px"></i> Stok habis';
       notif.className = 'jersey-notif jwarn';
     }
   } else {
@@ -2051,7 +2066,7 @@ function computeJerseyUsage(excludeRow){
     if(!warna) return;
     const posisi = jerseySel.dataset.posisi === 'gk' ? 'gk' : 'field';
     const ukuranTd = row.children[9];
-    const ukuran = ukuranTd ? ukuranTd.textContent.trim() : '';
+    const ukuran = getUkuranFromTd(ukuranTd);
     if(!ukuran) return;
     const key = warna + '|' + posisi;
     if(!usage[key]) usage[key] = {};
@@ -2235,8 +2250,8 @@ function enterEditCell(el){
     return;
   }
   if(el.dataset && el.dataset.editType==='ukuran'){
-    const cur = el.textContent.trim();
-    const opts = UKURAN_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    const cur = (el.textContent.trim()==='—') ? '' : el.textContent.trim();
+    const opts = [''].concat(UKURAN_OPTIONS).map(o=>`<option value="${o}"${o===cur?' selected':''}>${o||'—'}</option>`).join('');
     el.innerHTML = `<select class="ms-ed-input" data-edit-type="ukuran" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
     return;
   }
@@ -2260,8 +2275,8 @@ function enterEditCell(el){
     // efeknya keliatan "kekunci", klik edit nggak ngubah apa-apa. Sekarang
     // jadi dropdown yang sama kayak di form Tambah player. "—" (mis. player
     // Free) dianggap belum ada pilihan — nggak ada yg keselect duluan.
-    const cur = el.textContent.trim();
-    const opts = STATUS_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    const cur = (el.textContent.trim()==='—') ? '' : el.textContent.trim();
+    const opts = [''].concat(STATUS_OPTIONS).map(o=>`<option value="${o}"${o===cur?' selected':''}>${o||'—'}</option>`).join('');
     el.innerHTML = `<select class="ms-ed-input" data-edit-type="status" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
     return;
   }
@@ -2379,7 +2394,7 @@ function commitInput(input){
   }
   if(input.dataset.editType==='ukuran'){
     const td = input.parentNode;
-    td.innerHTML = `<span class="b b-gy">${input.value}</span>`;
+    td.innerHTML = input.value ? `<span class="b b-gy">${input.value}</span>` : '—';
     return;
   }
   if(input.dataset.editType==='shtm-status'){
@@ -2399,6 +2414,10 @@ function commitInput(input){
   }
   if(input.dataset.editType==='status'){
     const td = input.parentNode;
+    if(!input.value){
+      td.innerHTML = '—';
+      return;
+    }
     const cls = input.value==='Lunas' ? 'b-gn' : (input.value==='Sementara' ? 'b-am' : 'b-gy');
     const dot = input.value==='Lunas' ? '<span class="sd sdg"></span>' : (input.value==='Sementara' ? '<span class="sd sda"></span>' : '');
     td.innerHTML = `<span class="b ${cls}">${dot}${input.value}</span>`;
@@ -4104,7 +4123,7 @@ function computeJerseyUsedListFromLiveDom(){
     const warna = jerseySel.value;
     if(!warna) return;
     const ukuranTd = row.children[9];
-    const uk = ukuranTd ? ukuranTd.textContent.trim() : '';
+    const uk = getUkuranFromTd(ukuranTd);
     if(!uk) return;
     list.push({ warna, uk });
   });
