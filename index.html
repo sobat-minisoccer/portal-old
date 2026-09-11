@@ -2883,7 +2883,12 @@ function recalcRekap(){
     }
   }
 }
-function recalcAll(){ recalcSlot(); recalcBiaya(); recalcRekap(); if(typeof refreshDashKumulatifWidget==='function') refreshDashKumulatifWidget(); }
+function recalcAll(){
+  recalcSlot(); recalcBiaya(); recalcRekap();
+  if(typeof refreshDashKumulatifWidget==='function') refreshDashKumulatifWidget();
+  if(typeof refreshDashLiveCharts==='function') refreshDashLiveCharts();
+  if(typeof refreshReportingLive==='function') refreshReportingLive();
+}
 
 /* ── LAPORAN PDF (Cost & Benefit) ──
    Format diadaptasi dari contoh laporan yg sudah dipakai (Biaya | Pembayaran
@@ -3006,6 +3011,65 @@ function refreshDashKumulatifWidget(){
   if(kumulMalikEl) kumulMalikEl.textContent = 'Rp ' + Math.round(live.malik).toLocaleString('id-ID');
   if(kumulFilanEl) kumulFilanEl.textContent = 'Rp ' + Math.round(live.filan).toLocaleString('id-ID');
   if(totalBersamaEl) totalBersamaEl.textContent = 'Rp ' + Math.round(live.malik+live.filan).toLocaleString('id-ID');
+}
+// Info "mentah" match yang SEDANG AKTIF sekarang (kalau ada & belum
+// ditutup) -- dipakai bareng2 sama chart Dashboard (Margin per match,
+// Profit per match) DAN chart/tabel Reporting (Margin per match, Shared
+// profit) di bawah, supaya semuanya nempelin 1 titik/baris tambahan yang
+// SAMA buat match yang lagi jalan, bukan cuma mentok di match TUTUP
+// terakhir yang sudah ada baris resminya di Rekap_Keuangan. null kalau
+// nggak ada match aktif, atau match aktifnya udah 'tutup' (udah otomatis
+// py baris sendiri di Rekap_Keuangan lewat submitTutupMatch -- kalau masih
+// ditambahin di sini juga, jadi dobel).
+function getLiveMatchInfo(){
+  if(!msActiveId || !msMatches[msActiveId] || msMatches[msActiveId].status === 'tutup') return null;
+  const m = msMatches[msActiveId];
+  const fin = computeFinancialsFromLiveDom();
+  let tahun = '';
+  if(m.tglIso){ tahun = m.tglIso.split('-')[0]; }
+  else { const ym = /((19|20)\d{2})/.exec(m.titleLine||''); if(ym) tahun = ym[1]; }
+  const tglMatch = (m.titleLine||'').split('—')[0].trim();
+  const tipeEventFallback = (m.titleLine||'').includes('—') ? (m.titleLine||'').split('—')[1].trim() : '';
+  return {
+    tglLabel: tglMatch + ' (aktif)',
+    tipeEvent: m.tipeEvent || tipeEventFallback,
+    jenisGameLabel: m.jenisGameLabel || (m.jenisGame==='football' ? 'Football (11 vs 11)' : 'Minisoccer (7 vs 7)'),
+    tahun, fin
+  };
+}
+// Bentuk ringkas dipakai chart Dashboard (persis format d.matches dari
+// getDashboard(): tgl/jenis/tipe/margin/lap/tahun).
+function liveMatchAsDashRow(){
+  const info = getLiveMatchInfo();
+  if(!info) return null;
+  return { tgl: info.tglLabel, jenis: info.jenisGameLabel, tipe: info.tipeEvent, margin: info.fin.margin, lap:'', tahun: info.tahun };
+}
+// Bentuk lengkap dipakai chart+tabel Reporting -- nama field-nya SAMA
+// PERSIS kolom Rekap_Keuangan asli (hasil getMatches()), jadi kode render
+// yang sudah ada (renderRptMarginTable/renderRptSplitTable/chart) bisa
+// pakai baris sintetis ini apa adanya tanpa perlu tau bedanya.
+// baselineKumM/F = kumulatif Malik/Filan SEBELUM match ini (dari baris
+// Rekap_Keuangan TERAKHIR) -- match yang masih aktif belum punya baris
+// sendiri di situ, jadi kumulatifnya dihitung nambahin di sini.
+function liveMatchAsRptRow(baselineKumM, baselineKumF){
+  const info = getLiveMatchInfo();
+  if(!info) return null;
+  const f = info.fin;
+  return {
+    'Match / Tanggal': info.tglLabel,
+    'Tipe Event': info.tipeEvent,
+    'Jenis\nGame': info.jenisGameLabel,
+    'Tahun': info.tahun,
+    'Sales\n(Rp)': f.sales,
+    'Cost Ops\n(Rp)': f.cost,
+    'Margin\n(Rp)': f.margin,
+    'Split Malik\n60% (Rp)': f.malik,
+    'Split Filan\n40% (Rp)': f.filan,
+    'Net Malik\n(Rp)': f.malik,
+    'Net Filan\n(Rp)': f.filan,
+    'Kumul Malik\n(Rp)': (baselineKumM||0) + f.malik,
+    'Kumul Filan\n(Rp)': (baselineKumF||0) + f.filan
+  };
 }
 // id opsional: match mana yg mau dilaporkan. Kosong/tidak diisi = match
 // yang lagi aktif di Transaksi (perilaku asli, dipakai tab Rekap akhir).
@@ -4563,6 +4627,31 @@ function applyRealMarginData(matches){
     ci = mkLine('chartMargin', MD['l'+k], MD['d'+k]);
   }
 }
+// Histori match yang SUDAH DITUTUP (dari getDashboard(), di-cache di sini
+// biar nggak perlu fetch ulang tiap kali chart perlu di-refresh) + 1 titik
+// tambahan match yang SEDANG AKTIF (kalau ada). null = belum pernah
+// berhasil ditarik dari database sama sekali (beda dari [] = sudah
+// ditarik, kebetulan memang belum ada match tutup) -- dipakai jaga2 biar
+// chart nggak keburu di-render pakai data kosong sebelum fetch pertama
+// kelar.
+let _dashMatchesRaw = null;
+function dashMatchesWithLive(){
+  const closed = _dashMatchesRaw || [];
+  const live = liveMatchAsDashRow();
+  return live ? closed.concat([live]) : closed;
+}
+// Dipanggil abis fetch pertama (loadDashboardRealStats) MAUPUN tiap kali
+// data match aktif berubah (recalcAll) -- jadi chart "Margin per match" &
+// "Profit per match — Minisoccer vs Football" selalu ikut gerak ngikutin
+// match yang lagi berjalan, bukan cuma diem di match tutup terakhir.
+function refreshDashLiveCharts(){
+  if(_dashMatchesRaw === null) return; // belum pernah sukses fetch -- jangan timpa data contoh
+  const withLive = dashMatchesWithLive();
+  try{ applyRealMarginData(withLive); }
+  catch(err){ console.error('Gagal render chart Margin per match:', err); }
+  try{ applyRealLapData(withLive); }
+  catch(err){ console.error('Gagal render chart Profit per match:', err); }
+}
 function loadDashboardRealStats(){
   if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
   fetch(GAS_URL + '?action=getDashboard')
@@ -4603,18 +4692,18 @@ function loadDashboardRealStats(){
         if(deltaFilanEl) deltaFilanEl.textContent = n>0 ? (fmtDeltaRp(d.deltaFilan) + ' dari ' + n + ' match terakhir') : 'Belum ada match sebelumnya';
       }
 
-      // Chart "Margin per match" (12/24/Semua) — dibungkus try/catch biar
-      // kalau Chart.js gagal ke-load (CDN lambat/diblok), chart satunya di
-      // bawah ini tetap kecoba, bukan ikut batal semua.
+      // Chart "Margin per match" & "Profit per match" -- di-cache dulu
+      // (_dashMatchesRaw), dirender lewat refreshDashLiveCharts() yg ikut
+      // nempelin 1 titik tambahan utk match yang SEDANG AKTIF sekarang
+      // (kalau ada & belum ditutup). Sebelum ini, dua chart itu CUMA baca
+      // d.matches (histori match yg SUDAH ditutup di Rekap_Keuangan) --
+      // jadi mentok di match tutup terakhir, nggak pernah gerak walau lagi
+      // ada match aktif berjalan. refreshDashLiveCharts() dipanggil ulang
+      // tiap recalcAll() juga, jadi kedua chart ini "hidup" ngikutin
+      // perubahan Slot Player/Biaya match aktif real-time.
       if(Array.isArray(d.matches)){
-        try{ applyRealMarginData(d.matches); }
-        catch(err){ console.error('Gagal render chart Margin per match:', err); }
-      }
-
-      // Chart "Profit per match — Minisoccer vs Football" (butuh kolom Tahun)
-      if(Array.isArray(d.matches)){
-        try{ applyRealLapData(d.matches); }
-        catch(err){ console.error('Gagal render chart Profit per match:', err); }
+        _dashMatchesRaw = d.matches;
+        refreshDashLiveCharts();
       }
     })
     .catch(err=>{ console.error('Gagal ambil data Dashboard dari database:', err); });
@@ -5089,24 +5178,54 @@ function loadReportingMatches(){
     .then(data=>{
       if(data.error){ console.error('getMatches error:', data.error); return; }
       _rptMarginAllMatches = data;
-      renderRptSplitTable(data);
-      applyRptMarginFilter();
+      refreshReportingLive();
     })
     .catch(err=>{ console.error('Gagal ambil histori match dari database:', err); });
+}
+// Histori CLOSED (_rptMarginAllMatches, dari getMatches()/Rekap_Keuangan)
+// + 1 baris SINTETIS match yang SEDANG AKTIF sekarang (kalau ada & belum
+// ditutup) -- lihat liveMatchAsRptRow(). Baseline kumulatifnya diambil dari
+// baris Rekap_Keuangan TERAKHIR (sumber yang sama persis dipakai kartu
+// "Shared profit" di sini), supaya konsisten sama widget "Profit
+// kumulatif" di Dashboard.
+function reportingMatchesWithLive(){
+  const closed = _rptMarginAllMatches || [];
+  const last = closed[closed.length-1];
+  const baseM = last ? (parseFloat(last['Kumul Malik\n(Rp)'])||0) : 0;
+  const baseF = last ? (parseFloat(last['Kumul Filan\n(Rp)'])||0) : 0;
+  const live = liveMatchAsRptRow(baseM, baseF);
+  return live ? closed.concat([live]) : closed;
+}
+// Dipanggil abis fetch pertama (loadReportingMatches) MAUPUN tiap kali
+// data match aktif berubah (recalcAll) -- biar tab "Margin per match" &
+// "Shared profit" di Reporting sama-sama ikut gerak live, bukan cuma
+// mentok di match tutup terakhir ("15 Agust BOSS" dst).
+function refreshReportingLive(){
+  const withLive = reportingMatchesWithLive();
+  renderRptSplitTable(withLive);
+  // Dibungkus try/catch: applyRptMarginFilter() juga nggambar chart pakai
+  // Chart.js (renderRptMarginChart) -- kalau CDN-nya lagi lambat/diblok,
+  // dulu ini cuma bikin tab Reporting gagal render sekali. Sekarang
+  // refreshReportingLive() ikut dipanggil dari recalcAll() (biar live),
+  // yang jalan JAUH lebih sering -- tanpa try/catch, 1x gagal load Chart.js
+  // bakal bikin SETIAP recalcAll() lempar error nggak ketangkep dan
+  // ngerusak seluruh alur kalkulasi setelahnya, bukan cuma chart doang.
+  try{ applyRptMarginFilter(); }
+  catch(err){ console.error('Gagal render tab Margin per match (Reporting):', err); }
 }
 // Filter "Periode"/"Tipe" di atas tab Margin per match sebelumnya cuma
 // dekorasi — nggak ada onchange sama sekali, dan grafiknya (#chartRptMargin)
 // selalu digambar pakai data dummy dashboard (MD.l24/d24), sama sekali
 // nggak nyambung ke histori match yang sebenarnya. Sekarang keduanya
-// (grafik DAN tabel di bawahnya) sama-sama difilter dari histori asli
-// (_rptMarginAllMatches, hasil getMatches()) tiap kali salah satu filter
+// (grafik DAN tabel di bawahnya) sama-sama difilter dari histori asli +
+// match aktif (reportingMatchesWithLive()) tiap kali salah satu filter
 // diganti.
 function applyRptMarginFilter(){
   const periodeSel = document.getElementById('rpt-margin-periode');
   const tipeSel = document.getElementById('rpt-margin-tipe');
   const periode = periodeSel ? periodeSel.value : 'Semua match';
   const tipe = tipeSel ? tipeSel.value : 'Semua tipe';
-  let filtered = _rptMarginAllMatches;
+  let filtered = reportingMatchesWithLive();
   if(periode && periode!=='Semua match'){
     filtered = filtered.filter(m => String(m['Tahun']||'').trim() === periode);
   }
