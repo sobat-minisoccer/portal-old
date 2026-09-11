@@ -273,7 +273,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 <div class="cont">
   <div class="pg-hd">
     <div><div class="pg-title">Dashboard</div><div class="pg-sub">Sobat Minisoccer · 44 match sejak Oktober 2023</div></div>
-    <span class="pub-badge"><i class="ti ti-world" style="font-size:12px"></i> Live Reporting</span>
+    <span class="pub-badge"><i class="ti ti-world" style="font-size:12px"></i> Publik — tanpa login</span>
   </div>
 
   <!-- 3 metric cards: hapus shared profit dobel, cukup 1 -->
@@ -905,8 +905,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div class="modal-hd"><div class="modal-title"><i class="ti ti-users" style="color:var(--ac)"></i> <span id="db-player-modal-title-text">Database Player — 143 player</span></div><button class="ib" onclick="closeModal('m-db-player')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body" style="padding:0">
       <div style="padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;gap:8px">
-        <input type="text" placeholder="Cari nama..." style="flex:1;font-size:12px;padding:7px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)">
-        <select style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)"><option>Semua kategori</option><option>SMS</option><option>BMR</option><option>Umum</option></select>
+        <input type="text" id="dbp-search" placeholder="Cari nama..." oninput="filterDbPlayerModal()" style="flex:1;font-size:12px;padding:7px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)">
+        <select id="dbp-kategori" onchange="filterDbPlayerModal()" style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd);font-family:var(--fn)"><option>Semua kategori</option><option>SMS</option><option>BMR</option><option>Umum</option></select>
       </div>
       <table class="tbl">
         <thead><tr><th>No</th><th>Nama</th><th>Kategori</th><th>Hadir</th><th>Last match</th><th>Jersey</th><th>Deposit</th><th>SHTM</th></tr></thead>
@@ -2089,7 +2089,14 @@ function enterEditCell(el){
   }
   if(el.dataset && el.dataset.editType==='shtm-status'){
     const cur = el.textContent.trim();
-    const opts = SHTM_STATUS_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+    // Kolom SHTM di Kelola Player dapat tambahan opsi "—" (blm pernah punya
+    // SHTM sama sekali) — beda sama Daftar SHTM (adm-shtm) yang tiap baris
+    // MEMANG catatan SHTM asli, jadi nggak masuk akal ada opsi "belum ada
+    // status" di situ. Sam laporin dropdown ini maksa milih Belum/Sudah
+    // dipakai walau player-nya beneran belum pernah punya SHTM.
+    const isKelolaPlayer = !!el.closest('#player-tbody');
+    const optionList = isKelolaPlayer ? ['—'].concat(SHTM_STATUS_OPTIONS) : SHTM_STATUS_OPTIONS;
+    const opts = optionList.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
     el.innerHTML = `<select class="ms-ed-input" data-edit-type="shtm-status" style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--ac);background:var(--su);font-family:var(--fn)">${opts}</select>`;
     return;
   }
@@ -2219,8 +2226,17 @@ function commitInput(input){
   }
   if(input.dataset.editType==='shtm-status'){
     const td = input.parentNode;
-    const cls = input.value==='Sudah dipakai' ? 'b-gn' : 'b-sh';
-    td.innerHTML = `<span class="b ${cls}">${input.value}</span>`;
+    if(input.value==='—'){
+      // "Blm pernah punya SHTM" — plain "—" tanpa badge, sama kayak pola
+      // "belum ada data" di kolom lain (Deposit, Bank/Cash, dst), bukan
+      // dipaksa jadi badge Belum/Sudah dipakai.
+      td.textContent = '—';
+      td.style.color = 'var(--mu)';
+    } else {
+      const cls = input.value==='Sudah dipakai' ? 'b-gn' : 'b-sh';
+      td.innerHTML = `<span class="b ${cls}">${input.value}</span>`;
+      td.style.color = '';
+    }
     return;
   }
   if(input.dataset.editType==='status'){
@@ -4189,7 +4205,7 @@ function loadDbPlayersModal(){
 // Pagination generik 10 baris/halaman — dipakai bareng buat modal Database
 // Player & tabel admin Kelola player (dua state independen).
 const DBP_PAGE_SIZE = 10;
-let _dbModalRows = [], _dbModalPage = 1;
+let _dbModalRows = [], _dbModalViewRows = [], _dbModalPage = 1;
 let _playerDbRows = [], _playerDbPage = 1;
 function renderDbPager(prefix, rows, page){
   const pager = document.getElementById(prefix+'-pager');
@@ -4207,8 +4223,26 @@ function renderDbPager(prefix, rows, page){
   if(nextBtn) nextBtn.disabled = page>=totalPages;
 }
 function dbPlayerGoPage(delta){
-  const totalPages = Math.max(1, Math.ceil(_dbModalRows.length / DBP_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(_dbModalViewRows.length / DBP_PAGE_SIZE));
   _dbModalPage = Math.min(totalPages, Math.max(1, _dbModalPage + delta));
+  renderDbPlayerModalPage();
+}
+// Search + filter kategori di modal "Database Player" — inputnya kemarin
+// beneran nggak nyambung ke apa pun (nggak ada id/handler sama sekali),
+// jadi ngetik apa aja di situ nggak ngefek. _dbModalRows tetap nyimpen SEMUA
+// player hasil fetch (sumber kebenaran, nggak boleh diganti oleh filter),
+// hasil filternya masuk ke _dbModalViewRows yang baru dipaging/dirender.
+function filterDbPlayerModal(){
+  const qEl = document.getElementById('dbp-search');
+  const katEl = document.getElementById('dbp-kategori');
+  const q = qEl ? qEl.value.trim().toLowerCase() : '';
+  const kat = katEl ? katEl.value : 'Semua kategori';
+  _dbModalViewRows = _dbModalRows.filter(p=>{
+    if(q && !String(p['Nama Player']||'').toLowerCase().includes(q)) return false;
+    if(kat && kat!=='Semua kategori' && String(p['Kategori']||'').trim() !== kat) return false;
+    return true;
+  });
+  _dbModalPage = 1;
   renderDbPlayerModalPage();
 }
 function playerDbGoPage(delta){
@@ -4227,14 +4261,18 @@ function renderDbPlayerModal(players){
     return;
   }
   _dbModalRows = players;
-  _dbModalPage = 1;
-  renderDbPlayerModalPage();
+  filterDbPlayerModal(); // hormatin isian search/kategori yg mgkn udah keisi dari sebelumnya, sekalian set _dbModalViewRows + render
 }
 function renderDbPlayerModalPage(){
   const tbody = document.getElementById('db-player-modal-tbody');
   if(!tbody) return;
+  if(!_dbModalViewRows.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--mu)">Nama player tidak ditemukan.</td></tr>';
+    const pager = document.getElementById('db-player-pager'); if(pager) pager.style.display='none';
+    return;
+  }
   const start = (_dbModalPage-1)*DBP_PAGE_SIZE;
-  const pageRows = _dbModalRows.slice(start, start+DBP_PAGE_SIZE);
+  const pageRows = _dbModalViewRows.slice(start, start+DBP_PAGE_SIZE);
   tbody.innerHTML = pageRows.map(p=>{
     const no = p['No']!=null ? p['No'] : '';
     const nama = p['Nama Player'] || '';
@@ -4253,7 +4291,7 @@ function renderDbPlayerModalPage(){
       + '<td' + (hasDeposit?' style="color:var(--am);font-weight:500"':'') + '>' + escAttr(deposit) + '</td>'
       + '<td>' + escAttr(shtm) + '</td></tr>';
   }).join('');
-  renderDbPager('db-player', _dbModalRows, _dbModalPage);
+  renderDbPager('db-player', _dbModalViewRows, _dbModalPage);
 }
 window.addEventListener('DOMContentLoaded', loadDbPlayersModal);
 
