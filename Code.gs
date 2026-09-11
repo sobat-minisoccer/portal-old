@@ -63,6 +63,7 @@ function doPost(e) {
       case 'useShtm':           result = useShtm(payload); break;
       case 'addDeposit':        result = addDeposit(payload); break;
       case 'useDeposit':        result = useDeposit(payload); break;
+      case 'deleteDeposit':     result = deleteDeposit(payload); break;
       case 'closeMatch':        result = closeMatch(payload); break;
       case 'updateStokJersey':  result = updateStokJersey(payload); break;
       case 'addPlayerDb':       result = addNewPlayer(payload); break;
@@ -597,10 +598,55 @@ function getPlayerDepositSaldo(nama) {
 }
 function adjustPlayerDepositSaldo(nama, delta) {
   const info = getPlayerDepositSaldo(nama);
-  if (info.rowIdx < 0 || info.depositCol < 1) return null;
+  if (info.rowIdx < 0) {
+    // Belum ada row DB_Player buat nama ini. Kalau ini nambah saldo (delta
+    // positif — dari addDeposit/topup, mis. hasil "Cancel → Deposit" buat
+    // player yg blm pernah didaftarin manual ke DB), bikinin row baru
+    // otomatis — biar player ini muncul di Kelola Player & saldo depositnya
+    // nggak "gantung" (ada transaksinya tapi nggak nongol di mana pun).
+    // Kalau ngurangin (delta negatif — dari useDeposit/deleteDeposit),
+    // nggak ada row utk ditulis, nggak mungkin ada apa2 yg dikurangin, jadi
+    // dibiarin aja (useDeposit sendiri udah nolak duluan krn saldo 0).
+    if (delta > 0) {
+      writeNewPlayerRow({ nama, deposit: delta,
+        catatan: 'Otomatis dibuat dari transaksi deposit — blm pernah didaftarkan manual' });
+      return delta;
+    }
+    return null;
+  }
+  if (info.depositCol < 1) return null;
   const next = Math.max(0, info.saldo + delta);
   info.ws.getRange(info.rowIdx, info.depositCol).setValue(next);
   return next;
+}
+// ── Perkakas SEKALI-JALAN (dari editor Apps Script: pilih function ini di
+// dropdown "Run", klik Run) — nyisir Deposit_Log nyari nama yang punya
+// saldo aktif (dari akumulasi transaksi lama) tapi BELUM ada row-nya sama
+// sekali di DB_Player (mis. walk-in yang keburu dikonversi jadi deposit
+// lewat "Cancel → Deposit" tapi nggak pernah didaftarin manual ke DB) —
+// makanya nggak nongol di Kelola Player padahal beneran punya saldo. Bikin
+// row baru buat tiap nama begitu, isi Saldo Deposit-nya dari total riwayat
+// ledger. Aman dijalanin berkali-kali — nama yang udah ada row-nya dilewatin.
+function syncMissingDepositPlayers() {
+  const ws   = getSheet(SHEET.DEPOSIT);
+  const data = ws.getDataRange().getValues();
+  const totals = {}; // nama -> total saldo (masuk - keluar) dari ledger
+  for (let r = 2; r < data.length; r++) {
+    const nama = data[r][1];
+    if (!nama) continue;
+    totals[nama] = (totals[nama] || 0) + (toNum(data[r][5]) - toNum(data[r][6]));
+  }
+  const dibuat = [];
+  Object.keys(totals).forEach(nama => {
+    if (totals[nama] <= 0) return; // saldo abis/nol — nggak perlu row baru
+    const info = getPlayerDepositSaldo(nama);
+    if (info.rowIdx >= 0) return; // udah ada row-nya, lewatin
+    writeNewPlayerRow({ nama, deposit: totals[nama],
+      catatan: 'Otomatis dibuat — punya saldo deposit di riwayat tapi blm pernah didaftarkan manual' });
+    dibuat.push(nama + ' (Rp ' + totals[nama] + ')');
+  });
+  Logger.log('Player DB_Player dibuatkan baru: ' + (dibuat.length ? dibuat.join(', ') : '(tidak ada yang perlu dibuat)'));
+  return { ok: true, dibuat };
 }
 function addDeposit(p) {
   const ws      = getSheet(SHEET.DEPOSIT);
@@ -626,6 +672,27 @@ function useDeposit(p) {
   ]]);
   adjustPlayerDepositSaldo(p.namaPemain, -p.jumlah);
   return { ok: true, saldoSisa };
+}
+
+// Hapus 1 baris deposit dari daftar "Tambah Deposit" (frontend, tab
+// Deposit) — dulu tombol hapus di situ cuma ngilangin baris di layar
+// (row.remove() doang), nggak pernah ngirim apa2 ke backend, jadi saldo
+// yang sempat ditambahin (addDeposit) tetap nempel di database selama-
+// lamanya walau udah "dihapus" di tampilan. Sekarang penghapusan itu
+// ngirim ke sini, ditulis sbg baris pembalik di Deposit_Log (riwayatnya
+// tetap append-only, bukan ngedit/ngehapus baris yg lama — konsisten sama
+// pola "batal pakai deposit" yg juga nulis baris pembalik, bukan nge-undo
+// baris asalnya) sekaligus ngurangin saldo DB_Player-nya beneran.
+function deleteDeposit(p) {
+  const ws      = getSheet(SHEET.DEPOSIT);
+  const lastRow = ws.getLastRow() + 1;
+  const saldoBaru = adjustPlayerDepositSaldo(p.nama, -p.jumlah);
+  ws.getRange(lastRow, 1, 1, 8).setValues([[
+    today(), p.nama, p.matchId || '—',
+    'Dihapus', p.keterangan || 'Dihapus dari daftar Tambah Deposit',
+    0, p.jumlah, saldoBaru != null ? saldoBaru : ''
+  ]]);
+  return { ok: true, saldoDbPlayer: saldoBaru };
 }
 
 // ── POST: Stok Jersey ───────────────────────────────────────
@@ -1051,7 +1118,11 @@ function deleteScorer(p) {
 // urutan kolomnya udah kebukti beda dari asumsi lama kode ini. Nulis
 // berdasarkan NAMA kolom, jadi walau urutan asli beda, tetep masuk ke
 // kolom yang benar (bukan positional/asal-nempel-index).
-function addNewPlayer(p) {
+// Ditarik jadi function terpisah (writeNewPlayerRow) krn dipakai juga sama
+// createPlayerDbRowMinimal (row baru yang dibuat OTOMATIS krn ada transaksi
+// deposit atas nama yang blm terdaftar) — biar dua-duanya nulis kolom yg
+// sama persis, nggak ada yg beda sendiri kalau nanti header sheet berubah.
+function writeNewPlayerRow(opts) {
   const { ws, map, hdrs } = getHeaderMap(SHEET.PLAYER, 2);
   const lastRow = ws.getLastRow() + 1;
   const no      = lastRow - 2;
@@ -1061,24 +1132,31 @@ function addNewPlayer(p) {
     if (c > 0) rowArr[c-1] = val;
   }
   set(['No'], no);
-  set(['Nama Player','Nama'], p.nama);
-  set(['Kategori'], p.kategori || '—');
+  set(['Nama Player','Nama'], opts.nama);
+  set(['Kategori'], opts.kategori || '—');
   set(['Total Hadir','Total\nHadir'], 0);
   set(['Total Gol','Total\nGol'], 0);
   set(['Total SHTM','Total\nSHTM'], 0);
-  set(['Ukuran Jersey','Ukuran\nDominan','Ukuran'], p.ukuran || '—');
+  set(['Ukuran Jersey','Ukuran\nDominan','Ukuran'], opts.ukuran || '—');
   set(['Warna Favorit','Warna\nFavorit'], '—');
-  set(DEPOSIT_COL_ALIASES, 0);
+  set(DEPOSIT_COL_ALIASES, opts.deposit || 0);
   set(['Metode Favorit','Metode\nFavorit'], '—');
   set(['Bank'], '—');
-  set(['Kontak'], p.kontak || '—');
-  set(['Jersey Pribadi','Jersey\nPribadi'], p.jerseyPribadi || '—');
-  set(['Alias'], p.alias || '—');
+  set(['Kontak'], opts.kontak || '—');
+  set(['Jersey Pribadi','Jersey\nPribadi'], opts.jerseyPribadi || '—');
+  set(['Alias'], opts.alias || '—');
   set(['Status'], 'Aktif');
   set(['Status SHTM','Status\nSHTM'], '—');
-  set(['Catatan'], p.catatan || '');
+  set(['Catatan'], opts.catatan || '');
   set(['Tgl Daftar','Tgl\nDaftar'], today());
   ws.getRange(lastRow, 1, 1, rowArr.length).setValues([rowArr]);
+  return lastRow;
+}
+function addNewPlayer(p) {
+  const lastRow = writeNewPlayerRow({
+    nama: p.nama, kategori: p.kategori, ukuran: p.ukuran, kontak: p.kontak,
+    jerseyPribadi: p.jerseyPribadi, alias: p.alias, catatan: p.catatan
+  });
   return { ok: true, row: lastRow };
 }
 
@@ -1093,6 +1171,7 @@ function updatePlayerDb(p) {
   }
   set(['Nama Player','Nama'], p.nama);
   set(['Kategori'], p.kategori);
+  set(['Total Hadir','Total\nHadir'], p.hadir);
   set(['Ukuran Jersey','Ukuran\nDominan','Ukuran'], p.ukuran);
   set(DEPOSIT_COL_ALIASES, p.deposit);
   set(['Status SHTM','Status\nSHTM'], p.statusShtm);

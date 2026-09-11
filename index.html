@@ -2160,6 +2160,11 @@ function enterEditCell(el){
     el.innerHTML = `<input class="ms-ed-input" type="number" min="0" step="1" data-edit-type="gol" value="${n}" style="width:64px">`;
     return;
   }
+  if(el.dataset && el.dataset.editType==='hadir'){
+    const n = parseInt(el.textContent.trim(),10) || 0;
+    el.innerHTML = `<input class="ms-ed-input" type="number" min="0" step="1" data-edit-type="hadir" value="${n}" style="width:64px">`;
+    return;
+  }
   if(el.dataset && el.dataset.editType==='tahun'){
     const cur = el.textContent.trim();
     const opts = TAHUN_OPTIONS.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
@@ -2274,6 +2279,11 @@ function commitInput(input){
     td.textContent = Math.max(0, parseInt(input.value,10) || 0);
     return;
   }
+  if(input.dataset.editType==='hadir'){
+    const td = input.parentNode;
+    td.textContent = Math.max(0, parseInt(input.value,10) || 0);
+    return;
+  }
   if(input.dataset.editType==='tahun'){
     const td = input.parentNode;
     td.innerHTML = `<span class="b b-gy">${input.value}</span>`;
@@ -2362,10 +2372,11 @@ function afterRowChange(row){
     }
     const rowIdx = row.dataset.rowIdx;
     if(rowIdx && typeof msPostToBackend==='function'){
-      const kategoriTd = tds[3], depositTd = tds[6];
+      const kategoriTd = tds[3], hadirTd = tds[4], depositTd = tds[6];
       msPostToBackend({ action:'updatePlayerDb', rowIdx: parseInt(rowIdx,10),
         nama: playerDbRowNama(row),
         kategori: kategoriTd ? kategoriTd.textContent.trim() : undefined,
+        hadir: hadirTd ? (parseInt(hadirTd.textContent.trim(),10)||0) : undefined,
         deposit: depositTd ? parseRupiah(depositTd.textContent) : undefined,
         statusShtm: status || undefined });
     }
@@ -4447,7 +4458,7 @@ function renderPlayerDbTablePage(){
     const shtm = hasShtm ? ('<span class="b '+shtmCls+'">'+escAttr(shtmRaw)+'</span>') : '—';
     return '<tr data-row-idx="'+(p._row||'')+'"><td data-no-edit="1">'+escAttr(String(no))+'</td><td class="pri">'+escAttr(nama)+'</td><td>—</td>'
       + '<td data-edit-type="kategori"><span class="b b-gy">'+escAttr(kategori)+'</span></td>'
-      + '<td>'+escAttr(String(hadir))+'</td><td>'+escAttr(lastMatch)+'</td>'
+      + '<td data-edit-type="hadir">'+escAttr(String(hadir))+'</td><td data-no-edit="1">'+escAttr(lastMatch)+'</td>'
       + '<td data-edit-type="deposit"'+(hasDeposit?' style="color:var(--am);font-weight:500"':'')+'>'+escAttr(deposit)+'</td>'
       + '<td data-edit-type="shtm-status">'+shtm+'</td>'
       + '<td><div class="acts"><button class="ib ib-edit"><i class="ti ti-edit"></i></button><button class="ib del"><i class="ti ti-trash"></i></button></div></td></tr>';
