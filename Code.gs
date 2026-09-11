@@ -65,6 +65,7 @@ function doPost(e) {
       case 'useDeposit':        result = useDeposit(payload); break;
       case 'deleteDeposit':     result = deleteDeposit(payload); break;
       case 'closeMatch':        result = closeMatch(payload); break;
+      case 'deleteRekapMatch':  result = deleteRekapMatch(payload); break;
       case 'updateStokJersey':  result = updateStokJersey(payload); break;
       case 'addPlayerDb':       result = addNewPlayer(payload); break;
       case 'updateConfig':      result = updateConfig(payload); break;
@@ -96,6 +97,27 @@ function getSheet(name) {
   return SS().getSheetByName(name);
 }
 
+// Kolom "tanggal-ish" di sheet ini (mis. "Match / Tanggal") ditulis sbg
+// STRING teks biasa ("6 September 2026" — lihat closeMatch()), TAPI Google
+// Sheets suka diam2 "membantu" ndeteksi string yg keliatan kayak tanggal
+// trus nyimpen selnya jadi tipe Date ASLI (tergantung locale spreadsheet)
+// walau ditulis via setValues() sbg string. Begitu kebaca lagi di sini,
+// baliknya jadi objek Date JS, lalu pas di-JSON.stringify() (jsonResponse)
+// otomatis jadi ISO mentah kayak "2026-09-06T07:00:00.000Z" — bukan lagi
+// "6 September 2026" — begitu nyampe ke frontend (ini yg bikin chart/tabel
+// Dashboard & Reporting keluar kode aneh, bukan nama tanggal/event). Jaga2
+// di SATU tempat ini (dipakai semua sheetToObjects()) -- kalau ternyata
+// selnya kebaca sbg Date asli, format ulang jadi teks Indonesia biasa dulu
+// SEBELUM keluar dari fungsi ini, jangan biarin objek Date mentah lolos.
+function formatSheetDateForOutput(val) {
+  if (val instanceof Date) {
+    const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli',
+                   'Agustus','September','Oktober','November','Desember'];
+    return val.getDate() + ' ' + bulan[val.getMonth()] + ' ' + val.getFullYear();
+  }
+  return val;
+}
+
 function sheetToObjects(sheetName, headerRow) {
   const ws   = getSheet(sheetName);
   const data = ws.getDataRange().getValues();
@@ -105,7 +127,7 @@ function sheetToObjects(sheetName, headerRow) {
     const row = data[r];
     if (!row[0] && !row[1]) continue; // skip empty rows
     const obj = {};
-    hdrs.forEach((h, i) => { obj[h] = row[i] === '' ? null : row[i]; });
+    hdrs.forEach((h, i) => { obj[h] = row[i] === '' ? null : formatSheetDateForOutput(row[i]); });
     obj._row = r + 1; // 1-based row index for updates
     rows.push(obj);
   }
@@ -866,6 +888,16 @@ function closeMatch(p) {
   const kumF     = prevKumF + nf;
 
   const matchNo = (insertRow - 3); // nomor match baru (baris 3 = BASELINE = match "0")
+  // Paksa kolom "Match / Tanggal" (kolom 2) jadi format TEKS biasa DULU
+  // sebelum ditulis -- kalau nggak, Sheets suka diam2 ndeteksi string
+  // "6 September 2026" ini sbg tanggal beneran & convert sel-nya jadi tipe
+  // Date asli. Baru ketauan pas dibaca lagi (getMatches/getDashboard),
+  // keluar jadi ISO mentah "2026-09-06T07:00:00.000Z" di chart/tabel
+  // Dashboard & Reporting (bukan "6 September 2026" lagi). Cegah dari sini,
+  // langsung pas ditulis -- lihat juga formatSheetDateForOutput() di
+  // sheetToObjects() sbg jaring pengaman baca-ulang kalau ada baris LAMA yg
+  // udah kadung ke-convert sebelum fix ini ada.
+  rekap.getRange(insertRow, 2, 1, 1).setNumberFormat('@');
   rekap.getRange(insertRow, 1, 1, 22).setValues([[
     matchNo, p.tglMatch, p.jenisGame, p.tipeEvent,
     p.venue, p.tipeLapangan,
@@ -891,6 +923,63 @@ function closeMatch(p) {
     splitMalik: sm, splitFilan: sf,
     kumulMalik: kumM, kumulFilan: kumF
   };
+}
+
+// ── POST: Hapus 1 baris match dari Rekap_Keuangan (mis. hasil dobel-klik
+// tutup match sebelum bug-nya dibenerin) + hitung ulang Kumul Malik/Kumul
+// Filan semua baris SESUDAHNYA dari awal (bukan cuma "kurangin" baris yg
+// dihapus) — biar sekalian self-heal kalau kumulatifnya kebetulan udah
+// keburu ngaco duluan. Kolom "No" match dirapikan ulang jadi 1,2,3,...
+// tapi CUMA utk baris yg "No"-nya emang udah angka bersih (baris lama/beda
+// format dibiarin apa adanya, nggak ikut disentuh) — konsisten sama filter
+// yg dipakai getMatches().
+function deleteRekapMatch(p) {
+  const row = parseInt(p.row, 10);
+  if (!row || row < 4) return { error: 'Baris tidak valid.' };
+  const ws = getSheet(SHEET.REKAP);
+  const data = ws.getDataRange().getValues();
+  const idx = row - 1; // 0-based index ke data[]
+  if (idx >= data.length) return { error: 'Baris tidak ditemukan (mungkin sudah dihapus sebelumnya).' };
+  const target = data[idx];
+
+  // Verifikasi baris yang mau dihapus BENERAN masih persis sama dengan yg
+  // ditampilkan di layar Reporting pas tombol hapus diklik -- jaga2 kalau
+  // sheet-nya berubah (mis. ada yg nutup match baru) di antara waktu
+  // Reporting terakhir di-fetch & tombol hapus diklik, supaya nggak salah
+  // hapus baris.
+  const targetTglFormatted = formatSheetDateForOutput(target[1]);
+  const targetSales = toNum(target[6]);
+  if (String(targetTglFormatted) !== String(p.confirmTgl || '') ||
+      String(target[3] || '') !== String(p.confirmTipe || '') ||
+      Math.round(targetSales) !== Math.round(toNum(p.confirmSales))) {
+    return { error: 'Data baris ini sudah berubah dari yang ditampilkan di layar — refresh dulu halaman Reporting-nya, lalu coba hapus lagi (biar nggak salah hapus baris).' };
+  }
+
+  ws.deleteRow(row);
+
+  // Hitung ulang Kumul Malik/Kumul Filan dari baris BASELINE (row 3) sampai
+  // baris terakhir yang tersisa.
+  const data2 = ws.getDataRange().getValues();
+  let kumM = toNum(data2[2] ? data2[2][14] : 0); // baseline, kolom O
+  let kumF = toNum(data2[2] ? data2[2][15] : 0); // baseline, kolom P
+  let matchNo = 0;
+  for (let r = 3; r < data2.length; r++) {
+    const rowData = data2[r];
+    if (!rowData[0] && !rowData[1]) continue; // baris kosong, lewatin
+    const isNumericNo = /^\d+$/.test(String(rowData[0]).trim());
+    const nm = toNum(rowData[12]); // Net Malik, kolom M
+    const nf = toNum(rowData[13]); // Net Filan, kolom N
+    kumM += nm;
+    kumF += nf;
+    ws.getRange(r + 1, 15).setValue(kumM); // Kumul Malik, kolom O
+    ws.getRange(r + 1, 16).setValue(kumF); // Kumul Filan, kolom P
+    if (isNumericNo) {
+      matchNo++;
+      ws.getRange(r + 1, 1).setValue(matchNo); // No, kolom A
+    }
+  }
+
+  return { ok: true, deletedRow: row, newLastKumulMalik: kumM, newLastKumulFilan: kumF };
 }
 
 // ── POST: Update Config ─────────────────────────────────────

@@ -89,14 +89,27 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 .in-tab:hover:not(.active){color:var(--tx)}
 .tab-p{display:none}.tab-p.active{display:block}
 
-/* TRANSAKSI SIDEBAR */
-.trx-wrap{display:flex;background:var(--su);border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:14px}
-.trx-side{width:152px;flex-shrink:0;border-right:1px solid var(--bd);background:var(--su2)}
-.trx-st{padding:11px 14px;font-size:12px;color:var(--mu);cursor:pointer;border-left:3px solid transparent;display:flex;align-items:center;gap:7px;white-space:nowrap;user-select:none}
-.trx-st.active{color:var(--ac);border-left-color:var(--ac);background:var(--su);font-weight:500}
+/* TRANSAKSI TAB BAR — dulu sidebar vertikal (5 baris numpuk ke bawah,
+   Sam bilang "kepanjangan"). Sekarang jadi bar horizontal di ATAS konten
+   (trx-side jadi baris, bukan kolom) — utk match AKTIF ini otomatis udah
+   ringkas (cuma 1 baris tinggi, bukan 5). Utk match yg UDAH DITUTUP,
+   barisnya bisa di-collapse ke atas/bawah (klik toggle -> baris tab
+   ke-sembunyiin, klik lagi -> kebuka) krn biasanya cuma perlu liat Rekap
+   akhir doang. Lihat toggleTrxSideMenu() (dipanggil default dari
+   msRestore() sesuai status match) — tetep bisa di-toggle manual kapan aja
+   lewat baris "Menu tab", baik match aktif maupun tutup. */
+.trx-wrap{display:flex;flex-direction:column;background:var(--su);border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.trx-side{width:auto;flex-shrink:0;border-right:none;border-bottom:1px solid var(--bd);background:var(--su2)}
+.trx-side-list{display:flex;flex-direction:row;flex-wrap:wrap}
+.trx-st{padding:11px 14px;font-size:12px;color:var(--mu);cursor:pointer;border-left:none;border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px;white-space:nowrap;user-select:none}
+.trx-st.active{color:var(--ac);border-bottom-color:var(--ac);background:var(--su);font-weight:500}
 .trx-st:hover:not(.active){color:var(--tx);background:#EAEAE7}
 .trx-main{flex:1;min-width:0;overflow-x:auto}
 .trx-p{display:none;padding:0}.trx-p.active{display:block}
+.trx-side-toggle{padding:10px 12px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--mu);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;user-select:none;border-bottom:1px solid var(--bd)}
+.trx-side-toggle:hover{color:var(--tx);background:#EAEAE7}
+.trx-side.collapsed .trx-side-list{display:none}
+.trx-side.collapsed .trx-side-toggle{border-bottom:none}
 
 /* FILTER BAR */
 .fbar{display:flex;gap:8px;align-items:center;padding:10px 16px;background:var(--su);border-bottom:1px solid var(--bd);flex-wrap:wrap}
@@ -473,9 +486,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       </div>
     </div>
     <table class="tbl">
-      <thead><tr><th>Match</th><th>Margin</th><th>Net Malik (60%)</th><th>Net Filan (40%)</th><th>Kumulatif Malik</th><th>Kumulatif Filan</th></tr></thead>
+      <thead><tr><th>Match</th><th>Margin</th><th>Net Malik (60%)</th><th>Net Filan (40%)</th><th>Kumulatif Malik</th><th>Kumulatif Filan</th><th style="width:44px">Aksi</th></tr></thead>
       <tbody id="rpt-split-tbody">
-        <tr><td colspan="6" style="color:var(--mu)">Memuat data dari database…</td></tr>
+        <tr><td colspan="7" style="color:var(--mu)">Memuat data dari database…</td></tr>
       </tbody>
     </table>
     <div id="rpt-split-pager" style="display:none;padding:10px 16px;border-top:1px solid var(--bd);align-items:center;justify-content:space-between;font-size:12px">
@@ -526,11 +539,14 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
 
     <div class="trx-wrap" style="border-radius:0;border:none;border-top:1px solid var(--bd)">
       <div class="trx-side">
-        <div class="trx-st active" onclick="trxTab('slot',this)"><i class="ti ti-users" style="font-size:13px"></i> Slot player</div>
-        <div class="trx-st" onclick="trxTab('biaya',this)"><i class="ti ti-receipt" style="font-size:13px"></i> Biaya match</div>
-        <div class="trx-st" onclick="trxTab('deposit',this)"><i class="ti ti-wallet" style="font-size:13px"></i> Deposit player</div>
-        <div class="trx-st" onclick="trxTab('gol',this)"><i class="ti ti-ball-football" style="font-size:13px"></i> Goal scorer</div>
-        <div class="trx-st" onclick="trxTab('rekap',this)"><i class="ti ti-chart-pie" style="font-size:13px"></i> Rekap akhir</div>
+        <div class="trx-side-toggle" onclick="toggleTrxSideMenu()" id="trx-side-toggle-btn"><span>Menu tab</span><i class="ti ti-chevron-up" id="trx-side-toggle-icon" style="font-size:13px"></i></div>
+        <div class="trx-side-list">
+          <div class="trx-st active" onclick="trxTab('slot',this)"><i class="ti ti-users" style="font-size:13px"></i> Slot player</div>
+          <div class="trx-st" onclick="trxTab('biaya',this)"><i class="ti ti-receipt" style="font-size:13px"></i> Biaya match</div>
+          <div class="trx-st" onclick="trxTab('deposit',this)"><i class="ti ti-wallet" style="font-size:13px"></i> Deposit player</div>
+          <div class="trx-st" onclick="trxTab('gol',this)"><i class="ti ti-ball-football" style="font-size:13px"></i> Goal scorer</div>
+          <div class="trx-st" onclick="trxTab('rekap',this)"><i class="ti ti-chart-pie" style="font-size:13px"></i> Rekap akhir</div>
+        </div>
       </div>
       <div class="trx-main">
 
@@ -782,10 +798,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
           <div style="padding:14px 16px;border-top:1px solid var(--bd);display:flex;gap:8px">
             <button class="btn" onclick="generateLaporanPdf();openModal('m-laporan-pdf')"><i class="ti ti-file-text"></i> Lihat / cetak laporan PDF</button>
           </div>
-          <div style="padding:14px 16px;border-top:1px solid var(--bd);background:var(--am2)">
+          <div style="padding:14px 16px;border-top:1px solid var(--bd);background:var(--am2)" id="rkg-tutup-box">
             <div style="font-size:12px;font-weight:500;color:var(--am);margin-bottom:4px"><i class="ti ti-lock"></i> Tutup match untuk mengunci semua transaksi</div>
             <div style="font-size:11px;color:var(--am);margin-bottom:10px">Setelah ditutup, data tidak bisa diubah. Laporan PDF tetap bisa dilihat/dicetak kapan saja dari tombol di atas.</div>
-            <button class="btn btn-dng" onclick="openTutupMatchModal()"><i class="ti ti-lock"></i> Tutup dan kunci match ini</button>
+            <button class="btn btn-dng" id="rkg-tutup-btn" onclick="openTutupMatchModal()"><i class="ti ti-lock"></i> Tutup dan kunci match ini</button>
+          </div>
+          <div style="padding:14px 16px;border-top:1px solid var(--bd);background:var(--su2);display:none" id="rkg-tutup-done-box">
+            <div style="font-size:12px;font-weight:500;color:var(--mu)"><i class="ti ti-lock"></i> Match ini sudah ditutup dan dikunci — semua transaksi tidak bisa diubah lagi.</div>
           </div>
         </div>
 
@@ -1009,6 +1028,29 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
       <div class="info info-gn"><i class="ti ti-file-text"></i> Laporan PDF bisa dilihat/dicetak dari tombol "Lihat / cetak laporan PDF" di tab Rekap akhir, sebelum maupun sesudah match ditutup.</div>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeModal('m-tutup-match')">Batal</button><button class="btn btn-dng" onclick="submitTutupMatch()"><i class="ti ti-lock"></i> Ya, tutup match</button></div>
+  </div>
+</div>
+
+<!-- Modal: hapus 1 baris match dari Rekap_Keuangan (Reporting > Shared
+     profit) -- dipakai a.l. buat beresin baris dobel akibat bug tutup
+     match ke-klik 2x. Beda dari konfirmasi hapus generik "Hapus? Ya/Batal"
+     yg dipakai di tabel2 draft (Slot player dst) -- ini nyentuh baris yg
+     UDAH tersimpan di database beneran + ngitung ulang kumulatif semua
+     match sesudahnya, jadi sengaja dikasih modal + peringatan sendiri yg
+     lebih jelas, bukan konfirmasi inline biasa. -->
+<div id="m-hapus-rekap" class="modal-ov" onclick="bgClose(event,'m-hapus-rekap')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-trash" style="color:var(--rd)"></i> Hapus match dari Rekap Keuangan</div><button class="ib" onclick="closeModal('m-hapus-rekap')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="info info-am" style="margin-bottom:12px"><i class="ti ti-alert-triangle"></i> Ini menghapus baris match ini dari database Rekap Keuangan secara permanen, dan menghitung ulang Kumulatif Malik/Filan untuk semua match SESUDAHNYA. Tidak bisa dibatalkan dari sini (kalau salah hapus, kembalikan lewat Version History Google Sheets).</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;margin-bottom:4px">
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Match / Tanggal</span><span style="font-weight:600" id="hr-tgl">—</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Tipe Event</span><span style="font-weight:600" id="hr-tipe">—</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Sales</span><span style="font-weight:600" id="hr-sales">Rp 0</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Margin</span><span style="font-weight:600" id="hr-margin">Rp 0</span></div>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('m-hapus-rekap')">Batal</button><button class="btn btn-dng" onclick="submitHapusRekap()" id="hr-confirm-btn"><i class="ti ti-trash"></i> Ya, hapus match ini</button></div>
   </div>
 </div>
 
@@ -1454,6 +1496,20 @@ function trxTab(id,btn){
   document.querySelectorAll('.trx-st').forEach(t=>t.classList.remove('active'));
   document.getElementById('trx-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
+}
+// Buka/tutup daftar tab Transaksi (Slot player/Biaya/Deposit/Goal scorer/
+// Rekap akhir) — dipanggil dari klik baris "Menu tab", ATAU dipanggil
+// program (msRestore) dgn `forceCollapsed` buat nentuin default: collapsed
+// kalau match-nya UDAH ditutup (biasanya cuma perlu buka Rekap akhir),
+// expanded kalau masih aktif (masih sering gonta-ganti tab). Tetap bisa
+// di-toggle manual kapan aja, terlepas dari status match-nya.
+function toggleTrxSideMenu(forceCollapsed){
+  const side = document.querySelector('.trx-side');
+  const icon = document.getElementById('trx-side-toggle-icon');
+  if(!side) return;
+  const collapsed = (typeof forceCollapsed === 'boolean') ? forceCollapsed : !side.classList.contains('collapsed');
+  side.classList.toggle('collapsed', collapsed);
+  if(icon) icon.className = collapsed ? 'ti ti-chevron-down' : 'ti ti-chevron-up';
 }
 function adminTab(id,btn){
   ['adm-jersey','adm-shtm','adm-config','adm-player','adm-scorer'].forEach(i=>{
@@ -2112,20 +2168,23 @@ function refreshAllJerseySelects(){
    Biru/Hijau) dan angkanya statis, jadi warna baru yg ditambah lewat
    "Tambah stok" (mis. Hitam Pink) tidak pernah muncul di sini. Sekarang
    tabel dibangun dari JERSEY_STOK apa adanya (warna & ukuran apa pun),
-   dan "terpakai" dihitung real dari slot player match yg sedang aktif.
-   Format sel: {terpakai}/{total} — sisi kiri jumlah yg sudah dipakai
-   di match ini, sisi kanan total stok yg dimiliki. */
+   dan "terpakai" dihitung real dari computeJerseyUsage() -- AKUMULASI
+   slot player dari SEMUA match yg lagi aktif/belum ditutup sekaligus
+   (bukan cuma match yg kebetulan lagi kebuka di layar), lihat komentar
+   lengkap di computeJerseyUsage(). Format sel: {terpakai}/{total} —
+   sisi kiri jumlah yg sudah dipakai di SEMUA match aktif, sisi kanan
+   total stok yg dimiliki. */
 const JERSEY_SIZE_ORDER = ['S','M','L','XL','2XL','3XL'];
 // excludeRow (opsional): lewatin baris ini pas ngitung usage — dipakai pas
 // ngecek "boleh nggak SI BARIS INI pilih warna X" biar dia nggak ketauan
 // ngeblok pilihannya sendiri (pilihan yg udah dia pegang bukan "jatah orang
 // lain" yg harus dikurangin dari sisa stok buat dia sendiri).
-function computeJerseyUsage(excludeRow){
-  // key "{warna}|field" atau "{warna}|gk" -> {ukuran: jumlah}. Dipisah per
-  // posisi supaya nama yg sama (mis. keduanya "GK") tidak ketuker antara
-  // stok Field & stok GK.
-  const usage = {};
-  document.querySelectorAll('#slot-tbody tr').forEach(row=>{
+// Tambahin hitungan jersey dari sekumpulan <tr> (baik dari DOM live maupun
+// dari hasil parse ulang snapshot HTML match lain) ke `usage` yg dikasih --
+// dipisah biar bisa dipanggil berkali2 buat AKUMULASI lintas match di
+// computeJerseyUsage() di bawah.
+function accumulateJerseyUsageFromRows(rows, usage, excludeRow){
+  rows.forEach(row=>{
     if(excludeRow && row===excludeRow) return;
     const jerseySel = row.querySelector('.jersey-sel');
     if(!jerseySel) return;
@@ -2139,6 +2198,58 @@ function computeJerseyUsage(excludeRow){
     if(!usage[key]) usage[key] = {};
     usage[key][ukuran] = (usage[key][ukuran]||0) + 1;
   });
+}
+// Parse ulang snapshot slotHtml match LAIN (yg lagi nggak ditampilkan di
+// layar) trus akumulasiin jersey-nya ke `usage`. Aman dibaca via .value
+// stlh di-parse krn tiap kali user ganti jersey, semua <select> field/GK
+// selalu di-rebuild ulang (rebuildAllJerseySelectOptions -> innerHTML brand
+// baru dgn atribut selected="" ke-tulis eksplisit di string HTML-nya --
+// lihat buildFieldJerseyOptionsHtml/updateGkOptions), BUKAN cuma di-set
+// lewat properti `.value` JS. Jadi pilihan jersey yg beneran aktif tetap
+// "nempel" scr valid di attribute selected= walau di-innerHTML-in ulang
+// jadi string trus di-parse lagi di sini.
+let _jerseyUsageParseTmp = null;
+function accumulateJerseyUsageFromSlotHtml(html, usage){
+  if(!html) return;
+  if(!_jerseyUsageParseTmp) _jerseyUsageParseTmp = document.createElement('tbody');
+  _jerseyUsageParseTmp.innerHTML = html;
+  accumulateJerseyUsageFromRows([..._jerseyUsageParseTmp.querySelectorAll('tr')], usage, null);
+}
+function computeJerseyUsage(excludeRow){
+  // key "{warna}|field" atau "{warna}|gk" -> {ukuran: jumlah}. Dipisah per
+  // posisi supaya nama yg sama (mis. keduanya "GK") tidak ketuker antara
+  // stok Field & stok GK.
+  //
+  // Stok jersey itu SATU KOLAM BERSAMA yg dipakai bareng semua match yg
+  // lagi AKTIF (belum ditutup) di saat yg SAMA -- bukan cuma match yg
+  // kebetulan lagi kebuka di layar. Makanya usage di sini diakumulasi dari
+  // 2 sumber: (1) match yg SEDANG kebuka di DOM (live, per baris -- boleh
+  // exclude baris tertentu via excludeRow, dipakai pas ngecek "boleh gak
+  // BARIS INI milih warna X" biar dia nggak keitung ngeblok pilihannya
+  // sendiri), dan (2) SEMUA match LAIN di msMatches yg status-nya masih
+  // 'aktif' (bukan 'tutup') -- datanya diambil dari snapshot slotHtml yg
+  // kesimpen di situ (match itu nggak lagi nampil di DOM, jadi dibaca dari
+  // snapshot, bukan document.querySelectorAll). Match yg SUDAH 'tutup'
+  // sengaja TIDAK dihitung -- begitu match resmi ditutup, jersey yg
+  // kepakai di situ otomatis "balik" ke kolam stok bersama.
+  const usage = {};
+  const activeM = (typeof msMatches!=='undefined' && msActiveId) ? msMatches[msActiveId] : null;
+  // Match yg lagi kebuka di layar juga cuma diitung kalau statusnya BELUM
+  // 'tutup' -- soalnya submitTutupMatch() ngubah status trus msRestore()
+  // ulang MATCH YG SAMA (msActiveId nggak pindah), jadi baris2-nya tetap
+  // ada di #slot-tbody walau match itu udah resmi ditutup & jersey-nya
+  // seharusnya udah balik ke kolam bersama.
+  if(!activeM || activeM.status !== 'tutup'){
+    accumulateJerseyUsageFromRows([...document.querySelectorAll('#slot-tbody tr')], usage, excludeRow);
+  }
+  if(typeof msMatches !== 'undefined' && msMatches){
+    Object.keys(msMatches).forEach(id=>{
+      if(id === msActiveId) return; // match ini udah keitung dari DOM live di atas (kalau aktif)
+      const m = msMatches[id];
+      if(!m || m.status === 'tutup') return;
+      accumulateJerseyUsageFromSlotHtml(m.slotHtml, usage);
+    });
+  }
   return usage;
 }
 function jerseyStokRowHtml(warna, tipe, stokMap, usage){
@@ -3424,19 +3535,36 @@ function msRestore(id){
   const tutupBtn = document.getElementById('mhd-tutup-btn');
   const simpanBtn = document.getElementById('mhd-simpan-btn');
   const hapusBtn = document.getElementById('mhd-hapus-btn');
+  // Kotak "Tutup dan kunci match ini" di tab Rekap akhir — SEBELUMNYA nggak
+  // punya id sama sekali jadi nggak ikut ke-sembunyiin kayak tombol
+  // "Tutup match" di header pas match udah ditutup. Akibatnya ada 2 tombol
+  // tutup yang keduanya masih aktif (1 di header, 1 di tab Rekap akhir),
+  // Sam sempat kepencet 2x → closeMatch ke-kirim 2x (dobel di Rekap
+  // Keuangan & laporan). Sekarang box ini juga ikut disembunyiin begitu
+  // status match jadi 'tutup', diganti kotak abu2 "sudah ditutup" doang.
+  const rkgTutupBox = document.getElementById('rkg-tutup-box');
+  const rkgTutupDoneBox = document.getElementById('rkg-tutup-done-box');
   if(m.status==='tutup'){
     statusBadge.className='b b-gy';
     statusBadge.innerHTML = '<i class="ti ti-lock" style="font-size:11px"></i> Match ditutup';
     tutupBtn.style.display='none';
     if(simpanBtn) simpanBtn.style.display='none';
     if(hapusBtn) hapusBtn.style.display='none';
+    if(rkgTutupBox) rkgTutupBox.style.display='none';
+    if(rkgTutupDoneBox) rkgTutupDoneBox.style.display='';
   } else {
     statusBadge.className='b b-gn';
     statusBadge.innerHTML = '<span class="sd sdg"></span>Match aktif';
     tutupBtn.style.display='';
     if(simpanBtn) simpanBtn.style.display='';
     if(hapusBtn) hapusBtn.style.display='';
+    if(rkgTutupBox) rkgTutupBox.style.display='';
+    if(rkgTutupDoneBox) rkgTutupDoneBox.style.display='none';
   }
+  // Default menu tab: collapsed kalau match ini udah ditutup (biasanya
+  // cuma perlu Rekap akhir), expanded kalau masih aktif — tetap bisa
+  // di-toggle manual kapan aja lewat baris "Menu tab".
+  if(typeof toggleTrxSideMenu==='function') toggleTrxSideMenu(m.status==='tutup');
   setGameMode(m.jenisGame==='football' ? 'football' : 'mini');
   refreshAllJerseySelects();
   document.querySelectorAll('.jersey-sel[data-posisi="field"]').forEach(sel=>onJerseyChange(sel));
@@ -4398,6 +4526,11 @@ function computeJerseyUsedListFromLiveDom(){
 function openTutupMatchModal(){
   const m = msMatches[msActiveId];
   if(!m) return;
+  // Jaga2 tambahan — jangan sampai modal tutup match bisa kebuka lagi buat
+  // match yg udah 'tutup' (mis. box/tombol lama yg blm sempat ke-refresh
+  // tampilannya, atau race condition klik cepat) — sumber dobel-post
+  // closeMatch yg dilaporin Sam (submitTutupMatch ke-panggil 2x).
+  if(m.status==='tutup'){ showToast('Match ini sudah ditutup dan dikunci.'); return; }
   const f = computeFinancialsFromLiveDom();
   let sementaraCount = 0;
   document.querySelectorAll('#slot-tbody tr').forEach(tr=>{
@@ -4436,6 +4569,12 @@ function openTutupMatchModal(){
 function submitTutupMatch(){
   const m = msMatches[msActiveId];
   if(!m) return;
+  // Guard terakhir sebelum beneran ngirim closeMatch — kalau gara2 apapun
+  // tombolnya sempat ke-klik 2x (sebelum fix ini, box "Tutup dan kunci
+  // match ini" di tab Rekap akhir nggak ikut ke-sembunyiin pas match udah
+  // ditutup) modal ini masih sempat kebuka lagi, jangan sampai closeMatch
+  // ke-post ulang & bikin baris dobel di Rekap Keuangan + laporan.
+  if(m.status==='tutup'){ closeModal('m-tutup-match'); showToast('Match ini sudah ditutup dan dikunci.'); return; }
   // PENTING: simpan dulu isi live DOM (player/biaya terbaru) ke snapshot
   // SEBELUM ganti status. Tanpa ini, msRestore() di bawah akan menulis
   // ulang tabel dari snapshot LAMA (yg belum tentu punya perubahan terbaru,
@@ -5358,18 +5497,97 @@ function renderRptSplitPage(){
   const pageRows = _rptSplitRows.slice(start, start+RPT_PAGE_SIZE);
   tbody.innerHTML = pageRows.map(m=>{
     const tgl = m['Match / Tanggal'] || '—';
+    const tipe = m['Tipe Event'] || '';
+    const sales = parseFloat(m['Sales\n(Rp)']) || 0;
     const margin = parseFloat(m['Margin\n(Rp)']) || 0;
     const netM = parseFloat(m['Net Malik\n(Rp)']) || 0;
     const netF = parseFloat(m['Net Filan\n(Rp)']) || 0;
     const kumM = parseFloat(m['Kumul Malik\n(Rp)']) || 0;
     const kumF = parseFloat(m['Kumul Filan\n(Rp)']) || 0;
+    // Tombol hapus CUMA muncul utk baris match yg beneran udah tersimpan
+    // di Rekap_Keuangan (punya _row dari sheetToObjects) -- baris sintetis
+    // "match aktif" yg ditempel liveMatchAsRptRow() nggak punya _row sama
+    // sekali, jadi otomatis nggak dapet tombol hapus (nggak masuk akal
+    // "menghapus dari database" match yg emang belum ditutup/tersimpan).
+    // Argumen string di-escape single-quote-nya dulu (pola yg sama kayak
+    // toggleSf di submitTambahPlayer) krn nempel di onclick="" yg dibungkus
+    // double-quote.
+    const tglEsc = String(tgl).replace(/'/g,"\\'");
+    const tipeEsc = String(tipe).replace(/'/g,"\\'");
+    const delBtn = m._row
+      ? '<button class="ib" title="Hapus match ini dari Rekap Keuangan" onclick="openHapusRekapModal('+m._row+',\''+tglEsc+'\',\''+tipeEsc+'\','+sales+','+margin+')"><i class="ti ti-trash" style="color:var(--rd)"></i></button>'
+      : '';
     return '<tr><td class="pri">'+escAttr(tgl)+'</td>'
       + '<td style="color:'+(margin>=0?'var(--gn)':'var(--rd)')+'">'+fmtSignedRp(margin)+'</td>'
       + '<td style="color:var(--nv);font-weight:500">'+fmtSignedRp(netM)+'</td>'
       + '<td style="color:var(--gn);font-weight:500">'+fmtSignedRp(netF)+'</td>'
-      + '<td>'+fmtRupiah(kumM)+'</td><td>'+fmtRupiah(kumF)+'</td></tr>';
+      + '<td>'+fmtRupiah(kumM)+'</td><td>'+fmtRupiah(kumF)+'</td>'
+      + '<td>'+delBtn+'</td></tr>';
   }).join('');
   renderPager('split', _rptSplitRows, _rptSplitPage);
+}
+// Hapus 1 baris match dari Rekap_Keuangan (Reporting > Shared profit) --
+// dipakai a.l. buat beresin baris dobel akibat bug tutup match ke-klik 2x
+// (sebelum guard-nya ada). _hapusRekapTarget nyimpen data baris yg lagi
+// mau dihapus, dikirim balik ke backend sbg verifikasi "masih sama kayak
+// yg ditampilkan" sebelum beneran dihapus (deleteRekapMatch() di Code.gs).
+let _hapusRekapTarget = null;
+function openHapusRekapModal(row, tgl, tipe, sales, margin){
+  _hapusRekapTarget = { row, tgl, tipe, sales };
+  const tglEl = document.getElementById('hr-tgl');
+  const tipeEl = document.getElementById('hr-tipe');
+  const salesEl = document.getElementById('hr-sales');
+  const marginEl = document.getElementById('hr-margin');
+  if(tglEl) tglEl.textContent = tgl || '—';
+  if(tipeEl) tipeEl.textContent = tipe || '—';
+  if(salesEl) salesEl.textContent = 'Rp ' + fmtRupiah(sales);
+  if(marginEl){
+    marginEl.textContent = (margin<0?'-':'+') + 'Rp ' + fmtRupiah(Math.abs(margin));
+    marginEl.style.color = margin<0 ? 'var(--rd)' : 'var(--gn)';
+  }
+  openModal('m-hapus-rekap');
+}
+function submitHapusRekap(){
+  if(!_hapusRekapTarget) return;
+  if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0){
+    showToast('GAS_URL belum diset — nggak bisa hapus dari database.');
+    return;
+  }
+  const btn = document.getElementById('hr-confirm-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Menghapus...'; }
+  fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({
+      action:'deleteRekapMatch',
+      row: _hapusRekapTarget.row,
+      confirmTgl: _hapusRekapTarget.tgl,
+      confirmTipe: _hapusRekapTarget.tipe,
+      confirmSales: _hapusRekapTarget.sales
+    })
+  })
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && res.error){
+        showToast('Gagal hapus: ' + res.error);
+        return;
+      }
+      closeModal('m-hapus-rekap');
+      showToast('Match dihapus dari Rekap Keuangan. Kumulatif Malik/Filan sudah dihitung ulang.');
+      _hapusRekapTarget = null;
+      // Refresh Reporting & Dashboard biar angka Kumulatif/chart yg
+      // ditampilkan langsung nyambung ke hasil hapus+hitung-ulang barusan,
+      // bukan data lama sblm dihapus.
+      if(typeof loadReportingMatches==='function') loadReportingMatches();
+      if(typeof loadDashboardRealStats==='function') loadDashboardRealStats();
+    })
+    .catch(err=>{
+      console.error('Gagal hapus match dari Rekap Keuangan:', err);
+      showToast('Gagal hapus — cek koneksi internet lalu coba lagi.');
+    })
+    .finally(()=>{
+      if(btn){ btn.disabled = false; btn.innerHTML = '<i class="ti ti-trash"></i> Ya, hapus match ini'; }
+    });
 }
 function renderRptMarginTable(matches){
   const tbody = document.getElementById('rpt-margin-tbody');
@@ -5387,7 +5605,7 @@ function renderRptSplitTable(matches){
   const tbody = document.getElementById('rpt-split-tbody');
   if(!tbody) return;
   if(!matches.length){
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--mu)">Belum ada match yang ditutup.</td></tr>';
     const pager = document.getElementById('rpt-split-pager'); if(pager) pager.style.display='none';
     return;
   }
