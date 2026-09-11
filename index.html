@@ -1470,10 +1470,20 @@ function toggleSf(btn,nama,matchDate){
   }
 }
 
-// No Show flag — TANDA VISUAL DOANG, sengaja nggak nyentuh backend atau
-// perhitungan apa pun (Realisasi HTM/Sales dkk tetap terjumlah seperti
-// biasa, sama kayak player yg hadir). Beda dari toggleSf yg beneran nyatet
-// ke SHTM_Log krn punya efek nyata ke database.
+// No Show flag — TANDA VISUAL DOANG, sengaja nggak ngaruh ke perhitungan
+// apa pun (Realisasi HTM/Sales dkk tetap terjumlah seperti biasa, sama
+// kayak player yg hadir). Beda dari toggleSf yg beneran nyatet ke
+// SHTM_Log krn punya efek nyata ke database.
+//
+// TAPI status flag-nya sendiri (kena/nggaknya "No show") tetap harus
+// kesimpen ke database (Match_Drafts) supaya kelihatan di browser/device
+// lain — bukan cuma nyangkut di localStorage browser ini. Kolom2 lain di
+// Slot Player (HTM, Bank, Status, dst) memang cuma ke-sync pas klik
+// "Simpan" manual, tapi No Show ini per-klik langsungnya kelihatan (ada
+// highlight baris), jadi wajar diharapkan langsung ke-simpan juga — nggak
+// nunggu Sam inget klik "Simpan" dulu. msPersist() manggil ulang snapshot
+// slotHtml yang terbaru (row-noshow class-nya udah kebawa krn ini
+// nge-update DOM duluan sblm dipanggil) terus dikirim ke Match_Drafts.
 function toggleNoShow(btn){
   const row = btn.closest('tr');
   const on = btn.classList.contains('ns-on');
@@ -1486,6 +1496,7 @@ function toggleNoShow(btn){
     btn.innerHTML = '<i class="ti ti-user-off" style="font-size:9px"></i> No show ✓';
     if(row) row.classList.add('row-noshow');
   }
+  if(typeof msPersist==='function') msPersist();
 }
 
 // INIT
