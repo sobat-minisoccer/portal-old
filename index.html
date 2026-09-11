@@ -2735,7 +2735,12 @@ document.addEventListener('click', function(e){
     if(row) row.remove();
     if(wasInShtm) { renumberShtm(); refreshKelolaPlayerShtmCell(shtmNamaBeforeDelete); }
     if(wasInSlot){ renumberSlot(); refreshAllJerseySelects(); }
-    if(wasDepRow) refreshSlotDepositTriggers();
+    if(wasDepRow){
+      refreshSlotDepositTriggers();
+      if(depNamaBeforeDelete && depJumlahBeforeDelete > 0){
+        syncDbPlayersCacheDeposit(depNamaBeforeDelete, Math.max(0, getDbDepositBalance(depNamaBeforeDelete) - depJumlahBeforeDelete));
+      }
+    }
     if(wasInPlayerDb) renumberPlayerDb();
     if(wasInScorerDb){ resortScorerDb(); renderTopSkorFromDb(); }
     recalcAll();
@@ -3742,6 +3747,7 @@ function submitTambahDeposit(){
   if(!player){ showToast('Nama player belum diisi.'); return; }
   const jumlah = parseRupiah(document.getElementById('td-jumlah').value);
   const sumber = document.getElementById('td-sumber').value;
+  const saldoDbSebelum = getDbDepositBalance(player);
   const list = document.getElementById('dep-saldo-list');
   const row = document.createElement('div');
   row.className='dep-row';
@@ -3754,6 +3760,7 @@ function submitTambahDeposit(){
   closeModal('m-tambah-deposit');
   resetTambahDepositForm();
   refreshSlotDepositTriggers();
+  syncDbPlayersCacheDeposit(player, saldoDbSebelum + jumlah);
   showToast('Deposit ' + player + ' Rp ' + fmtRupiah(jumlah) + ' tersimpan.');
   if(typeof msPostToBackend==='function'){
     msPostToBackend({ action:'addDeposit', nama: player, jumlah,
@@ -3959,6 +3966,26 @@ function removeDepositLogRow(slotId){
 // absolute-setter), jadi yang dikirim ke backend adalah DELTA-nya
 // (requested - prevUsed), bukan requested itu sendiri — biar saldo di
 // database nggak kepotong dobel kalau admin edit ulang jumlahnya.
+// Saldo deposit yang dipakai/ditambah lewat Slot Player (applyDepositUsage,
+// submitTambahDeposit) beneran ke-update di database (action useDeposit/
+// addDeposit), TAPI _dbPlayersCache -- snapshot getPlayers() yang dipakai
+// buat render Kelola Player & modal Database Player -- nggak ikut ke-patch.
+// Efeknya persis yang dilaporkan: Fauzan udah "Dipakai match ini" di tab
+// Deposit player (saldo jadi Rp 0), tapi Kelola Player masih nunjukin saldo
+// LAMA (Rp 50.000) sampai halaman di-reload penuh. Sekarang cache-nya
+// dipatch langsung + tabel/modal yang lagi kebuka di-render ulang (hormatin
+// search yg lagi diisi), biar konsisten real-time tanpa perlu reload.
+function syncDbPlayersCacheDeposit(nama, newBalance){
+  if(!_dbPlayersCache) return;
+  const p = _dbPlayersCache.find(pl => (pl['Nama Player']||'').trim().toLowerCase() === (nama||'').trim().toLowerCase());
+  if(!p) return;
+  const depositKeys = ['Saldo Deposit\n(Rp)','Deposit Saldo (Rp)','Deposit Saldo\n(Rp)','Saldo Deposit (Rp)'];
+  const existingKey = depositKeys.find(k => p[k]!=null) || depositKeys[0];
+  p[existingKey] = newBalance;
+  const searchEl = document.getElementById('player-db-search');
+  if(typeof filterPlayerDbTable==='function') filterPlayerDbTable(searchEl ? searchEl.value : '');
+  if(typeof renderDbPlayerModal==='function') renderDbPlayerModal(_dbPlayersCache);
+}
 function applyDepositUsage(row, jumlahRequested){
   const nama = slotRowNama(row);
   const htm = parseRupiah(row.children[2].textContent);
@@ -3971,19 +3998,22 @@ function applyDepositUsage(row, jumlahRequested){
   let jumlah = Math.max(0, jumlahRequested || 0);
   if(jumlah > saldoAsal) jumlah = saldoAsal;
   const delta = jumlah - prevUsed;
+  let saldoAkhir;
   if(jumlah <= 0){
+    saldoAkhir = saldoAsal;
     if(prevUsed > 0 && depRow) depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoAsal);
     depositTd.innerHTML = depositCellHtml(nama, 0);
     updateBankSisaNote(bankTd, 0);
     removeDepositLogRow(slotId);
   } else {
-    const saldoBaru = saldoAsal - jumlah;
-    if(depRow) depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoBaru);
-    upsertDepositLogRow(slotId, nama, jumlah, saldoBaru);
+    saldoAkhir = saldoAsal - jumlah;
+    if(depRow) depRow.children[1].textContent = 'Rp ' + fmtRupiah(saldoAkhir);
+    upsertDepositLogRow(slotId, nama, jumlah, saldoAkhir);
     depositTd.innerHTML = depositCellHtml(nama, jumlah);
     updateBankSisaNote(bankTd, htm - jumlah);
   }
   delete depositTd.dataset.prevUsed;
+  if(delta !== 0) syncDbPlayersCacheDeposit(nama, saldoAkhir);
   if(delta !== 0 && typeof msPostToBackend==='function'){
     if(delta > 0){
       msPostToBackend({ action:'useDeposit', namaPemain: nama, jumlah: delta,
