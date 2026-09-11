@@ -343,12 +343,28 @@ function getConfig() {
 // doang. 1 baris per match; kolom "Data" isinya JSON blob snapshot match
 // itu (persis bentuk yang tadinya cuma disimpan ke localStorage lewat
 // msPersist() di index.html — title, tabel slot/biaya/deposit sbg HTML
-// string, dll). Match yang dihapus di Transaksi juga dihapus barisnya
-// di sini (lihat deleteMatchDraft). Match yang sudah ditutup TETAP ikut
-// tersimpan di sini apa adanya (sama kayak localStorage) — Match_Drafts
-// bukan sumber kebenaran finansial (itu tetap Rekap_Keuangan), cuma
-// cerminan draft/riwayat lokal Transaksi biar nyambung antar browser.
+// string, dll). Match yang sudah ditutup TETAP ikut tersimpan di sini apa
+// adanya (sama kayak localStorage) — Match_Drafts bukan sumber kebenaran
+// finansial (itu tetap Rekap_Keuangan), cuma cerminan draft/riwayat lokal
+// Transaksi biar nyambung antar browser.
+//
+// Match yang dihapus TIDAK langsung dibuang barisnya (lihat deleteMatchDraft)
+// -- kalau langsung dibuang, browser/device LAIN yang localStorage-nya masih
+// punya salinan lama match itu tidak akan pernah tahu match itu sudah
+// dihapus (baris di sheet ini kosong terlihat sama persis dengan "belum
+// pernah dipakai sama sekali", dan frontend sengaja tidak membersihkan
+// draft lokal kalau sheet ini kosong -- supaya draft yang belum sempat
+// ke-"Simpan" tidak ikut kehapus kalau kebetulan sheet lagi kosong/offline).
+// Solusinya: baris diubah jadi TOMBSTONE (Data = {"__deleted":true, ...})
+// bukan dihapus fisik, supaya browser lain yang narik getMatchDrafts() bisa
+// bedakan "memang belum pernah ada draft sama sekali" vs "match ini pernah
+// ada tapi sudah sengaja dihapus" -- lihat msSyncFromBackend di index.html.
+// Tombstone lama (lebih dari MATCH_DRAFT_TOMBSTONE_TTL_DAYS) dibersihkan
+// otomatis tiap kali getMatchDrafts() dipanggil, setelah cukup waktu buat
+// nyebar ke semua device yang mungkin lagi dibuka.
+const MATCH_DRAFT_TOMBSTONE_TTL_DAYS = 14;
 function getMatchDrafts() {
+  pruneOldMatchDraftTombstones();
   return sheetToObjects(SHEET.DRAFTS, 2);
 }
 function saveMatchDraft(p) {
@@ -375,10 +391,32 @@ function deleteMatchDraft(p) {
   if (!id) return { error: 'matchId wajib diisi' };
   const ws = getSheet(SHEET.DRAFTS);
   const data = ws.getDataRange().getValues();
+  const now = new Date();
+  const tombstoneRow = [id, JSON.stringify({ __deleted: true, deletedAt: now.toISOString() }), now];
+  let targetRow = -1;
   for (let r = 2; r < data.length; r++) {
-    if (String(data[r][0]) === String(id)) { ws.deleteRow(r + 1); break; }
+    if (String(data[r][0]) === String(id)) { targetRow = r + 1; break; }
+  }
+  if (targetRow === -1) {
+    const lastRow = Math.max(ws.getLastRow(), 2);
+    ws.getRange(lastRow + 1, 1, 1, 3).setValues([tombstoneRow]);
+  } else {
+    ws.getRange(targetRow, 1, 1, 3).setValues([tombstoneRow]);
   }
   return { ok: true, matchId: id };
+}
+function pruneOldMatchDraftTombstones() {
+  const ws = getSheet(SHEET.DRAFTS);
+  const data = ws.getDataRange().getValues();
+  const cutoff = new Date().getTime() - MATCH_DRAFT_TOMBSTONE_TTL_DAYS * 24 * 60 * 60 * 1000;
+  // hapus dari bawah ke atas biar index baris yang belum diproses gak geser
+  for (let r = data.length - 1; r >= 2; r--) {
+    let parsed;
+    try { parsed = JSON.parse(data[r][1]); } catch (e) { continue; }
+    if (!parsed || !parsed.__deleted) continue;
+    const updatedAt = data[r][2] ? new Date(data[r][2]).getTime() : 0;
+    if (updatedAt && updatedAt < cutoff) ws.deleteRow(r + 1);
+  }
 }
 
 // ── POST: Create Match ──────────────────────────────────────

@@ -3167,29 +3167,61 @@ function msSyncDraftsToBackend(){
   });
 }
 // Ditarik sekali di awal load (lihat DOMContentLoaded di bawah) — kalau
-// database sudah punya draft (artinya pernah di-"Simpan" dari browser/
-// device mana pun), itu dipakai sebagai versi terbaru, menimpa apa pun
-// yang ada di localStorage browser ini. Kalau database masih kosong (mis.
-// belum pernah "Simpan" sama sekali, atau baru pertama kali dipakai fitur
-// ini), tampilan yang sudah dimuat dari localStorage dibiarkan apa adanya
-// — nggak ada yang ditimpa/dihapus.
+// database sudah punya draft (artinya pernah di-"Simpan"/dibuat dari
+// browser/device mana pun), itu dipakai sebagai versi terbaru, menimpa apa
+// pun yang ada di localStorage browser ini. Kalau database masih kosong
+// TOTAL (mis. belum pernah "Simpan" sama sekali, atau baru pertama kali
+// dipakai fitur ini), tampilan yang sudah dimuat dari localStorage
+// dibiarkan apa adanya — nggak ada yang ditimpa/dihapus, supaya draft yang
+// belum sempat ke-"Simpan" tidak ikut kehapus kalau kebetulan sheet-nya
+// lagi kosong/offline.
+//
+// Match yang dihapus (lihat deleteMatchDraft di Code.gs) tersimpan sebagai
+// baris TOMBSTONE ({"__deleted":true}), bukan langsung dibuang — jadi kalau
+// browser ini narik baris tombstone utk match yang masih ada di localStorage
+// lokal, itu SINYAL VALID buat ikut membuang match itu di sini juga (beda
+// dari "sheet kosong total" di atas, yang memang sengaja tidak disentuh).
 function msSyncFromBackend(){
   if(!GAS_URL || GAS_URL.indexOf('script.google.com')<0) return;
   fetch(GAS_URL + '?action=getMatchDrafts')
     .then(r=>r.json())
     .then(rows=>{
-      if(!Array.isArray(rows) || rows.length===0) return;
+      if(!Array.isArray(rows) || rows.length===0) return; // sheet kosong total -> jangan sentuh draft lokal
       const remoteMatches = {};
       const remoteOrder = [];
+      const deletedIds = {};
       rows.forEach(row=>{
         const id = row['MatchId'];
         if(!id) return;
         let parsed;
         try{ parsed = JSON.parse(row['Data']); }catch(e){ return; }
+        if(parsed && parsed.__deleted){ deletedIds[id] = true; return; }
         remoteMatches[id] = parsed;
         remoteOrder.push(id);
       });
-      if(remoteOrder.length===0) return;
+      // Buang dulu match lokal yang ternyata sudah ditandai dihapus di
+      // device lain (tombstone) — berlaku baik ketika masih ada draft aktif
+      // lain yang ditarik (remoteOrder.length>0) maupun ketika SEMUA baris
+      // yang ada di sheet ternyata tombstone (remoteOrder.length===0, tapi
+      // deletedIds ada isinya — itu beda dari sheet kosong total di atas).
+      let changed = false;
+      Object.keys(deletedIds).forEach(id=>{
+        if(msMatches[id]){ delete msMatches[id]; changed = true; }
+        const idx = msOrder.indexOf(id);
+        if(idx!==-1){ msOrder.splice(idx,1); changed = true; }
+      });
+      if(remoteOrder.length===0){
+        // Nggak ada draft aktif sama sekali di database. Kalau ini gara2
+        // tombstone (bukan sheet kosong dari awal) dan kita barusan beneran
+        // buang sesuatu di lokal, refresh tampilan supaya ikut kosong.
+        if(changed){
+          msActiveId = msOrder[0] || null;
+          try{ localStorage.setItem(MS_STORAGE_KEY, JSON.stringify({msMatches, msOrder, msActiveId, msSeq})); }catch(e){}
+          if(msOrder.length===0){ msShowEmptyState(); msRenderSwitcher(); }
+          else { msRestore(msActiveId); }
+        }
+        return;
+      }
       Object.keys(msMatches).forEach(k=>delete msMatches[k]);
       Object.assign(msMatches, remoteMatches);
       msOrder = remoteOrder;
