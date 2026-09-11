@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Sobat Minisoccer — Mockup v3</title>
+<title>Sobat Minisoccer — Dashboard Transaksi & Reporting SMS</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -2457,6 +2457,20 @@ document.addEventListener('click', function(e){
     }
     const shtmNamaBeforeDelete = wasInShtm ? shtmRowNama(row) : null;
     const rowIdxBeforeDelete = row ? row.dataset.rowIdx : null;
+    // Hapus baris di #dep-saldo-list (tab Deposit) dulu cuma ngilangin
+    // tampilan LOKAL — saldo yang sempat ditambahkan (addDeposit) tetap
+    // nempel di database selama-lamanya krn nggak pernah ada aksi
+    // pembalik yg dikirim. Sekarang begitu baris dihapus (abis konfirmasi
+    // "yes"), dikirim balik sbg pengurang saldo persis sejumlah yg lagi
+    // ditampilkan di baris itu — biar "hapus di sini" beneran ngilangin
+    // saldo-nya di DB juga, bukan cuma sembunyiin dari tampilan.
+    const depNamaBeforeDelete = wasDepRow ? (row.children[0] ? row.children[0].textContent.trim() : '') : null;
+    const depJumlahBeforeDelete = wasDepRow ? Math.abs(parseRupiah(row.children[1] ? row.children[1].textContent : '0')) : 0;
+    if(wasDepRow && depNamaBeforeDelete && depJumlahBeforeDelete > 0 && typeof msPostToBackend==='function'){
+      msPostToBackend({ action:'deleteDeposit', nama: depNamaBeforeDelete, jumlah: depJumlahBeforeDelete,
+        matchId: (typeof msActiveId!=='undefined' ? msActiveId : '') || '—',
+        keterangan: 'Dihapus dari daftar Tambah Deposit' });
+    }
     if(wasInShtm && rowIdxBeforeDelete && typeof msPostToBackend==='function'){
       msPostToBackend({ action:'deleteShtmRow', rowIdx: parseInt(rowIdxBeforeDelete,10) });
     }
@@ -2961,6 +2975,11 @@ function repairSlotRowMarkup(){
       const nama = first ? first.textContent.trim() : (cell ? cell.textContent.trim() : '');
       if(nama) row.dataset.nama = nama;
     }
+    // Kolom Nama nggak boleh diedit dari sini (datanya dari DB Player,
+    // bukan sesuatu yg diubah per-match) — baris lama blm punya data-no-edit
+    // di kolom ini.
+    const namaTd = row.children[1];
+    if(namaTd) namaTd.dataset.noEdit = '1';
     const tds = row.querySelectorAll(':scope > td');
     // Kolom Status (index 10) — dulu nggak punya data-edit-type sama sekali,
     // jadi pensil-edit keliatan "kekunci" (nggak match heuristik generik apa
@@ -3284,7 +3303,7 @@ function submitTambahPlayer(){
   tr.dataset.nama = nama;
   tr.innerHTML = `
     <td style="color:var(--hi)" data-no-edit="1">${no}</td>
-    <td style="font-weight:500">${nama} <button class="sf sf-off" onclick="toggleSf(this,'${nama.replace(/'/g,"\\'")}','${tglLabel}')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
+    <td style="font-weight:500" data-no-edit="1">${nama} <button class="sf sf-off" onclick="toggleSf(this,'${nama.replace(/'/g,"\\'")}','${tglLabel}')"><i class="ti ti-ticket" style="font-size:9px"></i> Next</button></td>
     <td>${fmtRupiah(htm)}</td><td data-edit-type="label"><span class="b ${labelBadgeClass}">${label}</span></td>
     <td style="color:var(--mu)" data-edit-type="deposit-used">${depositCellContent}</td><td data-edit-type="bank" data-bank-val="${escAttr(bankVal)}"${bankVal?'':' style="color:var(--mu)"'}>${bankCellContent}</td>
     <td data-edit-type="tglbayar" data-date="${isFree?'':tglBayarIso}"${tglBayarCellTxt==='—'?' style="color:var(--mu)"':''}>${tglBayarCellTxt}</td>
