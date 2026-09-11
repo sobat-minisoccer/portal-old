@@ -514,7 +514,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
         <span class="b b-gn" style="font-size:12px;padding:5px 10px" id="mhd-status"><span class="sd sdg"></span>Match aktif</span>
         <button class="btn" id="mhd-simpan-btn" onclick="msSimpanDraft()"><i class="ti ti-device-floppy"></i> Simpan</button>
         <button class="btn" id="mhd-hapus-btn" onclick="msHapusMatchClick(this)"><i class="ti ti-trash"></i> Hapus match</button>
-        <button class="btn btn-dng" id="mhd-tutup-btn" onclick="openModal('m-tutup-match')"><i class="ti ti-lock"></i> Tutup match</button>
+        <button class="btn btn-dng" id="mhd-tutup-btn" onclick="openTutupMatchModal()"><i class="ti ti-lock"></i> Tutup match</button>
       </div>
     </div>
     <div class="mb-wrap">
@@ -785,7 +785,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
           <div style="padding:14px 16px;border-top:1px solid var(--bd);background:var(--am2)">
             <div style="font-size:12px;font-weight:500;color:var(--am);margin-bottom:4px"><i class="ti ti-lock"></i> Tutup match untuk mengunci semua transaksi</div>
             <div style="font-size:11px;color:var(--am);margin-bottom:10px">Setelah ditutup, data tidak bisa diubah. Laporan PDF tetap bisa dilihat/dicetak kapan saja dari tombol di atas.</div>
-            <button class="btn btn-dng" onclick="openModal('m-tutup-match')"><i class="ti ti-lock"></i> Tutup dan kunci match ini</button>
+            <button class="btn btn-dng" onclick="openTutupMatchModal()"><i class="ti ti-lock"></i> Tutup dan kunci match ini</button>
           </div>
         </div>
 
@@ -1001,10 +1001,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:13px;l
     <div class="modal-body">
       <div class="info info-am" style="margin-bottom:12px"><i class="ti ti-alert-triangle"></i> Setelah ditutup, semua transaksi dikunci dan tidak bisa diubah.</div>
       <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Total sales</span><span style="font-weight:600">Rp 1.863.500</span></div>
-        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Total cost</span><span style="font-weight:600;color:var(--rd)">Rp 1.614.000</span></div>
-        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--gn2);border-radius:var(--r)"><span style="color:var(--gn)">Margin</span><span style="font-weight:700;color:var(--gn)">+Rp 249.500</span></div>
-        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--am2);border-radius:var(--r)"><span style="color:var(--am)">Status bayar</span><span style="font-weight:600;color:var(--am)">1 masih Sementara ⚠</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Total sales</span><span style="font-weight:600" id="tm-total-sales">Rp 0</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--su2);border-radius:var(--r)"><span style="color:var(--mu)">Total cost</span><span style="font-weight:600;color:var(--rd)" id="tm-total-cost">Rp 0</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;border-radius:var(--r)" id="tm-margin-row"><span id="tm-margin-lbl">Margin</span><span style="font-weight:700" id="tm-margin">+Rp 0</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 10px;border-radius:var(--r)" id="tm-status-bayar-row"><span id="tm-status-bayar-lbl">Status bayar</span><span style="font-weight:600" id="tm-status-bayar">—</span></div>
       </div>
       <div class="info info-gn"><i class="ti ti-file-text"></i> Laporan PDF bisa dilihat/dicetak dari tombol "Lihat / cetak laporan PDF" di tab Rekap akhir, sebelum maupun sesudah match ditutup.</div>
     </div>
@@ -4386,6 +4386,52 @@ function computeJerseyUsedListFromLiveDom(){
     list.push({ warna, uk });
   });
   return list;
+}
+// Preview di modal "Tutup match" -- SEBELUMNYA ini teks statis mentah dari
+// mockup awal (Rp 1.863.500 / Rp 1.614.000 / +Rp 249.500 / "1 masih
+// Sementara", persis apa pun match/isi tabelnya) yang KEBETULAN mirip
+// angka match contoh, jadi kelihatan "jalan" padahal cuma dekorasi --
+// submitTutupMatch() sendiri sudah lama hitung angka final dari DOM live
+// (computeFinancialsFromLiveDom) sebelum kirim ke Rekap_Keuangan, cuma
+// PREVIEW-nya yang belum ikut. Sekarang dihitung ulang persis dari sumber
+// yang sama tiap kali modal ini mau dibuka.
+function openTutupMatchModal(){
+  const m = msMatches[msActiveId];
+  if(!m) return;
+  const f = computeFinancialsFromLiveDom();
+  let sementaraCount = 0;
+  document.querySelectorAll('#slot-tbody tr').forEach(tr=>{
+    const tds = tr.querySelectorAll(':scope > td');
+    const statusTxt = tds[10] ? tds[10].textContent : '';
+    if(/Sementara/i.test(statusTxt)) sementaraCount++;
+  });
+  const salesEl = document.getElementById('tm-total-sales');
+  const costEl = document.getElementById('tm-total-cost');
+  const marginRowEl = document.getElementById('tm-margin-row');
+  const marginLblEl = document.getElementById('tm-margin-lbl');
+  const marginEl = document.getElementById('tm-margin');
+  const statusRowEl = document.getElementById('tm-status-bayar-row');
+  const statusLblEl = document.getElementById('tm-status-bayar-lbl');
+  const statusEl = document.getElementById('tm-status-bayar');
+  if(salesEl) salesEl.textContent = 'Rp ' + fmtRupiah(f.sales);
+  if(costEl) costEl.textContent = 'Rp ' + fmtRupiah(f.cost);
+  const marginNeg = f.margin < 0;
+  if(marginRowEl) marginRowEl.style.background = marginNeg ? 'var(--rd2)' : 'var(--gn2)';
+  if(marginLblEl) marginLblEl.style.color = marginNeg ? 'var(--rd)' : 'var(--gn)';
+  if(marginEl){
+    marginEl.style.color = marginNeg ? 'var(--rd)' : 'var(--gn)';
+    marginEl.textContent = (marginNeg?'-':'+') + 'Rp ' + fmtRupiah(Math.abs(f.margin));
+  }
+  if(sementaraCount > 0){
+    if(statusRowEl) statusRowEl.style.background = 'var(--am2)';
+    if(statusLblEl) statusLblEl.style.color = 'var(--am)';
+    if(statusEl){ statusEl.style.color = 'var(--am)'; statusEl.textContent = sementaraCount + ' masih Sementara ⚠'; }
+  } else {
+    if(statusRowEl) statusRowEl.style.background = 'var(--gn2)';
+    if(statusLblEl) statusLblEl.style.color = 'var(--gn)';
+    if(statusEl){ statusEl.style.color = 'var(--gn)'; statusEl.textContent = 'Semua sudah Lunas ✓'; }
+  }
+  openModal('m-tutup-match');
 }
 function submitTutupMatch(){
   const m = msMatches[msActiveId];
